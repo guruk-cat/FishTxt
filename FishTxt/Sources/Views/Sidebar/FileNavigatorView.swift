@@ -1,0 +1,851 @@
+import SwiftUI
+
+struct FileNavigatorView: View {
+    @EnvironmentObject var store: ProjectStore
+    @EnvironmentObject var appColors: AppColors
+    @Binding var selectedProjectID: UUID?
+    @Binding var selectedFolderID: UUID?
+    @Binding var activeBlobID: UUID?
+    @Binding var isViewingHidden: Bool
+
+    @AppStorage("sidebar.isProjectsExpanded") private var isProjectsExpanded: Bool = true
+    @AppStorage("sidebar.isArchivedExpanded") private var isArchivedExpanded: Bool = true
+    @AppStorage("sidebar.navigatorMode") private var navigatorMode: String = "compact"
+
+    // Rename state
+    @State private var isRenamingProject = false
+    @State private var renameProjectID: UUID?
+    @State private var renameProjectText = ""
+    @State private var isRenamingFolder = false
+    @State private var renameFolderID: UUID?
+    @State private var renameFolderProjectID: UUID?
+    @State private var renameFolderText = ""
+
+    // Detailed mode expand state
+    @State private var expandedProjectIDs: Set<UUID> = []
+    @State private var expandedFolderIDs: Set<UUID> = []
+
+    // -------------------------------------------------------------------------
+    // Drag state — detailed mode only
+    //
+    // Key invariant: the dragged item is NEVER removed from its source display
+    // list while a drag is active. Removing it destroys the view that owns the
+    // DragGesture, which prevents .onEnded from firing, leaving clearDragState()
+    // uncalled and the overlay stuck. Instead we keep it at height 0 / opacity 0.
+    // -------------------------------------------------------------------------
+    @State private var draggedItemID: UUID? = nil
+    @State private var draggedProjectID: UUID? = nil
+    // nil  → dragging a folder or root-level blob
+    // UUID → dragging a blob that lives inside that folder
+    @State private var dragSourceFolderID: UUID? = nil
+    @State private var dragLocation: CGPoint = .zero
+    @State private var itemFrames: [UUID: CGRect] = [:]
+    @State private var ghostFolderIndex: Int? = nil         // target position among folders
+    @State private var ghostRootBlobIndex: Int? = nil       // target position among root blobs
+    @State private var ghostFolderBlobIndex: Int? = nil     // target position within a folder
+    @State private var hoveredFolderID: UUID? = nil         // folder highlighted for blob→folder drop
+    @State private var confirmGlowItemID: UUID? = nil
+    @State private var confirmGlowOpacity: Double = 0.0
+
+    static let rowHeight: CGFloat = 26
+
+    // MARK: - Convenience
+
+    var liveProjects: [Project] {
+        store.projects.filter { !$0.isArchived }.sorted { $0.createdAt < $1.createdAt }
+    }
+    var archivedProjects: [Project] {
+        store.projects.filter { $0.isArchived }.sorted { $0.createdAt < $1.createdAt }
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 4) {
+                DisclosureGroup(isExpanded: $isProjectsExpanded) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(liveProjects) { project in
+                            projectEntry(project, isArchived: false)
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text("PROJECTS")
+                            .font(.system(size: 11, weight: .semibold))
+                            .tracking(0.5)
+                        Spacer()
+                        Button {
+                            let p = store.createProject(name: "Untitled Project")
+                            selectedProjectID = p.id; selectedFolderID = nil
+                            activeBlobID = nil; isViewingHidden = false
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(AppColors.shared.contentPrimary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 4)
+                    .foregroundColor(AppColors.shared.contentTertiary)
+                }
+
+                if !archivedProjects.isEmpty {
+                    DisclosureGroup(isExpanded: $isArchivedExpanded) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(archivedProjects) { project in
+                                projectEntry(project, isArchived: true)
+                            }
+                        }
+                    } label: {
+                        Text("ARCHIVED PROJECTS")
+                            .font(.system(size: 11, weight: .semibold))
+                            .tracking(0.5)
+                            .foregroundColor(AppColors.shared.contentTertiary)
+                    }
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 12)
+        }
+        .coordinateSpace(name: "sidebarNav")
+        .onPreferenceChange(CardFrameKey.self) { itemFrames = $0 }
+        .overlay(dragOverlay)
+        .alert("Rename Project", isPresented: $isRenamingProject) {
+            TextField("Project name", text: $renameProjectText)
+            Button("Cancel", role: .cancel) {}
+            Button("Rename") {
+                if let id = renameProjectID { store.renameProject(id, to: renameProjectText) }
+            }
+        }
+        .alert("Rename Folder", isPresented: $isRenamingFolder) {
+            TextField("Folder name", text: $renameFolderText)
+            Button("Cancel", role: .cancel) {}
+            Button("Rename") {
+                if let fid = renameFolderID, let pid = renameFolderProjectID {
+                    store.renameFolder(fid, in: pid, to: renameFolderText)
+                }
+            }
+        }
+    }
+
+    // MARK: - Project entry dispatch
+
+    @ViewBuilder
+    private func projectEntry(_ project: Project, isArchived: Bool) -> some View {
+        if navigatorMode == "detailed" {
+            detailedProjectRow(project, isArchived: isArchived)
+        } else {
+            ProjectRow(
+                project: project,
+                isSelected: selectedProjectID == project.id,
+                onSelect: { selectProject(project) },
+                onRename: { beginRenameProject(project) },
+                onNewFolder: { _ = store.createFolder(in: project.id, name: "Untitled Folder") },
+                onNewBlob: { _ = store.createBlob(in: project.id) },
+                onViewHidden: { viewHidden(project) },
+                onArchive: { store.archiveProject(project.id) }
+            )
+            .contextMenu { projectContextMenu(project, isArchived: isArchived) }
+        }
+    }
+
+    // MARK: - Detailed project row
+
+    @ViewBuilder
+    private func detailedProjectRow(_ project: Project, isArchived: Bool) -> some View {
+        let isExpanded = expandedProjectIDs.contains(project.id)
+        let hasChildren = !project.folders.isEmpty ||
+            project.blobs.contains { $0.folderID == nil && !$0.isHidden }
+        let folders  = displayFolders(for: project)
+        let rootBlobs = displayRootBlobs(for: project)
+
+        VStack(alignment: .leading, spacing: 0) {
+            // Header row — fixed padding/height regardless of children
+            HStack(spacing: 4) {
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(hasChildren ? AppColors.shared.contentTertiary : Color.clear)
+                    .frame(width: 14)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        guard hasChildren else { return }
+                        if isExpanded { expandedProjectIDs.remove(project.id) }
+                        else          { expandedProjectIDs.insert(project.id) }
+                    }
+                Text(project.name)
+                    .font(.system(size: 13))
+                    .foregroundColor(AppColors.shared.contentPrimary)
+                    .lineLimit(1)
+                Spacer()
+            }
+            .padding(.leading, 4).padding(.trailing, 8).padding(.vertical, 6)
+            .background(selectedProjectID == project.id
+                ? AppColors.shared.backgroundHighlight.opacity(0.3) : Color.clear)
+            .overlay(
+                selectedProjectID == project.id
+                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentPrimary)
+                    : nil,
+                alignment: .leading
+            )
+            .contentShape(Rectangle())
+            .onTapGesture { selectProject(project) }
+            .contextMenu { projectContextMenu(project, isArchived: isArchived) }
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 0) {
+                    // --- Folders ---
+                    ForEach(folders) { item in
+                        if case .ghost = item {
+                            treeGhost()
+                                .padding(.leading, 22)
+                                .padding(.vertical, 1)
+                        } else if case .folder(let folder) = item {
+                            let isDragged = draggedItemID == folder.id
+                            detailedFolderRow(folder, in: project)
+                                // Keep in hierarchy but collapse so gesture survives
+                                .frame(height: isDragged ? 0 : nil)
+                                .clipped()
+                                .opacity(isDragged ? 0 : 1)
+                        }
+                    }
+                    .animation(.spring(response: 0.25, dampingFraction: 0.82),
+                               value: folders.map(\.id))
+
+                    // --- Root blobs ---
+                    ForEach(rootBlobs) { item in
+                        if case .ghost = item {
+                            treeGhost()
+                                .padding(.leading, 22)
+                                .padding(.vertical, 1)
+                        } else if case .blob(let blob) = item {
+                            let isDragged   = draggedItemID == blob.id
+                            // Invisible while hovering a folder so the gesture doesn't die
+                            let isInvisible = isDragged && hoveredFolderID != nil
+                            BlobTreeRow(
+                                blob: blob, projectID: project.id,
+                                isActive: activeBlobID == blob.id,
+                                isGlowing: confirmGlowItemID == blob.id,
+                                glowOpacity: confirmGlowItemID == blob.id ? confirmGlowOpacity : 0,
+                                indent: 22
+                            )
+                            .frame(height: Self.rowHeight)
+                            .frame(height: isInvisible ? 0 : nil)
+                            .clipped()
+                            .opacity(isInvisible ? 0 : 1)
+                            .contentShape(Rectangle())
+                            .onTapGesture { selectedProjectID = project.id; activeBlobID = blob.id }
+                            .background(frameTracker(.blob(blob)))
+                            .simultaneousGesture(
+                                rootBlobDrag(blob: blob, project: project),
+                                including: project.isArchived ? .subviews : .all
+                            )
+                            .contextMenu { blobContextMenu(blob, project: project, isInFolder: false) }
+                        }
+                    }
+                    .animation(.spring(response: 0.25, dampingFraction: 0.82),
+                               value: rootBlobs.map(\.id))
+                }
+            }
+        }
+    }
+
+    // MARK: - Detailed folder row
+
+    @ViewBuilder
+    private func detailedFolderRow(_ folder: BlobFolder, in project: Project) -> some View {
+        let isFolderExpanded = expandedFolderIDs.contains(folder.id)
+        let hasBlobs  = project.blobs.contains { $0.folderID == folder.id && !$0.isHidden }
+        let isHovered = hoveredFolderID == folder.id
+        let isGlowing = confirmGlowItemID == folder.id
+        let blobs     = displayFolderBlobs(folder: folder, project: project)
+
+        VStack(alignment: .leading, spacing: 0) {
+            // Folder header
+            HStack(spacing: 3) {
+                Image(systemName: isFolderExpanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(hasBlobs ? AppColors.shared.contentTertiary : Color.clear)
+                    .frame(width: 12)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        guard hasBlobs else { return }
+                        if isFolderExpanded { expandedFolderIDs.remove(folder.id) }
+                        else                { expandedFolderIDs.insert(folder.id) }
+                    }
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(isHovered ? AppColors.shared.accent : AppColors.shared.contentTertiary)
+                Text(folder.name)
+                    .font(.system(size: 12))
+                    .foregroundColor(AppColors.shared.contentSecondary)
+                    .lineLimit(1)
+                Spacer()
+            }
+            .padding(.leading, 22).padding(.trailing, 8).padding(.vertical, 4)
+            .frame(height: Self.rowHeight)
+            .background(
+                isHovered
+                    ? AppColors.shared.accent.opacity(0.12)
+                    : (selectedProjectID == project.id && selectedFolderID == folder.id
+                        ? AppColors.shared.backgroundHighlight.opacity(0.2)
+                        : Color.clear)
+            )
+            .overlay(
+                isGlowing
+                    ? RoundedRectangle(cornerRadius: 4)
+                        .stroke(AppColors.shared.confirmation.opacity(confirmGlowOpacity), lineWidth: 1)
+                    : nil
+            )
+            .contentShape(Rectangle())
+            .onTapGesture {
+                selectedProjectID = project.id; selectedFolderID = folder.id
+                activeBlobID = nil; isViewingHidden = false
+            }
+            .background(frameTracker(.folder(folder)))
+            .simultaneousGesture(
+                folderDrag(folder: folder, project: project),
+                including: project.isArchived ? .subviews : .all
+            )
+            .contextMenu {
+                if !project.isArchived {
+                    Button {
+                        renameFolderID = folder.id; renameFolderProjectID = project.id
+                        renameFolderText = folder.name; isRenamingFolder = true
+                    } label: { Label("Rename Folder", systemImage: "pencil") }
+                    Button { store.hideFolder(folder.id, in: project.id) } label: {
+                        Label("Hide Folder", systemImage: "eye.slash")
+                    }
+                    Divider()
+                    Button(role: .destructive) {
+                        store.deleteFolder(folder.id, in: project.id)
+                    } label: { Label("Delete Folder", systemImage: "trash") }
+                }
+            }
+
+            // Blobs inside folder (when expanded)
+            if isFolderExpanded {
+                ForEach(blobs) { item in
+                    if case .ghost = item {
+                        treeGhost()
+                            .padding(.leading, 38)
+                            .padding(.vertical, 1)
+                    } else if case .blob(let blob) = item {
+                        let isDragged = draggedItemID == blob.id
+                        // Collapse to 0 when the blob is leaving for another folder or root,
+                        // but keep in hierarchy so the gesture continues to fire.
+                        let isLeaving = isDragged && (hoveredFolderID != nil || ghostRootBlobIndex != nil)
+                        BlobTreeRow(
+                            blob: blob, projectID: project.id,
+                            isActive: activeBlobID == blob.id,
+                            isGlowing: confirmGlowItemID == blob.id,
+                            glowOpacity: confirmGlowItemID == blob.id ? confirmGlowOpacity : 0,
+                            indent: 38
+                        )
+                        .frame(height: Self.rowHeight)
+                        .frame(height: isLeaving ? 0 : nil)
+                        .clipped()
+                        .opacity(isLeaving ? 0 : 1)
+                        .contentShape(Rectangle())
+                        .onTapGesture { selectedProjectID = project.id; activeBlobID = blob.id }
+                        .background(frameTracker(.blob(blob)))
+                        .simultaneousGesture(
+                            folderBlobDrag(blob: blob, project: project, sourceFolderID: folder.id),
+                            including: project.isArchived ? .subviews : .all
+                        )
+                        .contextMenu { blobContextMenu(blob, project: project, isInFolder: true) }
+                    }
+                }
+                .animation(.spring(response: 0.25, dampingFraction: 0.82),
+                           value: blobs.map(\.id))
+            }
+        }
+    }
+
+    // MARK: - Ghost row
+
+    private func treeGhost() -> some View {
+        RoundedRectangle(cornerRadius: 4)
+            .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+            .foregroundColor(AppColors.shared.contentTertiary.opacity(0.4))
+            .frame(height: Self.rowHeight - 4)
+    }
+
+    // MARK: - Frame tracker
+
+    private func frameTracker(_ item: DashboardItem) -> some View {
+        GeometryReader { geo in
+            Color.clear.preference(
+                key: CardFrameKey.self,
+                value: [item.id: geo.frame(in: .named("sidebarNav"))]
+            )
+        }
+    }
+
+    // MARK: - Drag overlay
+
+    @ViewBuilder
+    private var dragOverlay: some View {
+        if let id = draggedItemID, let pid = draggedProjectID,
+           let project = store.projects.first(where: { $0.id == pid }) {
+            Group {
+                if let folder = project.folders.first(where: { $0.id == id }) {
+                    dragPreview(icon: "folder.fill", text: folder.name)
+                } else if let blob = project.blobs.first(where: { $0.id == id }) {
+                    BlobDragPreview(blob: blob, projectID: pid)
+                        .environmentObject(store)
+                }
+            }
+            .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+            .position(x: dragLocation.x, y: dragLocation.y)
+            .allowsHitTesting(false)
+        }
+    }
+
+    private func dragPreview(icon: String, text: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 11))
+                .foregroundColor(AppColors.shared.contentSecondary)
+            Text(text).font(.system(size: 12)).lineLimit(1)
+                .foregroundColor(AppColors.shared.contentSecondary)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 4)
+        .background(AppColors.shared.backgroundPrimary)
+        .cornerRadius(5)
+        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.cardBorder, lineWidth: 1))
+        .frame(width: 160, alignment: .leading)
+    }
+
+    // =========================================================================
+    // MARK: - Display lists
+    //
+    // Each function returns the items to render for a given section.
+    // The dragged item is ALWAYS included in its source list so its view stays
+    // in the hierarchy (preserving the gesture). A ghost is inserted at the
+    // computed target position. The dragged item is rendered invisible/collapsed
+    // at the call site.
+    // =========================================================================
+
+    private func displayFolders(for project: Project) -> [DashboardItem] {
+        var all = project.folders.sorted { $0.sortOrder < $1.sortOrder }.map(DashboardItem.folder)
+        guard let id = draggedItemID,
+              draggedProjectID == project.id,
+              dragSourceFolderID == nil,
+              let dragPos = all.firstIndex(where: { $0.id == id }),
+              let ghostIdx = ghostFolderIndex else { return all }
+        // Insert ghost at the correct slot in the full list (dragged item stays)
+        let insertAt = min(max(ghostIdx <= dragPos ? ghostIdx : ghostIdx + 1, 0), all.count)
+        all.insert(.ghost, at: insertAt)
+        return all
+    }
+
+    private func displayRootBlobs(for project: Project) -> [DashboardItem] {
+        var all = project.blobs
+            .filter { $0.folderID == nil && !$0.isHidden }
+            .sorted { $0.sortOrder < $1.sortOrder }
+            .map(DashboardItem.blob)
+        guard let id = draggedItemID, draggedProjectID == project.id else { return all }
+
+        if dragSourceFolderID == nil, let dragPos = all.firstIndex(where: { $0.id == id }) {
+            // Root blob reorder — keep dragged item, insert ghost
+            guard hoveredFolderID == nil, let ghostIdx = ghostRootBlobIndex else { return all }
+            let insertAt = min(max(ghostIdx <= dragPos ? ghostIdx : ghostIdx + 1, 0), all.count)
+            all.insert(.ghost, at: insertAt)
+        } else if dragSourceFolderID != nil {
+            // Folder blob dragging out to root — just show ghost, no dragged item here
+            if let ghostIdx = ghostRootBlobIndex {
+                all.insert(.ghost, at: max(0, min(ghostIdx, all.count)))
+            }
+        }
+        return all
+    }
+
+    private func displayFolderBlobs(folder: BlobFolder, project: Project) -> [DashboardItem] {
+        var all = project.blobs
+            .filter { $0.folderID == folder.id && !$0.isHidden }
+            .sorted { $0.sortOrder < $1.sortOrder }
+            .map(DashboardItem.blob)
+        guard let id = draggedItemID,
+              draggedProjectID == project.id,
+              dragSourceFolderID == folder.id,
+              let dragPos = all.firstIndex(where: { $0.id == id }) else { return all }
+
+        // When leaving for another folder or root: keep item (at 0 height) but no ghost here
+        if hoveredFolderID != nil || ghostRootBlobIndex != nil { return all }
+
+        // Reorder within this folder
+        guard let ghostIdx = ghostFolderBlobIndex else { return all }
+        let insertAt = min(max(ghostIdx <= dragPos ? ghostIdx : ghostIdx + 1, 0), all.count)
+        all.insert(.ghost, at: insertAt)
+        return all
+    }
+
+    // =========================================================================
+    // MARK: - Ghost index helper
+    //
+    // Returns the target insertion index within `items` (a reduced list that
+    // does NOT contain the dragged item). The value maps directly to the
+    // `toIndex` accepted by store.moveItem after it removes the source item.
+    // =========================================================================
+    private func ghostIndex(cursor: CGPoint, among items: [DashboardItem]) -> Int {
+        let framed: [(Int, CGRect)] = items.enumerated().compactMap { i, item in
+            guard let f = itemFrames[item.id] else { return nil }
+            return (i, f)
+        }.sorted { $0.1.minY < $1.1.minY }
+        guard !framed.isEmpty else { return 0 }
+        for (i, frame) in framed {
+            if cursor.y < frame.midY { return i }
+        }
+        return framed.count
+    }
+
+    // =========================================================================
+    // MARK: - Drag gestures
+    // =========================================================================
+
+    private func folderDrag(folder: BlobFolder, project: Project) -> some Gesture {
+        DragGesture(minimumDistance: 8, coordinateSpace: .named("sidebarNav"))
+            .onChanged { v in
+                if draggedItemID == nil {
+                    draggedItemID = folder.id
+                    draggedProjectID = project.id
+                    dragSourceFolderID = nil
+                }
+                guard draggedItemID == folder.id else { return }
+                dragLocation = v.location
+                // Ghost position among other folders (reduced list)
+                let others = project.folders.sorted { $0.sortOrder < $1.sortOrder }
+                    .filter { $0.id != folder.id }.map(DashboardItem.folder)
+                ghostFolderIndex = ghostIndex(cursor: v.location, among: others)
+                ghostRootBlobIndex = nil; ghostFolderBlobIndex = nil; hoveredFolderID = nil
+            }
+            .onEnded { _ in
+                guard draggedItemID == folder.id else { return }
+                defer { clearDragState() }
+                guard let ghostIdx = ghostFolderIndex else { return }
+                let current = store.projects.first { $0.id == project.id } ?? project
+                let sorted  = current.folders.sorted { $0.sortOrder < $1.sortOrder }
+                guard let from = sorted.firstIndex(where: { $0.id == folder.id }) else { return }
+                let to = min(max(ghostIdx, 0), sorted.count - 1)
+                guard to != from else { return }
+                store.moveItem(in: project.id, fromIndex: from, toIndex: to, context: nil)
+                triggerGlow(for: folder.id)
+            }
+    }
+
+    private func rootBlobDrag(blob: Blob, project: Project) -> some Gesture {
+        DragGesture(minimumDistance: 8, coordinateSpace: .named("sidebarNav"))
+            .onChanged { v in
+                if draggedItemID == nil {
+                    draggedItemID = blob.id
+                    draggedProjectID = project.id
+                    dragSourceFolderID = nil
+                }
+                guard draggedItemID == blob.id else { return }
+                dragLocation = v.location
+                ghostFolderBlobIndex = nil
+                let current = store.projects.first { $0.id == project.id } ?? project
+                // Check hover over any folder
+                for f in current.folders {
+                    if let frame = itemFrames[f.id], frame.contains(v.location) {
+                        hoveredFolderID = f.id; ghostRootBlobIndex = nil; return
+                    }
+                }
+                hoveredFolderID = nil
+                let others = current.blobs.filter { $0.folderID == nil && !$0.isHidden && $0.id != blob.id }
+                    .sorted { $0.sortOrder < $1.sortOrder }.map(DashboardItem.blob)
+                ghostRootBlobIndex = ghostIndex(cursor: v.location, among: others)
+            }
+            .onEnded { _ in
+                guard draggedItemID == blob.id else { return }
+                defer { clearDragState() }
+                let current = store.projects.first { $0.id == project.id } ?? project
+                if let target = hoveredFolderID {
+                    store.moveBlobToFolder(blob.id, to: target, in: project.id)
+                    expandedFolderIDs.insert(target)
+                    triggerGlow(for: target); return
+                }
+                guard let ghostIdx = ghostRootBlobIndex else { return }
+                let rootBlobs = current.blobs.filter { $0.folderID == nil && !$0.isHidden }
+                    .sorted { $0.sortOrder < $1.sortOrder }
+                guard let from = rootBlobs.firstIndex(where: { $0.id == blob.id }) else { return }
+                let to = min(max(ghostIdx, 0), rootBlobs.count - 1)
+                guard to != from else { return }
+                store.moveItem(in: project.id, fromIndex: current.folders.count + from,
+                               toIndex: current.folders.count + to, context: nil)
+                triggerGlow(for: blob.id)
+            }
+    }
+
+    private func folderBlobDrag(blob: Blob, project: Project, sourceFolderID: UUID) -> some Gesture {
+        DragGesture(minimumDistance: 8, coordinateSpace: .named("sidebarNav"))
+            .onChanged { v in
+                if draggedItemID == nil {
+                    draggedItemID = blob.id
+                    draggedProjectID = project.id
+                    dragSourceFolderID = sourceFolderID
+                }
+                guard draggedItemID == blob.id else { return }
+                dragLocation = v.location
+                let current = store.projects.first { $0.id == project.id } ?? project
+                // Hover over a different folder?
+                for f in current.folders where f.id != sourceFolderID {
+                    if let frame = itemFrames[f.id], frame.contains(v.location) {
+                        hoveredFolderID = f.id
+                        ghostFolderBlobIndex = nil; ghostRootBlobIndex = nil; return
+                    }
+                }
+                hoveredFolderID = nil
+                // Are we over the root blob zone or below the folder's content?
+                let rootBlobItems = current.blobs.filter { $0.folderID == nil && !$0.isHidden }
+                    .sorted { $0.sortOrder < $1.sortOrder }.map(DashboardItem.blob)
+                let folderBlobItems = current.blobs.filter { $0.folderID == sourceFolderID && !$0.isHidden }
+                    .sorted { $0.sortOrder < $1.sortOrder }.map(DashboardItem.blob)
+                let folderMaxY = folderBlobItems.compactMap { itemFrames[$0.id]?.maxY }.max() ?? 0
+                let isOverRoot = rootBlobItems.contains {
+                    itemFrames[$0.id].map { $0.insetBy(dx: 0, dy: -6).contains(v.location) } ?? false
+                }
+                let isBelowFolder = !rootBlobItems.isEmpty && v.location.y > folderMaxY + 6
+
+                if isOverRoot || isBelowFolder {
+                    let others = rootBlobItems.filter { $0.id != blob.id }
+                    ghostRootBlobIndex  = ghostIndex(cursor: v.location, among: others)
+                    ghostFolderBlobIndex = nil
+                } else {
+                    let others = folderBlobItems.filter { $0.id != blob.id }
+                    ghostFolderBlobIndex = ghostIndex(cursor: v.location, among: others)
+                    ghostRootBlobIndex  = nil
+                }
+            }
+            .onEnded { _ in
+                guard draggedItemID == blob.id else { return }
+                defer { clearDragState() }
+                let current = store.projects.first { $0.id == project.id } ?? project
+                // Drop onto a different folder
+                if let target = hoveredFolderID {
+                    store.moveBlobToFolder(blob.id, to: target, in: project.id)
+                    expandedFolderIDs.insert(target)
+                    triggerGlow(for: target); return
+                }
+                // Move to root with positional drop
+                if let ghostIdx = ghostRootBlobIndex {
+                    store.moveBlobToRoot(blob.id, in: project.id)
+                    // Reposition in the now-updated project
+                    let updated   = store.projects.first { $0.id == project.id } ?? current
+                    let rootBlobs = updated.blobs.filter { $0.folderID == nil && !$0.isHidden }
+                        .sorted { $0.sortOrder < $1.sortOrder }
+                    if let from = rootBlobs.firstIndex(where: { $0.id == blob.id }) {
+                        let to = min(max(ghostIdx, 0), rootBlobs.count - 1)
+                        if to != from {
+                            store.moveItem(in: project.id,
+                                           fromIndex: updated.folders.count + from,
+                                           toIndex:   updated.folders.count + to,
+                                           context: nil)
+                        }
+                    }
+                    triggerGlow(for: blob.id); return
+                }
+                // Reorder within folder
+                if let ghostIdx = ghostFolderBlobIndex {
+                    let folderBlobs = current.blobs.filter { $0.folderID == sourceFolderID && !$0.isHidden }
+                        .sorted { $0.sortOrder < $1.sortOrder }
+                    guard let from = folderBlobs.firstIndex(where: { $0.id == blob.id }) else { return }
+                    let to = min(max(ghostIdx, 0), folderBlobs.count - 1)
+                    guard to != from else { return }
+                    store.moveItem(in: project.id, fromIndex: from, toIndex: to, context: sourceFolderID)
+                    triggerGlow(for: blob.id)
+                }
+            }
+    }
+
+    // MARK: - Helpers
+
+    private func clearDragState() {
+        draggedItemID = nil; draggedProjectID = nil; dragSourceFolderID = nil
+        dragLocation = .zero; ghostFolderIndex = nil; ghostRootBlobIndex = nil
+        ghostFolderBlobIndex = nil; hoveredFolderID = nil
+    }
+
+    private func triggerGlow(for id: UUID) {
+        confirmGlowItemID = id; confirmGlowOpacity = 1.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeOut(duration: 0.4)) { confirmGlowOpacity = 0.0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmGlowItemID = nil }
+        }
+    }
+
+    private func selectProject(_ project: Project) {
+        selectedProjectID = project.id; selectedFolderID = nil
+        activeBlobID = nil; isViewingHidden = false
+    }
+    private func viewHidden(_ project: Project) {
+        selectedProjectID = project.id; selectedFolderID = nil
+        activeBlobID = nil; isViewingHidden = true
+    }
+    private func beginRenameProject(_ project: Project) {
+        renameProjectID = project.id; renameProjectText = project.name; isRenamingProject = true
+    }
+
+    @ViewBuilder
+    private func projectContextMenu(_ project: Project, isArchived: Bool) -> some View {
+        Button { selectProject(project) } label: { Label("Open", systemImage: "arrow.right") }
+        if !isArchived {
+            Button { beginRenameProject(project) } label: { Label("Rename", systemImage: "pencil") }
+            Button { _ = store.createFolder(in: project.id, name: "Untitled Folder") } label: {
+                Label("New Folder", systemImage: "folder.badge.plus")
+            }
+            Button { _ = store.createBlob(in: project.id) } label: {
+                Label("New Blob", systemImage: "doc.badge.plus")
+            }
+            Divider()
+            Button { viewHidden(project) } label: {
+                Label("View Hidden Items", systemImage: "eye.slash")
+            }
+            Divider()
+            Button { store.archiveProject(project.id) } label: {
+                Label("Archive Project", systemImage: "archivebox")
+            }
+        } else {
+            Divider()
+            Button { store.restoreProject(project.id) } label: {
+                Label("Restore Project", systemImage: "arrow.uturn.backward")
+            }
+        }
+        Divider()
+        Button(role: .destructive) {
+            store.deleteProject(project.id)
+            if selectedProjectID == project.id {
+                selectedProjectID = nil; selectedFolderID = nil; activeBlobID = nil
+            }
+        } label: { Label("Delete Project", systemImage: "trash") }
+    }
+
+    @ViewBuilder
+    private func blobContextMenu(_ blob: Blob, project: Project, isInFolder: Bool) -> some View {
+        if !project.isArchived {
+            if isInFolder {
+                Button { store.moveBlobToRoot(blob.id, in: project.id) } label: {
+                    Label("Send Back to Root", systemImage: "arrow.up")
+                }
+            }
+            Button { store.hideBlob(blob.id, in: project.id) } label: {
+                Label("Hide Blob", systemImage: "eye.slash")
+            }
+            Divider()
+            Button(role: .destructive) { store.deleteBlob(blob.id, in: project.id) } label: {
+                Label("Delete Blob", systemImage: "trash")
+            }
+        }
+    }
+}
+
+// MARK: - BlobTreeRow
+
+private struct BlobTreeRow: View {
+    @EnvironmentObject var store: ProjectStore
+    let blob: Blob
+    let projectID: UUID
+    let isActive: Bool
+    let isGlowing: Bool
+    let glowOpacity: Double
+    let indent: CGFloat
+    @State private var title: String?
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 10))
+                .foregroundColor(AppColors.shared.contentTertiary)
+            Text(title ?? "Untitled")
+                .font(.system(size: 12))
+                .foregroundColor(isActive ? AppColors.shared.accent : AppColors.shared.contentSecondary)
+                .lineLimit(1)
+            Spacer()
+        }
+        .padding(.leading, indent).padding(.trailing, 8).padding(.vertical, 4)
+        .background(isActive ? AppColors.shared.backgroundHighlight.opacity(0.2) : Color.clear)
+        .overlay(isGlowing
+            ? RoundedRectangle(cornerRadius: 4)
+                .stroke(AppColors.shared.confirmation.opacity(glowOpacity), lineWidth: 1)
+            : nil)
+        .task(id: blob.updatedAt) {
+            let result = await Task.detached(priority: .utility) {
+                store.loadBlobExcerpt(blobID: blob.id, in: projectID)
+            }.value
+            title = result.title ?? result.body.flatMap { String($0.prefix(40)) }
+        }
+    }
+}
+
+// MARK: - BlobDragPreview
+
+private struct BlobDragPreview: View {
+    @EnvironmentObject var store: ProjectStore
+    let blob: Blob
+    let projectID: UUID
+    @State private var title: String?
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "doc.text").font(.system(size: 10))
+                .foregroundColor(AppColors.shared.contentSecondary)
+            Text(title ?? "Untitled").font(.system(size: 12)).lineLimit(1)
+                .foregroundColor(AppColors.shared.contentSecondary)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 4)
+        .background(AppColors.shared.backgroundPrimary)
+        .cornerRadius(5)
+        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.cardBorder, lineWidth: 1))
+        .frame(width: 160, alignment: .leading)
+        .task {
+            let result = await Task.detached(priority: .utility) {
+                store.loadBlobExcerpt(blobID: blob.id, in: projectID)
+            }.value
+            title = result.title ?? result.body.flatMap { String($0.prefix(40)) }
+        }
+    }
+}
+
+// MARK: - Compact ProjectRow
+
+struct ProjectRow: View {
+    let project: Project
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onRename: () -> Void
+    let onNewFolder: () -> Void
+    let onNewBlob: () -> Void
+    let onViewHidden: () -> Void
+    let onArchive: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(project.name)
+                .font(.system(size: 13))
+                .foregroundColor(AppColors.shared.contentPrimary)
+            Spacer()
+        }
+        .padding(.horizontal, 8).padding(.vertical, 6)
+        .background(isSelected ? AppColors.shared.backgroundHighlight.opacity(0.3) : Color.clear)
+        .overlay(
+            isSelected
+                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentPrimary)
+                : nil,
+            alignment: .leading
+        )
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect() }
+    }
+}
+
+#Preview {
+    FileNavigatorView(
+        selectedProjectID: .constant(nil),
+        selectedFolderID: .constant(nil),
+        activeBlobID: .constant(nil),
+        isViewingHidden: .constant(false)
+    )
+    .environmentObject(ProjectStore())
+    .environmentObject(AppColors.shared)
+    .frame(width: 200)
+}

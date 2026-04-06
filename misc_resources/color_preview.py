@@ -1,0 +1,664 @@
+#!/usr/bin/env python3
+# FishTxt Color Preview
+# Opens localhost:8765
+# ⌘R in the browser re-reads colors.json on every page load.
+
+import json, http.server, socketserver, webbrowser, threading
+from pathlib import Path
+
+COLORS_PATH = Path(__file__).parent.parent / "FishTxt/Resources/colors.json"
+PORT = 8765
+
+
+def load_colors():
+    with open(COLORS_PATH) as f:
+        return json.load(f)
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *args):
+        pass  # suppress request logs
+
+    def do_GET(self):
+        if self.path not in ('/', '/index.html'):
+            self.send_response(404); self.end_headers(); return
+        try:
+            colors = load_colors()
+            body = HTML_TEMPLATE.replace('__COLORS_JSON__', json.dumps(colors, indent=2))
+            data = body.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            err = f'<pre style="color:tomato;padding:2rem">Error reading colors.json:\n{e}</pre>'.encode()
+            self.send_response(500)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            self.wfile.write(err)
+
+
+# HTML template 
+# COLORS_JSON is replaced at serve time with the live contents of colors.json
+
+HTML_TEMPLATE = """\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FishTxt Color Preview</title>
+<style>
+
+/* ── Reset & base ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* defaults (coast) – JS overwrites these on load */
+  --bg-primary:       rgb(35,46,52);
+  --bg-secondary:     rgb(50,65,72);
+  --bg-highlight:     rgb(68,86,95);
+  --c-primary:        rgb(192,179,160);
+  --c-secondary:      rgb(172,142,105);
+  --c-tertiary:       rgb(85,102,110);
+  --accent:           rgb(92,132,145);
+  --confirmation:     rgb(100,150,112);
+  --sidebar-bg:       rgb(26,38,44);
+  --card-border:      rgb(65,82,90);
+  --destructive:      rgb(204,82,82);
+  --accent-glow:      rgba(92,132,145,0.30);
+  --confirmation-glow:rgba(100,150,112,0.30);
+}
+
+body {
+  background: #0e0e0e;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  color: #bbb;
+  min-width: 900px;
+}
+
+/* ── Sticky top bar ────────────────────────────────────────────────────── */
+#topbar {
+  position: sticky; top: 0; z-index: 200;
+  background: #161616;
+  border-bottom: 1px solid #2a2a2a;
+  padding: 10px 20px;
+  display: flex; align-items: center; gap: 14px;
+}
+#topbar .logo { font-size: 13px; font-weight: 700; color: #888; letter-spacing: .5px; }
+#themeSelect {
+  background: #222; border: 1px solid #3a3a3a; color: #ccc;
+  padding: 4px 10px; border-radius: 6px; font-size: 13px; cursor: pointer;
+  text-transform: capitalize;
+}
+#themeSelect option { text-transform: capitalize; }
+#topbar .hint { font-size: 11px; color: #3d3d3d; margin-left: auto; }
+
+/* ── Section labels ────────────────────────────────────────────────────── */
+.sec { padding: 36px 28px 14px; font-size: 10px; font-weight: 700;
+       letter-spacing: 1.6px; text-transform: uppercase; color: #383838; }
+
+/* ── App window wrapper ────────────────────────────────────────────────── */
+.app-win {
+  display: flex; height: 560px;
+  margin: 0 28px;
+  border-radius: 12px; overflow: hidden;
+  border: 1px solid #1e1e1e;
+  box-shadow: 0 12px 48px rgba(0,0,0,.7);
+}
+
+/* ── Sidebar icon column (48 px) ───────────────────────────────────────── */
+.sb-icons {
+  width: 48px; flex-shrink: 0;
+  background: var(--sidebar-bg);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0; gap: 2px;
+  border-right: 1px solid rgba(255,255,255,.05);
+}
+.sb-ico {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--c-tertiary); font-size: 15px; cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.sb-ico:hover   { background: var(--bg-highlight); color: var(--c-primary); }
+.sb-ico.active  { color: var(--accent); }
+.sb-ico.dim     { opacity: .28; cursor: default; }
+.sb-spacer      { flex: 1; }
+
+/* ── File navigator (200 px) ───────────────────────────────────────────── */
+.file-nav {
+  width: 200px; flex-shrink: 0;
+  background: var(--sidebar-bg);
+  padding: 12px 0;
+  border-right: 1px solid rgba(255,255,255,.05);
+  overflow-y: auto;
+}
+.nav-sec-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--c-tertiary);
+  padding: 0 14px 6px;
+}
+.nav-proj {
+  font-size: 12px; color: var(--c-primary);
+  padding: 5px 14px; display: flex; align-items: center; gap: 6px;
+  cursor: pointer; border-radius: 6px; margin: 0 4px;
+}
+.nav-proj:hover, .nav-proj.sel { background: var(--bg-highlight); }
+.nav-folder {
+  font-size: 11.5px; color: var(--c-secondary);
+  padding: 4px 14px 4px 26px; display: flex; align-items: center; gap: 5px;
+  cursor: pointer; border-radius: 6px; margin: 0 4px;
+}
+.nav-folder:hover { background: var(--bg-highlight); color: var(--c-primary); }
+.nav-arch-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--c-tertiary);
+  padding: 14px 14px 6px; opacity: .45;
+}
+.nav-proj.arch { opacity: .4; }
+
+/* ── Dashboard main area ───────────────────────────────────────────────── */
+.dash {
+  flex: 1; background: var(--bg-secondary);
+  padding: 20px; overflow-y: auto;
+}
+
+/* Folder row */
+.folder-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.f-card {
+  background: var(--bg-primary); border: 1px solid var(--card-border);
+  border-radius: 10px; height: 80px; width: 190px;
+  display: flex; align-items: center; padding: 0 14px; gap: 10px;
+  cursor: pointer; transition: background .12s;
+}
+.f-card:hover { background: var(--bg-highlight); }
+.f-icon { font-size: 19px; }
+.f-name { font-size: 13px; font-weight: 500; color: var(--c-primary); }
+
+/* Blob grid */
+.blob-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.b-card {
+  background: var(--bg-primary); border: 1px solid var(--card-border);
+  border-radius: 10px; height: 200px; padding: 15px;
+  cursor: pointer; overflow: hidden; position: relative;
+  transition: background .12s, border-color .12s;
+}
+.b-card:hover { background: var(--bg-highlight); }
+.b-title {
+  font-size: 13px; font-weight: 600; color: var(--c-primary);
+  margin-bottom: 7px;
+  font-family: ui-monospace, 'SF Mono', 'Courier New', monospace;
+}
+.b-body {
+  font-size: 11.5px; color: var(--c-secondary); line-height: 1.65;
+  font-family: ui-monospace, 'SF Mono', 'Courier New', monospace;
+  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical;
+}
+.b-empty {
+  font-size: 12px; color: var(--c-tertiary); font-style: italic;
+  font-family: ui-monospace, 'SF Mono', 'Courier New', monospace;
+}
+
+/* Card state modifiers */
+.b-card.hovered  { background: var(--bg-highlight); }
+.b-card.accent   { border: 2px solid var(--accent); }
+.b-card.glow,
+.f-card.glow     { border-color: var(--confirmation);
+                   box-shadow: 0 0 0 3px var(--confirmation-glow); }
+.b-card.ghost    {
+  background: transparent;
+  border: 1.5px dashed var(--card-border);
+  opacity: .38;
+}
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  background: var(--bg-secondary); border: 1px solid var(--card-border);
+  border-radius: 6px; color: var(--c-secondary);
+  font-size: 11px; padding: 3px 8px; cursor: pointer;
+}
+
+/* ── Card states gallery ───────────────────────────────────────────────── */
+.states-row { padding: 0 28px; display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.state-item { display: flex; flex-direction: column; }
+.state-lbl  { font-size: 10px; color: #3d3d3d; margin-top: 7px;
+               text-align: center; letter-spacing: .3px; }
+
+/* ── Expanded editor layout ────────────────────────────────────────────── */
+.editor-win {
+  display: flex; height: 480px;
+  margin: 0 28px;
+  border-radius: 12px; overflow: hidden;
+  border: 1px solid #1e1e1e;
+  box-shadow: 0 8px 32px rgba(0,0,0,.6);
+}
+.editor-main { flex: 1; display: flex; flex-direction: column; }
+
+/* Pinned column */
+.pinned-col {
+  width: 260px; flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-left: 1px solid rgba(255,255,255,.05);
+  padding: 10px 8px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.pin-back { font-size: 10px; color: var(--c-tertiary);
+             padding: 2px 6px 8px; letter-spacing: .7px; cursor: pointer; }
+.pin-folder {
+  background: var(--bg-primary); border: 1px solid var(--card-border);
+  border-radius: 8px; height: 44px; padding: 0 12px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--c-primary); cursor: pointer;
+}
+.pin-blob {
+  background: var(--bg-primary); border: 1px solid var(--card-border);
+  border-radius: 8px; height: 80px; padding: 10px 12px;
+  cursor: pointer; overflow: hidden;
+}
+.pin-blob.active { border: 2px solid var(--accent); }
+.pin-blob.ghost  {
+  background: transparent;
+  border: 1.5px dashed var(--card-border); opacity: .35;
+}
+.pin-b-title {
+  font-size: 12px; font-weight: 600; color: var(--c-primary);
+  font-family: ui-monospace, 'SF Mono', monospace; margin-bottom: 4px;
+}
+.pin-b-body {
+  font-size: 11px; color: var(--c-secondary);
+  font-family: ui-monospace, 'SF Mono', monospace;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+
+/* Editor toolbar */
+.ed-toolbar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--card-border);
+  padding: 7px 10px; display: flex; align-items: center; gap: 2px;
+  flex-shrink: 0;
+}
+.tb-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--c-secondary); font-size: 13px; font-weight: 500;
+  padding: 4px 8px; border-radius: 5px;
+  font-family: -apple-system, sans-serif;
+  transition: background .1s, color .1s;
+}
+.tb-btn:hover { background: var(--bg-highlight); color: var(--c-primary); }
+.tb-btn.on    { color: var(--accent); background: var(--accent-glow); }
+.tb-drop {
+  display: flex; align-items: center; gap: 3px; cursor: pointer;
+  color: var(--c-secondary); font-size: 13px; font-weight: 500;
+  padding: 4px 8px; border-radius: 5px;
+  transition: background .1s, color .1s;
+}
+.tb-drop:hover { background: var(--bg-highlight); color: var(--c-primary); }
+.tb-sep { width: 1px; height: 15px; background: var(--card-border); margin: 0 4px; }
+
+/* Editor body */
+.ed-body {
+  flex: 1; background: var(--bg-primary);
+  padding: 32px 52px; overflow-y: auto; position: relative;
+}
+.ed-h1 {
+  font-size: 22px; font-weight: 700; color: var(--c-secondary);
+  font-family: ui-monospace, 'SF Mono', monospace; margin-bottom: 16px;
+}
+.ed-p {
+  font-size: 14px; color: var(--c-secondary); line-height: 1.85;
+  font-family: ui-monospace, 'SF Mono', monospace; margin-bottom: 14px;
+}
+.ed-quote {
+  border-left: 3px solid var(--accent); padding-left: 14px;
+  color: var(--c-primary); font-size: 14px; line-height: 1.85;
+  font-family: ui-monospace, 'SF Mono', monospace; margin-bottom: 14px;
+}
+.cursor {
+  display: inline-block; width: 2px; height: 1.2em;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  vertical-align: text-bottom;
+  margin-left: 2px;
+  animation: cursor-blink 1s ease-in-out infinite;
+}
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Save island */
+.save-wrap { position: absolute; bottom: 16px; right: 20px; display: flex; gap: 8px; }
+.save-pill {
+  background: var(--bg-secondary); border: 1px solid var(--card-border);
+  border-radius: 20px; padding: 4px 14px; font-size: 11px;
+  color: var(--c-tertiary); font-family: -apple-system, sans-serif;
+}
+.save-pill.saving { color: var(--c-secondary); }
+.save-pill.saved  { color: var(--confirmation); border-color: var(--confirmation); }
+
+/* ── UI elements section ───────────────────────────────────────────────── */
+.elements-row { padding: 0 28px; display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; }
+.el-group     { display: flex; flex-direction: column; gap: 7px; }
+.el-lbl       { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px;
+                 text-transform: uppercase; color: #383838; margin-bottom: 4px; }
+
+/* Buttons */
+.btn {
+  padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 500;
+  border: none; cursor: pointer; font-family: -apple-system, sans-serif;
+  display: inline-block;
+}
+.btn-default { background: var(--bg-primary); color: var(--c-primary); border: 1px solid var(--card-border); }
+.btn-accent  { background: var(--accent); color: var(--bg-secondary); }
+.btn-destruct{ background: transparent; color: var(--destructive); border: 1px solid var(--destructive); }
+.btn-ghost   { background: transparent; color: var(--c-secondary); border: none; }
+
+/* Context menu */
+.ctx-menu {
+  background: var(--bg-primary); border: 1px solid var(--card-border);
+  border-radius: 10px; padding: 4px; min-width: 186px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.45);
+}
+.ctx-item {
+  padding: 6px 12px; font-size: 12.5px; color: var(--c-primary);
+  border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px;
+}
+.ctx-item:hover    { background: var(--bg-highlight); }
+.ctx-item.destruct { color: var(--destructive); }
+.ctx-short { margin-left: auto; font-size: 10.5px; color: var(--c-tertiary); }
+.ctx-sep   { height: 1px; background: var(--card-border); margin: 3px 4px; opacity: .6; }
+
+/* Swatches */
+.swatch-row  { display: flex; gap: 6px; }
+.swatch      { width: 48px; height: 32px; border-radius: 6px; border: 1px solid #1e1e1e; }
+.swatch-lbl  { font-size: 9px; color: #383838; text-align: center; margin-top: 3px; }
+
+/* Color list */
+.c-list div { font-size: 12.5px; line-height: 2; font-family: ui-monospace, monospace; }
+
+.bottom-pad { height: 56px; }
+
+</style>
+</head>
+<body>
+
+<!-- ─── Top bar ─────────────────────────────────────────────────────────── -->
+<div id="topbar">
+  <span class="logo">FishTxt Color Preview</span>
+  <select id="themeSelect"></select>
+  <span class="hint">Edit colors.json → ⌘R to reload &nbsp;·&nbsp; All states shown statically</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 1 — DASHBOARD VIEW (full app layout mock)
+════════════════════════════════════════════════════════════════════════ -->
+<div class="sec">Dashboard View</div>
+<div class="app-win">
+
+  <!-- Sidebar icon column -->
+  <div class="sb-icons">
+    <div class="sb-ico" title="Toggle sidebar">☰</div>
+    <div class="sb-ico" title="New folder">⊞</div>
+    <div class="sb-ico" title="New blob">＋</div>
+    <div class="sb-ico dim" title="Git (coming soon)">⎇</div>
+    <div class="sb-spacer"></div>
+    <div class="sb-ico active" title="Settings">⚙</div>
+  </div>
+
+  <!-- File navigator -->
+  <div class="file-nav">
+    <div style="padding: 0 4px;">
+      <div class="nav-sec-lbl" style="padding:8px 10px 6px;">Projects</div>
+      <div class="nav-proj sel"><span>▾</span><span>Voyager</span></div>
+      <div class="nav-folder">📁 Field Notes</div>
+      <div class="nav-folder">📁 Drafts</div>
+      <div class="nav-proj"><span>▸</span><span>Atlas</span></div>
+      <div class="nav-arch-lbl">Archived</div>
+      <div class="nav-proj arch"><span>▸</span><span>Old Work</span></div>
+    </div>
+  </div>
+
+  <!-- Dashboard content -->
+  <div class="dash">
+    <!-- Folder cards -->
+    <div class="folder-row">
+      <div class="f-card"><span class="f-icon">📁</span><span class="f-name">Field Notes</span></div>
+      <div class="f-card"><span class="f-icon">📁</span><span class="f-name">Drafts</span></div>
+      <div class="f-card glow"><span class="f-icon">📁</span><span class="f-name">Archive</span></div>
+    </div>
+
+    <!-- Blob cards -->
+    <div class="blob-grid">
+      <div class="b-card">
+        <div class="b-title"># The Tide at Dusk</div>
+        <div class="b-body">The water recedes slowly against the sand, pulling small stones with a sound like distant applause. I've been coming here every evening for three weeks, watching the pattern shift imperceptibly.</div>
+      </div>
+      <div class="b-card hovered">
+        <div class="copy-btn">Copy</div>
+        <div class="b-title"># Morning Routine</div>
+        <div class="b-body">Wake at 6. Brew coffee while reading. Write for 45 minutes before checking messages. This has been the most productive schedule I've maintained in years.</div>
+      </div>
+      <div class="b-card accent">
+        <div class="b-title"># Draft: Intro Chapter</div>
+        <div class="b-body">Every story begins somewhere. Mine begins in a harbor town where the fog never fully lifts before noon and the fishermen tell the same jokes every morning without apology.</div>
+      </div>
+      <div class="b-card glow">
+        <div class="b-title"># Field Note #4</div>
+        <div class="b-body">Observed three cormorants diving in synchrony near the north jetty. Duration: approximately 40 minutes. Unusual for this species in mid-autumn.</div>
+      </div>
+      <div class="b-card ghost"></div>
+      <div class="b-card"><div class="b-empty">Empty note</div></div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 3 — EDITOR VIEW (expanded mode with pinned column)
+════════════════════════════════════════════════════════════════════════ -->
+<div class="sec">Editor View — Expanded Mode</div>
+<div class="editor-win">
+
+  <!-- Sidebar icons (minimal) -->
+  <div class="sb-icons">
+    <div class="sb-ico">☰</div>
+    <div class="sb-ico">⊞</div>
+    <div class="sb-ico">＋</div>
+    <div class="sb-spacer"></div>
+    <div class="sb-ico">⚙</div>
+  </div>
+
+  <!-- Editor main (toolbar + body) -->
+  <div class="editor-main">
+    <div class="ed-toolbar">
+      <div class="tb-drop">Paragraph ▾</div>
+      <div class="tb-sep"></div>
+      <button class="tb-btn on"><b>B</b></button>
+      <button class="tb-btn"><i>I</i></button>
+      <button class="tb-btn"><u>U</u></button>
+      <button class="tb-btn">&ldquo;</button>
+      <button class="tb-btn">¶</button>
+      <div class="tb-sep"></div>
+      <div class="tb-drop">• List ▾</div>
+    </div>
+    <div class="ed-body">
+      <div class="ed-h1"># Morning Routine</div>
+      <div class="ed-p">Wake at 6. <strong>Brew coffee</strong> while reading. Write for 45 minutes before checking messages.</div>
+      <div class="ed-quote">This has been the most productive schedule I've maintained in years.</div>
+      <div class="ed-p">The key is consistency over intensity.<span class="cursor"></span></div>
+      <div class="save-wrap">
+        <div class="save-pill">—</div>
+        <div class="save-pill saving">Saving…</div>
+        <div class="save-pill saved">Saved ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pinned column -->
+  <div class="pinned-col">
+    <div class="pin-back">← Voyager</div>
+    <div class="pin-folder"><span style="font-size:14px;">📁</span><span>Field Notes</span></div>
+    <div class="pin-blob">
+      <div class="pin-b-title"># The Tide at Dusk</div>
+      <div class="pin-b-body">The water recedes slowly…</div>
+    </div>
+    <div class="pin-blob active">
+      <div class="pin-b-title"># Morning Routine</div>
+      <div class="pin-b-body">Wake at 6. Brew coffee…</div>
+    </div>
+    <div class="pin-blob">
+      <div class="pin-b-title"># Draft: Intro</div>
+      <div class="pin-b-body">Every story begins…</div>
+    </div>
+    <div class="pin-blob ghost"></div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 4 — UI ELEMENTS
+════════════════════════════════════════════════════════════════════════ -->
+<div class="sec">UI Elements</div>
+<div class="elements-row">
+
+  <!-- Buttons -->
+  <div class="el-group">
+    <div class="el-lbl">Buttons</div>
+    <button class="btn btn-default">Default action</button>
+    <button class="btn btn-accent">Accent / confirm</button>
+    <button class="btn btn-destruct">Delete</button>
+    <button class="btn btn-ghost">Ghost / subtle</button>
+  </div>
+
+  <!-- Context menu -->
+  <div class="el-group">
+    <div class="el-lbl">Context Menu</div>
+    <div class="ctx-menu">
+      <div class="ctx-item">Open <span class="ctx-short">↵</span></div>
+      <div class="ctx-item">Rename <span class="ctx-short">⌘R</span></div>
+      <div class="ctx-item">New Blob Inside</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item">View Hidden</div>
+      <div class="ctx-item">Hide</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item destruct">Delete <span class="ctx-short">⌫</span></div>
+    </div>
+  </div>
+
+  <!-- Save island states -->
+  <div class="el-group">
+    <div class="el-lbl">Save Island</div>
+    <div class="save-pill" style="display:inline-block;">Unsaved</div>
+    <div class="save-pill saving" style="display:inline-block;">Saving…</div>
+    <div class="save-pill saved" style="display:inline-block;">Saved ✓</div>
+  </div>
+
+  <!-- Text colors -->
+  <div class="el-group c-list">
+    <div class="el-lbl">Text Colors</div>
+    <div style="color:var(--c-secondary)">content_primary</div>
+    <div style="color:var(--c-primary)">content_secondary</div>
+    <div style="color:var(--c-tertiary)">content_tertiary</div>
+    <div style="color:var(--accent)">accent</div>
+    <div style="color:var(--confirmation)">confirmation</div>
+    <div style="color:var(--destructive)">destructive</div>
+  </div>
+
+  <!-- Background swatches -->
+  <div class="el-group">
+    <div class="el-lbl">Backgrounds</div>
+    <div class="swatch-row">
+      <div>
+        <div class="swatch" style="background:var(--sidebar-bg)"></div>
+        <div class="swatch-lbl">sidebar</div>
+      </div>
+      <div>
+        <div class="swatch" style="background:var(--bg-secondary)"></div>
+        <div class="swatch-lbl">secondary</div>
+      </div>
+      <div>
+        <div class="swatch" style="background:var(--bg-primary)"></div>
+        <div class="swatch-lbl">primary</div>
+      </div>
+      <div>
+        <div class="swatch" style="background:var(--bg-highlight)"></div>
+        <div class="swatch-lbl">highlight</div>
+      </div>
+      <div>
+        <div class="swatch" style="background:var(--card-border)"></div>
+        <div class="swatch-lbl">border</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-pad"></div>
+
+<script>
+const COLORS = __COLORS_JSON__;
+
+function applyTheme(name) {
+  const p = COLORS[name];
+  if (!p) return;
+  const r = document.documentElement;
+  const rgb  = k => p[k].join(',');
+  const rgba = (k, a) => `rgba(${p[k].join(',')},${a})`;
+  r.style.setProperty('--bg-primary',         `rgb(${rgb('background_primary')})`);
+  r.style.setProperty('--bg-secondary',        `rgb(${rgb('background_secondary')})`);
+  r.style.setProperty('--bg-highlight',        `rgb(${rgb('background_highlight')})`);
+  r.style.setProperty('--c-primary',           `rgb(${rgb('content_secondary')})`);
+  r.style.setProperty('--c-secondary',         `rgb(${rgb('content_primary')})`);
+  r.style.setProperty('--c-tertiary',          `rgb(${rgb('content_tertiary')})`);
+  r.style.setProperty('--accent',              `rgb(${rgb('accent')})`);
+  r.style.setProperty('--confirmation',        `rgb(${rgb('confirmation')})`);
+  r.style.setProperty('--sidebar-bg',          `rgb(${rgb('sidebar_background')})`);
+  r.style.setProperty('--card-border',         `rgb(${rgb('card_border')})`);
+  r.style.setProperty('--destructive',         `rgb(${rgb('destructive')})`);
+  r.style.setProperty('--accent-glow',         rgba('accent', 0.28));
+  r.style.setProperty('--confirmation-glow',   rgba('confirmation', 0.28));
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('themeSelect');
+  Object.keys(COLORS).forEach(name => {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = name.replace(/_/g, ' ');
+    sel.appendChild(o);
+  });
+  sel.value = Object.keys(COLORS)[0];
+  applyTheme(sel.value);
+  sel.addEventListener('change', () => applyTheme(sel.value));
+});
+</script>
+</body>
+</html>
+"""  # end HTML_TEMPLATE
+
+
+def main():
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        url = f"http://localhost:{PORT}"
+        print(f"\n  FishTxt Color Preview  →  {url}")
+        print(f"  ⌘R (or Ctrl+R) in the browser re-reads colors.json.")
+        print(f"  Ctrl+C to stop.\n")
+        threading.Timer(0.6, lambda: webbrowser.open(url)).start()
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\n  Stopped.")
+
+
+if __name__ == "__main__":
+    main()
