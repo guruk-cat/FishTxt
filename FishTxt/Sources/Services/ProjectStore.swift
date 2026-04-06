@@ -10,7 +10,6 @@ class ProjectStore: ObservableObject {
     init() {
         self.rootPath = NSHomeDirectory() + "/Documents/FishTxt"
         ensureRootDirectory()
-        copyWelcomeProjectIfNeeded()
         loadProjects()
     }
 
@@ -23,10 +22,12 @@ class ProjectStore: ObservableObject {
                 withIntermediateDirectories: true,
                 attributes: nil
             )
+            
+            copyWelcomeProject()
         }
     }
 
-    private func copyWelcomeProjectIfNeeded() {
+    private func copyWelcomeProject() {
         let welcomeProjectID = "620851BD-61D1-4502-A662-D054E85FCC33"
         let destination = URL(fileURLWithPath: rootPath + "/" + welcomeProjectID)
 
