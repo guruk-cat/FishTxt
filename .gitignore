@@ -1,0 +1,17 @@
+.DS_Store
+.claude/
+
+xcuserdata/
+*.xcworkspace
+*.xctimeline
+
+## Obj-C/Swift specific
+*.hmap
+
+## App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+swiftpm
+.build/
