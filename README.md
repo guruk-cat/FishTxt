@@ -37,20 +37,18 @@ When launching the app for the first time, FishTxt will have a "Welcome" project
 
 Project files are stored in `~/Documents/FishTxt/`, and user settings are stored through `@AppStorage`.
 
-### 2.4. Miscellaneous Files
-
-The folder `misc_resources` contains some stuff that's not part of the packaged application. These are:
-
-* `FishTxt.icon`: the app icon that you can edit with Apple's icon composer.
-* `imgs/`: contains images for this README file (screenshots of color themes).
-* `welcome-project/`: contains the project data for the "welcome" project mentioned earlier.
-* `color_preview.py`: a python script that launches a html page that simulates the look and feel of different UI elements in FishTxt. In the html page, you can select different color themes that ship with the app, and `Cmd + R` should reload any changes you make to the color themes, which are stored in `FishTxt/Resources/colors.json`. Tinkering with this is pretty fun.
-* `DRAG_FEATURE_HELP.md`: There was a reoccuring bug with the drag-and-drop features, so this file exists for reference when trying to fix similar issues.
-* `OLD_DOCS.md`: a comprehensive-ish planning documentation describing the app's features and build. (This is what I fed into Claude Code at some point.)
-
 ## 3. Color Themes
 
 Five colors themes are provided with the app. In the current version, as you can see in the screenshots, macOS will color-match the window's title bar to the user's wallpaper. (My wallpaper happened to be purple.) This will likely change in a future version.
+
+If you want to try making your own color theme, you'll have to edit `FishTxt/Resources/colors.json`. You might want to use `misc_resources/color_preview.py`: a python script that launches a html page, which simulates the look and feel of different UI elements in FishTxt. In the html page, you can select different color themes that ship with the app, and `Cmd + R` should reload any changes you make to the color themes. Tinkering with this is pretty fun.
+
+Open your terminal, and enter:
+
+```bash
+cd path/to/your/FishTxt/download
+python3 misc_resources/color_preview.py
+```
 
 ### Coast (default)
 

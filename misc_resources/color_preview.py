@@ -10,12 +10,12 @@ HTML_PATH = Path(__file__).parent / "color_preview.html"
 PORT = 8765
 
 def load_colors():
-  with open(COLORS_PATH) as f:
-    return json.load(f)
+    with open(COLORS_PATH) as f:
+        return json.load(f)
     
 def load_html():
-  with open(HTML_PATH) as f:
-    return f.read()
+    with open(HTML_PATH) as f:
+        return f.read()
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args):
@@ -40,9 +40,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(err)
 
-
-# HTML template 
-# COLORS_JSON is replaced at serve time with the live contents of colors.json
 HTML_TEMPLATE = load_html()
 
 def main():
