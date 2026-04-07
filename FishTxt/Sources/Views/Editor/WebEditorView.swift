@@ -3,6 +3,7 @@ import WebKit
 
 struct WebEditorView: NSViewRepresentable {
     @ObservedObject var bridge: EditorBridge
+    @AppStorage("autoScroll") private var autoScrollMode: String = "regular"
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -33,7 +34,9 @@ struct WebEditorView: NSViewRepresentable {
         return webView
     }
 
-    func updateNSView(_ nsView: WKWebView, context: Context) {}
+    func updateNSView(_ nsView: WKWebView, context: Context) {
+        context.coordinator.updateAutoScroll(autoScrollMode)
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(bridge: bridge)
@@ -43,14 +46,24 @@ struct WebEditorView: NSViewRepresentable {
 
     class Coordinator: NSObject, WKNavigationDelegate {
         let bridge: EditorBridge
+        private var lastScrollMode: String = ""
 
         init(bridge: EditorBridge) {
             self.bridge = bridge
         }
 
+        func updateAutoScroll(_ mode: String) {
+            guard mode != lastScrollMode else { return }
+            lastScrollMode = mode
+            bridge.setAutoScroll(mode)
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 self.bridge.applyColors()
+                let scrollMode = UserDefaults.standard.string(forKey: "autoScroll") ?? "regular"
+                self.bridge.setAutoScroll(scrollMode)
+                self.lastScrollMode = scrollMode
                 webView.evaluateJavaScript("window.editorBridge?.focus()", completionHandler: nil)
                 webView.becomeFirstResponder()
             }

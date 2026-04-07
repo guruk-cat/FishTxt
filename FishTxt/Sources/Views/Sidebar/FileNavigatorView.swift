@@ -82,7 +82,7 @@ struct FileNavigatorView: View {
                         } label: {
                             Image(systemName: "plus")
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(AppColors.shared.contentPrimary)
+                                .foregroundColor(AppColors.shared.contentTertiary)
                         }
                         .buttonStyle(.plain)
                     }
@@ -162,6 +162,9 @@ struct FileNavigatorView: View {
 
         VStack(alignment: .leading, spacing: 0) {
             // Header row — fixed padding/height regardless of children
+            let isProjectSelected = selectedProjectID == project.id
+                && selectedFolderID == nil
+                && activeBlobID == nil
             HStack(spacing: 4) {
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
@@ -175,16 +178,18 @@ struct FileNavigatorView: View {
                     }
                 Text(project.name)
                     .font(.system(size: 13))
-                    .foregroundColor(AppColors.shared.contentPrimary)
+                    .foregroundColor(isProjectSelected
+                        ? AppColors.shared.accent
+                        : AppColors.shared.contentTertiary)
                     .lineLimit(1)
                 Spacer()
             }
             .padding(.leading, 4).padding(.trailing, 8).padding(.vertical, 6)
-            .background(selectedProjectID == project.id
+            .background(isProjectSelected
                 ? AppColors.shared.backgroundHighlight.opacity(0.3) : Color.clear)
             .overlay(
-                selectedProjectID == project.id
-                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentPrimary)
+                isProjectSelected
+                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.accent)
                     : nil,
                 alignment: .leading
             )
@@ -234,7 +239,11 @@ struct FileNavigatorView: View {
                             .clipped()
                             .opacity(isInvisible ? 0 : 1)
                             .contentShape(Rectangle())
-                            .onTapGesture { selectedProjectID = project.id; activeBlobID = blob.id }
+                            .onTapGesture {
+                                selectedProjectID = project.id
+                                selectedFolderID = nil
+                                activeBlobID = blob.id
+                            }
                             .background(frameTracker(.blob(blob)))
                             .simultaneousGesture(
                                 rootBlobDrag(blob: blob, project: project),
@@ -262,32 +271,41 @@ struct FileNavigatorView: View {
 
         VStack(alignment: .leading, spacing: 0) {
             // Folder header
-            HStack(spacing: 3) {
+            let isFolderSelected = selectedProjectID == project.id
+                && selectedFolderID == folder.id
+                && activeBlobID == nil
+            HStack(spacing: 4) {
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(isHovered ? AppColors.shared.accent : AppColors.shared.contentTertiary)
+                Text(folder.name)
+                    .font(.system(size: 12))
+                    .foregroundColor(isFolderSelected
+                        ? AppColors.shared.accent
+                        : AppColors.shared.contentTertiary)
+                    .lineLimit(1)
+                Spacer()
+            }
+            .padding(.leading, 22).padding(.trailing, 8).padding(.vertical, 4)
+            // Chevron sits inside the 22px leading space without pushing folder icon right
+            .overlay(alignment: .leading) {
                 Image(systemName: isFolderExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundColor(hasBlobs ? AppColors.shared.contentTertiary : Color.clear)
-                    .frame(width: 12)
+                    .frame(width: 14)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         guard hasBlobs else { return }
                         if isFolderExpanded { expandedFolderIDs.remove(folder.id) }
                         else                { expandedFolderIDs.insert(folder.id) }
                     }
-                Image(systemName: "folder.fill")
-                    .font(.system(size: 11))
-                    .foregroundColor(isHovered ? AppColors.shared.accent : AppColors.shared.contentTertiary)
-                Text(folder.name)
-                    .font(.system(size: 12))
-                    .foregroundColor(AppColors.shared.contentSecondary)
-                    .lineLimit(1)
-                Spacer()
+                    .padding(.leading, 6)
             }
-            .padding(.leading, 22).padding(.trailing, 8).padding(.vertical, 4)
             .frame(height: Self.rowHeight)
             .background(
                 isHovered
                     ? AppColors.shared.accent.opacity(0.12)
-                    : (selectedProjectID == project.id && selectedFolderID == folder.id
+                    : (isFolderSelected
                         ? AppColors.shared.backgroundHighlight.opacity(0.2)
                         : Color.clear)
             )
@@ -347,7 +365,11 @@ struct FileNavigatorView: View {
                         .clipped()
                         .opacity(isLeaving ? 0 : 1)
                         .contentShape(Rectangle())
-                        .onTapGesture { selectedProjectID = project.id; activeBlobID = blob.id }
+                        .onTapGesture {
+                            selectedProjectID = project.id
+                            selectedFolderID = nil
+                            activeBlobID = blob.id
+                        }
                         .background(frameTracker(.blob(blob)))
                         .simultaneousGesture(
                             folderBlobDrag(blob: blob, project: project, sourceFolderID: folder.id),
@@ -758,7 +780,7 @@ private struct BlobTreeRow: View {
                 .foregroundColor(AppColors.shared.contentTertiary)
             Text(title ?? "Untitled")
                 .font(.system(size: 12))
-                .foregroundColor(isActive ? AppColors.shared.accent : AppColors.shared.contentSecondary)
+                .foregroundColor(isActive ? AppColors.shared.accent : AppColors.shared.contentTertiary)
                 .lineLimit(1)
             Spacer()
         }
@@ -822,14 +844,16 @@ struct ProjectRow: View {
         HStack(spacing: 6) {
             Text(project.name)
                 .font(.system(size: 13))
-                .foregroundColor(AppColors.shared.contentPrimary)
+                .foregroundColor(isSelected
+                    ? AppColors.shared.accent
+                    : AppColors.shared.contentTertiary)
             Spacer()
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .background(isSelected ? AppColors.shared.backgroundHighlight.opacity(0.3) : Color.clear)
         .overlay(
             isSelected
-                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentPrimary)
+                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.accent)
                 : nil,
             alignment: .leading
         )

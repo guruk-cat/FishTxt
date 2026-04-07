@@ -50,8 +50,8 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
             case "copyAll":
                 if let text = body["text"] as? String {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(text, forType: .string)
+                    let html = body["html"] as? String
+                    Self.writeToClipboard(html: html, plainText: text)
                 }
 
             default:
@@ -62,18 +62,23 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     // MARK: - Swift → JS (editor commands)
 
-    func toggleBold()           { evaluate("window.editorBridge.toggleBold()") }
-    func toggleItalic()         { evaluate("window.editorBridge.toggleItalic()") }
-    func toggleUnderline()      { evaluate("window.editorBridge.toggleUnderline()") }
-    func toggleBulletList()     { evaluate("window.editorBridge.toggleBulletList()") }
-    func toggleOrderedList()    { evaluate("window.editorBridge.toggleOrderedList()") }
-    func toggleBlockquote()     { evaluate("window.editorBridge.toggleBlockquote()") }
+    func toggleBold()           { evaluate("window.editorBridge.toggleBold()"); refocusWebView() }
+    func toggleItalic()         { evaluate("window.editorBridge.toggleItalic()"); refocusWebView() }
+    func toggleUnderline()      { evaluate("window.editorBridge.toggleUnderline()"); refocusWebView() }
+    func toggleBulletList()     { evaluate("window.editorBridge.toggleBulletList()"); refocusWebView() }
+    func toggleOrderedList()    { evaluate("window.editorBridge.toggleOrderedList()"); refocusWebView() }
+    func toggleBlockquote()     { evaluate("window.editorBridge.toggleBlockquote()"); refocusWebView() }
     func addFootnoteReference() { evaluate("window.editorBridge.addFootnoteReference()") }
     func copyAll()              { evaluate("window.editorBridge.copyAll()") }
     func focus()                { evaluate("window.editorBridge.focus()") }
 
     func setHeading(level: Int) {
         evaluate("window.editorBridge.setHeading(\(level))")
+        refocusWebView()
+    }
+
+    func setAutoScroll(_ mode: String) {
+        evaluate("window.editorBridge.setAutoScrollMode('\(mode)')")
     }
 
     func setContent(_ jsonString: String) {
@@ -110,6 +115,32 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     private func evaluate(_ js: String) {
         DispatchQueue.main.async {
             self.webView?.evaluateJavaScript(js, completionHandler: nil)
+        }
+    }
+
+    private func refocusWebView() {
+        DispatchQueue.main.async {
+            if let webView = self.webView {
+                webView.window?.makeFirstResponder(webView)
+            }
+        }
+    }
+
+    /// Writes HTML and plain text to the clipboard with proper UTF-8 encoding.
+    /// Wraps the HTML fragment in a minimal document with a charset declaration so that
+    /// apps like Pages and Word don't misinterpret multi-byte characters (curly quotes,
+    /// em-dashes, etc.) as Latin-1.
+    static func writeToClipboard(html: String?, plainText: String?) {
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        if let html = html {
+            let doc = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"></head><body>\(html)</body></html>"
+            if let data = doc.data(using: .utf8) {
+                pb.setData(data, forType: NSPasteboard.PasteboardType(rawValue: "public.html"))
+            }
+        }
+        if let text = plainText {
+            pb.setString(text, forType: .string)
         }
     }
 }

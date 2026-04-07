@@ -87,7 +87,7 @@ struct CardView: View {
     // MARK: - Blob Card
     private func blobCardContent(_ blob: Blob) -> some View {
         ZStack(alignment: .topTrailing) {
-            if excerpt != nil && excerpt?.title == nil && excerpt?.body == nil {
+            if excerpt != nil && excerpt?.title == nil && excerpt?.bodyAttributed == nil {
                 // Empty state — centered
                 Text("Empty")
                     .font(.system(size: 16, design: .monospaced))
@@ -103,11 +103,10 @@ struct CardView: View {
                             .foregroundColor(AppColors.shared.contentSecondary)
                             .lineLimit(1)
                     }
-                    if let body = excerpt?.body {
+                    if let body = excerpt?.bodyAttributed {
                         Text(body)
-                            .font(.system(size: 16, design: .monospaced))
-                            .lineSpacing(16 * 0.25)
                             .foregroundColor(AppColors.shared.contentPrimary)
+                            .lineSpacing(16 * 0.25)
                             .lineLimit(excerpt?.title != nil ? 8 : 10)
                     }
                     Spacer(minLength: 0)
@@ -121,9 +120,10 @@ struct CardView: View {
             // Copy button (appears on hover)
             if isHovered {
                 Button(action: {
-                    if let text = store.loadBlobPlainText(blobID: blob.id, in: projectID, maxWords: .max) {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(text, forType: .string)
+                    let html = store.loadBlobHTML(blobID: blob.id, in: projectID)
+                    let text = store.loadBlobPlainText(blobID: blob.id, in: projectID, maxWords: .max)
+                    if html != nil || text != nil {
+                        EditorBridge.writeToClipboard(html: html, plainText: text)
                         withAnimation(.easeInOut(duration: 0.15)) { copyConfirmed = true }
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                             withAnimation(.easeOut(duration: 0.3)) { copyConfirmed = false }

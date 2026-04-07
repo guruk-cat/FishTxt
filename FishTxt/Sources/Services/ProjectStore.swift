@@ -1,5 +1,4 @@
 import SwiftUI
-import Foundation
 
 class ProjectStore: ObservableObject {
     @Published var projects: [Project] = []
@@ -474,13 +473,14 @@ class ProjectStore: ObservableObject {
     // MARK: - Blob Excerpt
 
     struct BlobExcerpt {
-        var title: String?   // text from the first heading node
-        var body: String?    // text from all non-heading nodes
+        var title: String?            // plain text from the first heading node
+        var body: String?             // plain text from all non-heading nodes (used by sidebar)
+        var bodyAttributed: AttributedString?  // rich text body with inline marks (used by card previews)
     }
 
     /// Parses TipTap JSON and returns a structured excerpt.
     /// Title = first heading node's text (only one, regardless of level).
-    /// Body  = plain text from all non-heading nodes; subsequent headings are skipped.
+    /// Body  = text from all non-heading nodes with inline bold/italic/underline preserved.
     func loadBlobExcerpt(blobID: UUID, in projectID: UUID) -> BlobExcerpt {
         guard let jsonString = loadBlobContent(blobID: blobID, in: projectID),
               let data = jsonString.data(using: .utf8),
@@ -490,7 +490,7 @@ class ProjectStore: ObservableObject {
         }
 
         var titleParts: [String] = []
-        var bodyParts:  [String] = []
+        var bodyNodes:  [[String: Any]] = []
         var foundTitle = false
 
         for node in topNodes {
@@ -500,18 +500,77 @@ class ProjectStore: ObservableObject {
                     extractText(from: node, into: &titleParts)
                     foundTitle = true
                 }
-                // subsequent headings are intentionally skipped
+                // subsequent headings intentionally skipped
             } else {
-                extractText(from: node, into: &bodyParts)
+                bodyNodes.append(node)
             }
         }
 
+        var bodyParts: [String] = []
+        for node in bodyNodes { extractText(from: node, into: &bodyParts) }
+
         let title = titleParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         let body  = bodyParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        let bodyAttributed = buildAttributedBody(from: bodyNodes)
+
         return BlobExcerpt(
-            title: title.isEmpty ? nil : title,
-            body:  body.isEmpty  ? nil : body
+            title:         title.isEmpty ? nil : title,
+            body:          body.isEmpty  ? nil : body,
+            bodyAttributed: bodyAttributed
         )
+    }
+
+    // MARK: - Attributed body builder
+
+    private func buildAttributedBody(from nodes: [[String: Any]]) -> AttributedString? {
+        var result = AttributedString()
+        var isFirst = true
+
+        for node in nodes {
+            let part = attributedStringFromNode(node)
+            guard !part.characters.isEmpty else { continue }
+            if !isFirst {
+                var sep = AttributedString(" ")
+                sep.font = .system(size: 16, design: .monospaced)
+                result += sep
+            }
+            result += part
+            isFirst = false
+        }
+
+        return result.characters.isEmpty ? nil : result
+    }
+
+    private func attributedStringFromNode(_ node: [String: Any]) -> AttributedString {
+        guard let type = node["type"] as? String else { return AttributedString() }
+
+        if type == "text" {
+            guard let text = node["text"] as? String, !text.isEmpty else { return AttributedString() }
+            var segment = AttributedString(text)
+            let marks = node["marks"] as? [[String: Any]] ?? []
+            var isBold = false
+            var isItalic = false
+            var isUnderline = false
+            for mark in marks {
+                switch mark["type"] as? String {
+                case "bold":      isBold = true
+                case "italic":    isItalic = true
+                case "underline": isUnderline = true
+                default: break
+                }
+            }
+            var font = Font.system(size: 16, weight: isBold ? .bold : .regular, design: .monospaced)
+            if isItalic { font = font.italic() }
+            segment.font = font
+            if isUnderline { segment.underlineStyle = Text.LineStyle(pattern: .solid) }
+            return segment
+        } else {
+            var result = AttributedString()
+            if let children = node["content"] as? [[String: Any]] {
+                for child in children { result += attributedStringFromNode(child) }
+            }
+            return result
+        }
     }
 
     /// Extracts plain text from a blob's TipTap JSON.
@@ -529,6 +588,55 @@ class ProjectStore: ObservableObject {
         if maxWords == .max { return full }
         let words = full.split(separator: " ", omittingEmptySubsequences: true).prefix(maxWords)
         return words.joined(separator: " ")
+    }
+
+    /// Generates HTML from a blob's TipTap JSON, preserving headings, lists, and inline marks.
+    func loadBlobHTML(blobID: UUID, in projectID: UUID) -> String? {
+        guard let jsonString = loadBlobContent(blobID: blobID, in: projectID),
+              let data = jsonString.data(using: .utf8),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let topNodes = root["content"] as? [[String: Any]] else { return nil }
+        let html = topNodes.map { renderNodeHTML($0) }.joined()
+        return html.isEmpty ? nil : html
+    }
+
+    private func renderNodeHTML(_ node: [String: Any]) -> String {
+        guard let type = node["type"] as? String else { return "" }
+        let children = node["content"] as? [[String: Any]] ?? []
+        switch type {
+        case "paragraph":
+            return "<p>" + children.map { renderNodeHTML($0) }.joined() + "</p>"
+        case "heading":
+            let level = (node["attrs"] as? [String: Any])?["level"] as? Int ?? 1
+            return "<h\(level)>" + children.map { renderNodeHTML($0) }.joined() + "</h\(level)>"
+        case "bulletList":
+            return "<ul>" + children.map { renderNodeHTML($0) }.joined() + "</ul>"
+        case "orderedList":
+            return "<ol>" + children.map { renderNodeHTML($0) }.joined() + "</ol>"
+        case "listItem":
+            return "<li>" + children.map { renderNodeHTML($0) }.joined() + "</li>"
+        case "blockquote":
+            return "<blockquote>" + children.map { renderNodeHTML($0) }.joined() + "</blockquote>"
+        case "hardBreak":
+            return "<br>"
+        case "text":
+            guard let text = node["text"] as? String else { return "" }
+            let escaped = text
+                .replacingOccurrences(of: "&", with: "&amp;")
+                .replacingOccurrences(of: "<", with: "&lt;")
+                .replacingOccurrences(of: ">", with: "&gt;")
+            let marks = node["marks"] as? [[String: Any]] ?? []
+            return marks.reduce(escaped) { result, mark in
+                switch mark["type"] as? String {
+                case "bold":      return "<strong>\(result)</strong>"
+                case "italic":    return "<em>\(result)</em>"
+                case "underline": return "<u>\(result)</u>"
+                default:          return result
+                }
+            }
+        default:
+            return children.map { renderNodeHTML($0) }.joined()
+        }
     }
 
     private func extractText(from node: Any, into result: inout [String]) {

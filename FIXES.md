@@ -52,7 +52,13 @@ Right now, in the file navigator, folders appear more indented than root blobs. 
 
 **Bug fix:** When selecting a folder or blob in the navigator, the respective item is highlighted (so far correct behavior). The bug: when selecting a folder (thus highlighting that folder), then selecting a blob (thus highlighting the blob), the highlight on the folder persists instead of being toggled off. This happens regardless of whether the blob belongs to the previously selected folder. This does NOT happen when selecting a folder after having selected previously a different folder. Fix the code such that only one item in the navigator is highlighted at a given time (the item that is mainly being displayed, whether it be the project root dashboard, folder dashboard, or a blob editor).
 
-**New rule:**
+**New rule:** The dashboard or editor context should be the only determining factor when it comes to highlighting navigator items. Examples:
+
+* Project root dashboard shown = project highlighted in navigator.
+* Folder dashboard shown = corresponding folder highlighted.
+* Blob editor open = corresponding blob highlighted.
+
+Selected item in the navigator, regardless of kind, should be displayed in `content_secondary` as its font color. Otherwise, they should all be `content_primary` as their font color.
 
 ### icon buttons
 
