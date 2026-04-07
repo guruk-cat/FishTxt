@@ -20,7 +20,7 @@
 		FT0000000000000000000036 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000025 /* ContentView.swift */; };
 		FT0000000000000000000037 /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000026 /* CardView.swift */; };
 		FT0000000000000000000038 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000027 /* DashboardView.swift */; };
-		FT0000000000000000000039 /* EditViewPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000028 /* EditViewPlaceholder.swift */; };
+		FT0000000000000000000039 /* EditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000028 /* EditView.swift */; };
 		FT000000000000000000003B /* FileNavigatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000002A /* FileNavigatorView.swift */; };
 		FT000000000000000000003C /* SidebarButtonColumn.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000002B /* SidebarButtonColumn.swift */; };
 		FT000000000000000000003D /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000002C /* SidebarView.swift */; };
@@ -48,7 +48,7 @@
 		FT0000000000000000000025 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FT0000000000000000000026 /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
 		FT0000000000000000000027 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
-		FT0000000000000000000028 /* EditViewPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditViewPlaceholder.swift; sourceTree = "<group>"; };
+		FT0000000000000000000028 /* EditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditView.swift; sourceTree = "<group>"; };
 		FT000000000000000000002A /* FileNavigatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileNavigatorView.swift; sourceTree = "<group>"; };
 		FT000000000000000000002B /* SidebarButtonColumn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarButtonColumn.swift; sourceTree = "<group>"; };
 		FT000000000000000000002C /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
@@ -159,7 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				FT0000000000000000000041 /* EditorBridge.swift */,
-				FT0000000000000000000028 /* EditViewPlaceholder.swift */,
+				FT0000000000000000000028 /* EditView.swift */,
 				FT0000000000000000000045 /* ToolbarView.swift */,
 				FT0000000000000000000043 /* WebEditorView.swift */,
 			);
@@ -287,7 +287,7 @@
 				FT0000000000000000000036 /* ContentView.swift in Sources */,
 				FT0000000000000000000037 /* CardView.swift in Sources */,
 				FT0000000000000000000038 /* DashboardView.swift in Sources */,
-				FT0000000000000000000039 /* EditViewPlaceholder.swift in Sources */,
+				FT0000000000000000000039 /* EditView.swift in Sources */,
 				FT000000000000000000003B /* FileNavigatorView.swift in Sources */,
 				FT000000000000000000003C /* SidebarButtonColumn.swift in Sources */,
 				FT000000000000000000003D /* SidebarView.swift in Sources */,
