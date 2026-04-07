@@ -6,7 +6,7 @@
 
 * [1. Overview](#1-overview)
 * [2. Current Build](#2-current-build)
-* [3. Features](#3-color-themes)
+* [3. Color Themes](#3-color-themes)
 
 ## 1. Overview
 
