@@ -1,6 +1,6 @@
 # FishTxt
 
-> A rich text editor for rapid brainstorming and managing long drafts.
+> A rich text editor for rapid brainstorming and longer drafts.
 
 ## Order of Contents
 
@@ -29,7 +29,7 @@ Much of FishTxt has been written as a native macOS application, but the actual t
 
 An installation `.dmg` and a compressed `.app` are both available in `packaging/`, and you can use any of the two.
 
-### 2.2. First Launch
+### 2.2. First Launch and Walkthrough
 
 When launching the app for the first time, FishTxt will have a "Welcome" project. This is an example project directory — which functions like any other FishTxt project that a user creates for their own use — and will guide you through the major features of the app. You can safely delete or archive this, if you want, after having been walked through.
 
@@ -39,7 +39,9 @@ Project files are stored in `~/Documents/FishTxt/`, and user settings are stored
 
 ## 3. Color Themes
 
-Five colors themes are provided with the app. In the current version, as you can see in the screenshots, macOS will color-match the window's title bar to the user's wallpaper. (My wallpaper happened to be purple.) This will likely change in a future version.
+Four colors themes are provided with the app.
+
+### 3.1. Making your own
 
 If you want to try making your own color theme, you'll have to edit `FishTxt/Resources/colors.json`. You might want to use `misc_resources/color_preview.py`: a python script that launches a html page, which simulates the look and feel of different UI elements in FishTxt. In the html page, you can select different color themes that ship with the app, and `Cmd + R` should reload any changes you make to the color themes. Tinkering with this is pretty fun.
 
@@ -50,22 +52,14 @@ cd path/to/your/FishTxt/download
 python3 misc_resources/color_preview.py
 ```
 
-### Coast (default)
+### 3.2. Screenshots
 
-![coast_theme](/misc_resources/imgs/coast.png)
+(The macOS screenshot app captures the app window's title bar to be transparent against the system wallpaper. My wallpaper happened to be purple when I made these, so the title bar has a purple hue in every single screenshot; this can be ignored.)
 
-### Cherry
+**Coast (default)** ![coast_theme](/misc_resources/imgs/coast.png)
 
-![cherry_theme](/misc_resources/imgs/cherry.png)
+**Cherry** ![cherry_theme](/misc_resources/imgs/cherry.png)
 
-### Birch
+**Birch** ![birch_theme](/misc_resources/imgs/birch.png)
 
-![birch_theme](/misc_resources/imgs/birch.png)
-
-### Fauna
-
-![fauna_theme](/misc_resources/imgs/fauna.png)
-
-### Flora
-
-![flora_theme](/misc_resources/imgs/flora.png)
+**Flora** ![flora_theme](/misc_resources/imgs/flora.png)
