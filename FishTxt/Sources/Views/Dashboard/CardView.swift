@@ -101,7 +101,7 @@ struct CardView: View {
                         Text(title)
                             .font(.system(size: 16, weight: .bold, design: .monospaced))
                             .foregroundColor(AppColors.shared.contentSecondary)
-                            .lineLimit(1)
+                            .lineLimit(2)
                     }
                     if let body = excerpt?.bodyAttributed {
                         Text(body)
