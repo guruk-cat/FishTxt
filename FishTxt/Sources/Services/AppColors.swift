@@ -94,13 +94,14 @@ class AppColors: ObservableObject {
         return """
         (function(){
           var r = document.documentElement.style;
-          r.setProperty('--bg-primary',        '\(rgb("background_primary"))');
-          r.setProperty('--bg-secondary',      '\(rgb("background_secondary"))');
-          r.setProperty('--content-primary',   '\(rgb("content_primary"))');
-          r.setProperty('--content-secondary', '\(rgb("content_secondary"))');
-          r.setProperty('--content-tertiary',  '\(rgb("content_tertiary"))');
-          r.setProperty('--accent',            '\(rgb("accent"))');
-          r.setProperty('--confirmation',      '\(rgb("confirmation"))');
+          r.setProperty('--bg-primary',          '\(rgb("background_primary"))');
+          r.setProperty('--bg-secondary',        '\(rgb("background_secondary"))');
+          r.setProperty('--sidebar-background',  '\(rgb("sidebar_background"))');
+          r.setProperty('--content-primary',     '\(rgb("content_primary"))');
+          r.setProperty('--content-secondary',   '\(rgb("content_secondary"))');
+          r.setProperty('--content-tertiary',    '\(rgb("content_tertiary"))');
+          r.setProperty('--accent',              '\(rgb("accent"))');
+          r.setProperty('--confirmation',        '\(rgb("confirmation"))');
         })()
         """
     }
@@ -119,13 +120,14 @@ class AppColors: ObservableObject {
         return """
         (function(){
           var r = document.documentElement.style;
-          r.setProperty('--bg-primary',        '\(rgb("background_primary"))');
-          r.setProperty('--bg-secondary',      '\(rgb("background_secondary"))');
-          r.setProperty('--content-primary',   '\(rgb("content_primary"))');
-          r.setProperty('--content-secondary', '\(rgb("content_secondary"))');
-          r.setProperty('--content-tertiary',  '\(rgb("content_tertiary"))');
-          r.setProperty('--accent',            '\(rgb("accent"))');
-          r.setProperty('--confirmation',      '\(rgb("confirmation"))');
+          r.setProperty('--bg-primary',          '\(rgb("background_primary"))');
+          r.setProperty('--bg-secondary',        '\(rgb("background_secondary"))');
+          r.setProperty('--sidebar-background',  '\(rgb("sidebar_background"))');
+          r.setProperty('--content-primary',     '\(rgb("content_primary"))');
+          r.setProperty('--content-secondary',   '\(rgb("content_secondary"))');
+          r.setProperty('--content-tertiary',    '\(rgb("content_tertiary"))');
+          r.setProperty('--accent',              '\(rgb("accent"))');
+          r.setProperty('--confirmation',        '\(rgb("confirmation"))');
           var sel = document.getElementById('ft-sel');
           if (!sel) { sel = document.createElement('style'); sel.id = 'ft-sel'; document.head.appendChild(sel); }
           sel.textContent = '::selection { background: \(selectionBg); }';
