@@ -5,8 +5,8 @@
     "background_highlight": [68, 86, 95],
     "content_primary":      [192, 179, 160],
     "content_secondary":    [172, 142, 105],
-    "content_tertiary":     [85, 102, 110],
-    "accent":               [92, 132, 145],
+    "content_tertiary":     [94, 112, 121],
+    "accent":               [101, 145, 160],
     "confirmation":         [100, 150, 112],
     "sidebar_background":   [26, 38, 44],
     "card_border":          [65, 82, 90],
@@ -38,20 +38,6 @@
     "confirmation":         [168, 111, 144],
     "sidebar_background":   [24, 26, 22],
     "card_border":          [65, 68, 60],
-    "destructive":          [204, 82, 82]
-  },
-
-  "fauna":{
-    "background_primary":   [28, 25, 21],
-    "background_secondary": [43, 39, 34],
-    "background_highlight": [62, 56, 48],
-    "content_primary":      [240, 225, 202],
-    "content_secondary":    [220,	149,	92],
-    "content_tertiary":     [90, 82, 72],
-    "accent":               [185, 152, 110],
-    "confirmation":         [95, 140, 88],
-    "sidebar_background":   [20, 18, 15],
-    "card_border":          [62, 55, 46],
     "destructive":          [204, 82, 82]
   },
 

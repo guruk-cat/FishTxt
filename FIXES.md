@@ -22,7 +22,7 @@ Moreover, this should *feel* like a scroll, with a smooth animation, instead of 
 
 When you implement this feature, I suspect that it might cause the footnotes to also appear slightly higher than where it is right now. Prevent this from happening (for example: add a padding above footnotes that adjust according to window size and eidtor size).
 
-### 3. cursor appearance
+## 3. cursor appearance
 
 Currently, the cursor height seems to be matching the line spacing of the text. My reasoning is as follows. In the first line of a body paragraph following a heading, the cursor is the same height as the font; presumably because the gap between the heading and the paragraph is a padding, not a line space variable. But in subsequent lines, the height of the cursor extends above the font to cover the spacing between each line of text. This does not look good, and it is overall inconsistent.
 
@@ -30,10 +30,14 @@ First, I'd like the cursor height to consistently match the height of the font. 
 
 Secondly, I'd also like the cursor width to be a little thicker; after all, the cursor is using the `accent` color from the color palette.
 
-### 4. formatting buttons
+## 4. formatting buttons
 
 The formatting button indications are still behaving as they did before.
 
 More specifically, for example, if I press Cmd + B for bold text, the button indication on the toolbar does not toggel until I start typing: that is, until the cursor actually enteres the place where text would appear bold.
 
 I suspect the underlying logic of the bug to be as follows. For instance, in markdown, bold text is indicated by surrounding it with a set of two astericks. Thus, even if I "inserted" a bold text zone next to the cursor, I wouldn't be entering the "bold zone" until I actually move the cursor two spaces down. I suspect that the rich text formatting is working in some similar way.
+
+## 5. Navigator font colors
+
+I'd like the items in the navigator to glow-on-hover in `content_primary` like the sidebar icon buttons. Please ensure that both icon and text for folders and blobs glow.
