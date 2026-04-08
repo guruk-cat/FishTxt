@@ -21,12 +21,8 @@ struct EditView: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            VStack(spacing: 0) {
-                headerBar
-                WebEditorView(bridge: bridge)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .background(AppColors.shared.backgroundPrimary)
+            WebEditorView(bridge: bridge)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             saveIsland
         }
@@ -56,6 +52,8 @@ struct EditView: View {
             bridge.applyColors()
         }
         .onAppear {
+            bridge.onClose = { saveAndClose() }
+            bridge.onHide  = { saveAndHide() }
             escMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 if event.keyCode == 53 { // Escape
                     saveAndClose()
@@ -70,27 +68,6 @@ struct EditView: View {
                 escMonitor = nil
             }
         }
-    }
-
-    // MARK: - Header bar
-
-    private var headerBar: some View {
-        HStack(spacing: 0) {
-            ToolbarView(bridge: bridge)
-            Spacer()
-            chromeButtons
-        }
-        .frame(height: 44)
-        .background(AppColors.shared.backgroundPrimary)
-    }
-
-    private var chromeButtons: some View {
-        HStack(spacing: 4) {
-            ChromeButton(symbol: "doc.on.clipboard", tip: "Copy")  { bridge.copyAll() }
-            ChromeButton(symbol: "eye.slash",         tip: "Hide")  { saveAndHide() }
-            ChromeButton(symbol: "xmark",             tip: "Close") { saveAndClose() }
-        }
-        .padding(.trailing, 12)
     }
 
     // MARK: - Save status island
@@ -155,30 +132,6 @@ struct EditView: View {
     }
 }
 
-// MARK: - Chrome button with hover highlight
-
-private struct ChromeButton: View {
-    let symbol: String
-    let tip: String
-    let action: () -> Void
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 13))
-                .foregroundColor(isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary)
-                .frame(width: 28, height: 28)
-                .background(AppColors.shared.backgroundSecondary)
-                .cornerRadius(5)
-                .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.cardBorder, lineWidth: 1))
-                .animation(.easeInOut(duration: 0.12), value: isHovered)
-        }
-        .buttonStyle(.plain)
-        .help(tip)
-        .onHover { isHovered = $0 }
-    }
-}
 
 #Preview {
     ZStack {

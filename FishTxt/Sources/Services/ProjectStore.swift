@@ -506,10 +506,17 @@ class ProjectStore: ObservableObject {
             }
         }
 
+        // Join text within each node with "" (text nodes already carry their own spacing),
+        // then join top-level nodes with " " so paragraphs stay separated.
         var bodyParts: [String] = []
-        for node in bodyNodes { extractText(from: node, into: &bodyParts) }
+        for node in bodyNodes {
+            var parts: [String] = []
+            extractText(from: node, into: &parts)
+            let nodeText = parts.joined()
+            if !nodeText.isEmpty { bodyParts.append(nodeText) }
+        }
 
-        let title = titleParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = titleParts.joined().trimmingCharacters(in: .whitespacesAndNewlines)
         let body  = bodyParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         let bodyAttributed = buildAttributedBody(from: bodyNodes)
 
@@ -580,9 +587,19 @@ class ProjectStore: ObservableObject {
               let data = jsonString.data(using: .utf8),
               let root = try? JSONSerialization.jsonObject(with: data) else { return nil }
 
-        var parts: [String] = []
-        extractText(from: root, into: &parts)
-        let full = parts.joined(separator: " ")
+        // Walk top-level nodes, joining text within each node with "" to avoid
+        // double spaces around bold/italic runs, then join nodes with " ".
+        var topParts: [String] = []
+        if let dict = root as? [String: Any],
+           let topNodes = dict["content"] as? [Any] {
+            for node in topNodes {
+                var parts: [String] = []
+                extractText(from: node, into: &parts)
+                let t = parts.joined()
+                if !t.isEmpty { topParts.append(t) }
+            }
+        }
+        let full = topParts.joined(separator: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !full.isEmpty else { return nil }
         if maxWords == .max { return full }

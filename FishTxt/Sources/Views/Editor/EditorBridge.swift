@@ -20,6 +20,11 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     @Published var isDirty    = false
     @Published var editorState = EditorState()
 
+    /// Called when the web toolbar's Close button is tapped.
+    var onClose: (() -> Void)?
+    /// Called when the web toolbar's Hide button is tapped.
+    var onHide: (() -> Void)?
+
     // MARK: - JS → Swift (WKScriptMessageHandler)
 
     func userContentController(
@@ -53,6 +58,12 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                     let html = body["html"] as? String
                     Self.writeToClipboard(html: html, plainText: text)
                 }
+
+            case "closeEditor":
+                self.onClose?()
+
+            case "hideBlob":
+                self.onHide?()
 
             default:
                 break

@@ -21,10 +21,6 @@ struct FileNavigatorView: View {
     @State private var renameFolderProjectID: UUID?
     @State private var renameFolderText = ""
 
-    // Detailed mode expand state
-    @State private var expandedProjectIDs: Set<UUID> = []
-    @State private var expandedFolderIDs: Set<UUID> = []
-
     // -------------------------------------------------------------------------
     // Drag state — detailed mode only
     //
@@ -46,6 +42,9 @@ struct FileNavigatorView: View {
     @State private var hoveredFolderID: UUID? = nil         // folder highlighted for blob→folder drop
     @State private var confirmGlowItemID: UUID? = nil
     @State private var confirmGlowOpacity: Double = 0.0
+
+    // Hover state for navigator rows
+    @State private var hoveredRowID: UUID? = nil
 
     static let rowHeight: CGFloat = 26
 
@@ -129,6 +128,20 @@ struct FileNavigatorView: View {
         }
     }
 
+    // MARK: - Expansion helpers (derived from selection — no manual state)
+
+    private func isProjectExpanded(_ project: Project) -> Bool {
+        selectedProjectID == project.id
+    }
+
+    private func isFolderExpanded(_ folder: BlobFolder, in project: Project) -> Bool {
+        if selectedFolderID == folder.id { return true }
+        if let blobID = activeBlobID,
+           let blob = project.blobs.first(where: { $0.id == blobID }),
+           blob.folderID == folder.id { return true }
+        return false
+    }
+
     // MARK: - Project entry dispatch
 
     @ViewBuilder
@@ -154,7 +167,7 @@ struct FileNavigatorView: View {
 
     @ViewBuilder
     private func detailedProjectRow(_ project: Project, isArchived: Bool) -> some View {
-        let isExpanded = expandedProjectIDs.contains(project.id)
+        let isExpanded = isProjectExpanded(project)
         let hasChildren = !project.folders.isEmpty ||
             project.blobs.contains { $0.folderID == nil && !$0.isHidden }
         let folders  = displayFolders(for: project)
@@ -165,22 +178,21 @@ struct FileNavigatorView: View {
             let isProjectSelected = selectedProjectID == project.id
                 && selectedFolderID == nil
                 && activeBlobID == nil
+            let isRowHovered = hoveredRowID == project.id
             HStack(spacing: 4) {
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(hasChildren ? AppColors.shared.contentTertiary : Color.clear)
+                    .foregroundColor(hasChildren
+                        ? (isProjectSelected ? AppColors.shared.accent :
+                           isRowHovered      ? AppColors.shared.contentPrimary :
+                                               AppColors.shared.contentTertiary)
+                        : Color.clear)
                     .frame(width: 14)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        guard hasChildren else { return }
-                        if isExpanded { expandedProjectIDs.remove(project.id) }
-                        else          { expandedProjectIDs.insert(project.id) }
-                    }
                 Text(project.name)
                     .font(.system(size: 13))
                     .foregroundColor(isProjectSelected
                         ? AppColors.shared.accent
-                        : AppColors.shared.contentTertiary)
+                        : (isRowHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
                     .lineLimit(1)
                 Spacer()
             }
@@ -194,6 +206,9 @@ struct FileNavigatorView: View {
                 alignment: .leading
             )
             .contentShape(Rectangle())
+            .onHover { h in
+                hoveredRowID = h ? project.id : (hoveredRowID == project.id ? nil : hoveredRowID)
+            }
             .onTapGesture { selectProject(project) }
             .contextMenu { projectContextMenu(project, isArchived: isArchived) }
 
@@ -263,9 +278,9 @@ struct FileNavigatorView: View {
 
     @ViewBuilder
     private func detailedFolderRow(_ folder: BlobFolder, in project: Project) -> some View {
-        let isFolderExpanded = expandedFolderIDs.contains(folder.id)
+        let isFolderExpanded = isFolderExpanded(folder, in: project)
         let hasBlobs  = project.blobs.contains { $0.folderID == folder.id && !$0.isHidden }
-        let isHovered = hoveredFolderID == folder.id
+        let isDragHovered = hoveredFolderID == folder.id
         let isGlowing = confirmGlowItemID == folder.id
         let blobs     = displayFolderBlobs(folder: folder, project: project)
 
@@ -274,15 +289,22 @@ struct FileNavigatorView: View {
             let isFolderSelected = selectedProjectID == project.id
                 && selectedFolderID == folder.id
                 && activeBlobID == nil
+            let isRowHovered = hoveredRowID == folder.id
             HStack(spacing: 4) {
                 Image(systemName: "folder.fill")
                     .font(.system(size: 11))
-                    .foregroundColor(isHovered ? AppColors.shared.accent : AppColors.shared.contentTertiary)
+                    .foregroundColor(
+                        isFolderSelected ? AppColors.shared.accent :
+                        isDragHovered    ? AppColors.shared.accent :
+                        isRowHovered     ? AppColors.shared.contentPrimary :
+                                           AppColors.shared.contentTertiary)
                 Text(folder.name)
                     .font(.system(size: 12))
-                    .foregroundColor(isFolderSelected
-                        ? AppColors.shared.accent
-                        : AppColors.shared.contentTertiary)
+                    .foregroundColor(
+                        isFolderSelected ? AppColors.shared.accent :
+                        isDragHovered    ? AppColors.shared.accent :
+                        isRowHovered     ? AppColors.shared.contentPrimary :
+                                           AppColors.shared.contentTertiary)
                     .lineLimit(1)
                 Spacer()
             }
@@ -291,19 +313,17 @@ struct FileNavigatorView: View {
             .overlay(alignment: .leading) {
                 Image(systemName: isFolderExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(hasBlobs ? AppColors.shared.contentTertiary : Color.clear)
+                    .foregroundColor(hasBlobs
+                        ? (isFolderSelected ? AppColors.shared.accent :
+                           isRowHovered     ? AppColors.shared.contentPrimary :
+                                              AppColors.shared.contentTertiary)
+                        : Color.clear)
                     .frame(width: 14)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        guard hasBlobs else { return }
-                        if isFolderExpanded { expandedFolderIDs.remove(folder.id) }
-                        else                { expandedFolderIDs.insert(folder.id) }
-                    }
                     .padding(.leading, 6)
             }
             .frame(height: Self.rowHeight)
             .background(
-                isHovered
+                isDragHovered
                     ? AppColors.shared.accent.opacity(0.12)
                     : (isFolderSelected
                         ? AppColors.shared.backgroundHighlight.opacity(0.2)
@@ -316,6 +336,9 @@ struct FileNavigatorView: View {
                     : nil
             )
             .contentShape(Rectangle())
+            .onHover { h in
+                hoveredRowID = h ? folder.id : (hoveredRowID == folder.id ? nil : hoveredRowID)
+            }
             .onTapGesture {
                 selectedProjectID = project.id; selectedFolderID = folder.id
                 activeBlobID = nil; isViewingHidden = false
@@ -584,7 +607,6 @@ struct FileNavigatorView: View {
                 let current = store.projects.first { $0.id == project.id } ?? project
                 if let target = hoveredFolderID {
                     store.moveBlobToFolder(blob.id, to: target, in: project.id)
-                    expandedFolderIDs.insert(target)
                     triggerGlow(for: target); return
                 }
                 guard let ghostIdx = ghostRootBlobIndex else { return }
@@ -646,7 +668,6 @@ struct FileNavigatorView: View {
                 // Drop onto a different folder
                 if let target = hoveredFolderID {
                     store.moveBlobToFolder(blob.id, to: target, in: project.id)
-                    expandedFolderIDs.insert(target)
                     triggerGlow(for: target); return
                 }
                 // Move to root with positional drop
@@ -772,15 +793,20 @@ private struct BlobTreeRow: View {
     let glowOpacity: Double
     let indent: CGFloat
     @State private var title: String?
+    @State private var isHovered = false
 
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "doc.text")
                 .font(.system(size: 10))
-                .foregroundColor(AppColors.shared.contentTertiary)
+                .foregroundColor(isActive
+                    ? AppColors.shared.accent
+                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
             Text(title ?? "Untitled")
                 .font(.system(size: 12))
-                .foregroundColor(isActive ? AppColors.shared.accent : AppColors.shared.contentTertiary)
+                .foregroundColor(isActive
+                    ? AppColors.shared.accent
+                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
                 .lineLimit(1)
             Spacer()
         }
@@ -790,6 +816,7 @@ private struct BlobTreeRow: View {
             ? RoundedRectangle(cornerRadius: 4)
                 .stroke(AppColors.shared.confirmation.opacity(glowOpacity), lineWidth: 1)
             : nil)
+        .onHover { isHovered = $0 }
         .task(id: blob.updatedAt) {
             let result = await Task.detached(priority: .utility) {
                 store.loadBlobExcerpt(blobID: blob.id, in: projectID)
@@ -840,13 +867,15 @@ struct ProjectRow: View {
     let onViewHidden: () -> Void
     let onArchive: () -> Void
 
+    @State private var isHovered = false
+
     var body: some View {
         HStack(spacing: 6) {
             Text(project.name)
                 .font(.system(size: 13))
                 .foregroundColor(isSelected
                     ? AppColors.shared.accent
-                    : AppColors.shared.contentTertiary)
+                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
             Spacer()
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
@@ -858,6 +887,7 @@ struct ProjectRow: View {
             alignment: .leading
         )
         .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
         .onTapGesture { onSelect() }
     }
 }

@@ -27,7 +27,6 @@
 		FT0000000000000000000040 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000003F /* SettingsView.swift */; };
 		FT0000000000000000000042 /* EditorBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000041 /* EditorBridge.swift */; };
 		FT0000000000000000000044 /* WebEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000043 /* WebEditorView.swift */; };
-		FT0000000000000000000046 /* ToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000045 /* ToolbarView.swift */; };
 		FT0000000000000000000048 /* editor.html in Resources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000047 /* editor.html */; };
 /* End PBXBuildFile section */
 
@@ -55,7 +54,6 @@
 		FT000000000000000000003F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		FT0000000000000000000041 /* EditorBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorBridge.swift; sourceTree = "<group>"; };
 		FT0000000000000000000043 /* WebEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEditorView.swift; sourceTree = "<group>"; };
-		FT0000000000000000000045 /* ToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarView.swift; sourceTree = "<group>"; };
 		FT0000000000000000000047 /* editor.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = editor.html; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -160,7 +158,6 @@
 			children = (
 				FT0000000000000000000041 /* EditorBridge.swift */,
 				FT0000000000000000000028 /* EditView.swift */,
-				FT0000000000000000000045 /* ToolbarView.swift */,
 				FT0000000000000000000043 /* WebEditorView.swift */,
 			);
 			path = Editor;
@@ -294,7 +291,6 @@
 				FT0000000000000000000040 /* SettingsView.swift in Sources */,
 				FT0000000000000000000042 /* EditorBridge.swift in Sources */,
 				FT0000000000000000000044 /* WebEditorView.swift in Sources */,
-				FT0000000000000000000046 /* ToolbarView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
