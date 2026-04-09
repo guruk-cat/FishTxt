@@ -6,7 +6,6 @@ struct SettingsView: View {
 
     // Defaults
     @AppStorage("colorPalette") private var colorPalette: String = "coast"
-    @AppStorage("sidebar.navigatorMode") private var navigatorMode: String = "compact"
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
     @AppStorage("fontSize") private var fontSize: Double = 16.0
     @AppStorage("autoScroll") private var autoScroll: String = "regular"
@@ -109,15 +108,6 @@ struct SettingsView: View {
                             Picker("", selection: $autoScroll) {
                                 Text("Regular").tag("regular")
                                 Text("Centered").tag("centered")
-                            }
-                            .pickerStyle(.segmented)
-                            .frame(width: 160)
-                        }
-
-                        settingsRow("Navigator") {
-                            Picker("", selection: $navigatorMode) {
-                                Text("Compact").tag("compact")
-                                Text("Detailed").tag("detailed")
                             }
                             .pickerStyle(.segmented)
                             .frame(width: 160)

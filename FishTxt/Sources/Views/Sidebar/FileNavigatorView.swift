@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct FileNavigatorView: View {
+    
     @EnvironmentObject var store: ProjectStore
     @EnvironmentObject var appColors: AppColors
     @Binding var selectedProjectID: UUID?
@@ -8,9 +9,8 @@ struct FileNavigatorView: View {
     @Binding var activeBlobID: UUID?
     @Binding var isViewingHidden: Bool
 
-    @AppStorage("sidebar.isProjectsExpanded") private var isProjectsExpanded: Bool = true
-    @AppStorage("sidebar.isArchivedExpanded") private var isArchivedExpanded: Bool = true
-    @AppStorage("sidebar.navigatorMode") private var navigatorMode: String = "compact"
+    // Level state: true = Level 2 (viewing project), false = Level 1 (project picker)
+    @State private var isViewingProject: Bool = false
 
     // Rename state
     @State private var isRenamingProject = false
@@ -29,7 +29,7 @@ struct FileNavigatorView: View {
     // DragGesture, which prevents .onEnded from firing, leaving clearDragState()
     // uncalled and the overlay stuck. Instead we keep it at height 0 / opacity 0.
     // -------------------------------------------------------------------------
-    @State private var draggedItemID: UUID? = nil
+    @State private var draggedItemID: UUID? = nil 
     @State private var draggedProjectID: UUID? = nil
     // nil  → dragging a folder or root-level blob
     // UUID → dragging a blob that lives inside that folder
@@ -45,6 +45,10 @@ struct FileNavigatorView: View {
 
     // Hover state for navigator rows
     @State private var hoveredRowID: UUID? = nil
+    @State private var headerRowHovered: Bool = false
+    @State private var backButtonHovered: Bool = false
+    @State private var plusButtonHovered: Bool = false
+    @State private var folderBackButtonHovered: Bool = false
 
     static let rowHeight: CGFloat = 26
 
@@ -60,56 +64,66 @@ struct FileNavigatorView: View {
     // MARK: - Body
 
     var body: some View {
+        if isViewingProject,
+           let id = selectedProjectID,
+           let project = store.projects.first(where: { $0.id == id }) {
+            level2ProjectView(project)
+        } else {
+            level1ProjectPicker
+        }
+    }
+
+    // MARK: - Level 1: Project Picker
+
+    private var level1ProjectPicker: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 4) {
-                DisclosureGroup(isExpanded: $isProjectsExpanded) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        ForEach(liveProjects) { project in
-                            projectEntry(project, isArchived: false)
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Text("PROJECTS")
+            VStack(alignment: .leading, spacing: 0) {
+                // PROJECTS header
+                HStack {
+                    Text("PROJECTS")
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(0.5)
+                        .foregroundColor(AppColors.shared.contentSecondary)
+                    Spacer()
+                    Button {
+                        let p = store.createProject(name: "Untitled Project")
+                        selectedProjectID = p.id
+                        selectedFolderID = nil
+                        activeBlobID = nil
+                        isViewingHidden = false
+                        isViewingProject = true
+                    } label: {
+                        Image(systemName: "plus")
                             .font(.system(size: 11, weight: .semibold))
-                            .tracking(0.5)
-                        Spacer()
-                        Button {
-                            let p = store.createProject(name: "Untitled Project")
-                            selectedProjectID = p.id; selectedFolderID = nil
-                            activeBlobID = nil; isViewingHidden = false
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(AppColors.shared.contentTertiary)
-                        }
-                        .buttonStyle(.plain)
+                            .foregroundColor(plusButtonHovered ? AppColors.shared.contentSecondary : AppColors.shared.contentTertiary)
                     }
-                    .padding(.horizontal, 4)
-                    .foregroundColor(AppColors.shared.contentTertiary)
+                    .buttonStyle(.plain)
+                    .onHover { plusButtonHovered = $0 }
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
+
+                ForEach(liveProjects) { project in
+                    level1ProjectRow(project, isArchived: false)
                 }
 
                 if !archivedProjects.isEmpty {
-                    DisclosureGroup(isExpanded: $isArchivedExpanded) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            ForEach(archivedProjects) { project in
-                                projectEntry(project, isArchived: true)
-                            }
-                        }
-                    } label: {
-                        Text("ARCHIVED PROJECTS")
-                            .font(.system(size: 11, weight: .semibold))
-                            .tracking(0.5)
-                            .foregroundColor(AppColors.shared.contentTertiary)
+                    Text("ARCHIVED PROJECTS")
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(0.5)
+                        .foregroundColor(AppColors.shared.contentSecondary)
+                        .padding(.horizontal, 8)
+                        .padding(.top, 16)
+                        .padding(.bottom, 4)
+
+                    ForEach(archivedProjects) { project in
+                        level1ProjectRow(project, isArchived: true)
                     }
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 12)
+            .padding(.bottom, 12)
         }
-        .coordinateSpace(name: "sidebarNav")
-        .onPreferenceChange(CardFrameKey.self) { itemFrames = $0 }
-        .overlay(dragOverlay)
         .alert("Rename Project", isPresented: $isRenamingProject) {
             TextField("Project name", text: $renameProjectText)
             Button("Cancel", role: .cancel) {}
@@ -117,104 +131,75 @@ struct FileNavigatorView: View {
                 if let id = renameProjectID { store.renameProject(id, to: renameProjectText) }
             }
         }
-        .alert("Rename Folder", isPresented: $isRenamingFolder) {
-            TextField("Folder name", text: $renameFolderText)
-            Button("Cancel", role: .cancel) {}
-            Button("Rename") {
-                if let fid = renameFolderID, let pid = renameFolderProjectID {
-                    store.renameFolder(fid, in: pid, to: renameFolderText)
+    }
+
+    // MARK: - Level 1: Project Row
+
+    @ViewBuilder
+    private func level1ProjectRow(_ project: Project, isArchived: Bool) -> some View {
+        let isRowHovered = hoveredRowID == project.id
+
+        HStack(spacing: 6) {
+            Text(project.name)
+                .font(.system(size: 13))
+                .foregroundColor(isRowHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary)
+            Spacer()
+        }
+        .padding(.horizontal, 8).padding(.vertical, 6)
+        .contentShape(Rectangle())
+        .onHover { h in
+            hoveredRowID = h ? project.id : (hoveredRowID == project.id ? nil : hoveredRowID)
+        }
+        .onTapGesture {
+            selectedProjectID = project.id
+            selectedFolderID = nil
+            activeBlobID = nil
+            isViewingHidden = false
+            isViewingProject = true
+        }
+        .contextMenu { projectContextMenu(project, isArchived: isArchived) }
+    }
+
+    // MARK: - Level 2: Project Contents
+
+    @ViewBuilder
+    private func level2ProjectView(_ project: Project) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                // Header with project name and back button
+                HStack(spacing: 8) {
+                    Text(project.name.uppercased())
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(0.5)
+                        .foregroundColor(AppColors.shared.contentSecondary)
+                        .onTapGesture { selectProject(project) }
+                    Spacer()
+                    Button {
+                        isViewingProject = false
+                        selectedProjectID = nil
+                        selectedFolderID = nil
+                        activeBlobID = nil
+                    } label: {
+                        Image(systemName: "arrow.uturn.left")
+                            .font(.system(size: 11))
+                            .foregroundColor(backButtonHovered ? AppColors.shared.contentSecondary : AppColors.shared.contentTertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { backButtonHovered = $0 }
+                    .opacity(headerRowHovered ? 1 : 0)
                 }
-            }
-        }
-    }
+                .padding(.horizontal, 8)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
+                .contentShape(Rectangle())
+                .onHover { headerRowHovered = $0 }
 
-    // MARK: - Expansion helpers (derived from selection — no manual state)
+                // Folders and root blobs
+                let folders = displayFolders(for: project)
+                let rootBlobs = displayRootBlobs(for: project)
 
-    private func isProjectExpanded(_ project: Project) -> Bool {
-        selectedProjectID == project.id
-    }
-
-    private func isFolderExpanded(_ folder: BlobFolder, in project: Project) -> Bool {
-        if selectedFolderID == folder.id { return true }
-        if let blobID = activeBlobID,
-           let blob = project.blobs.first(where: { $0.id == blobID }),
-           blob.folderID == folder.id { return true }
-        return false
-    }
-
-    // MARK: - Project entry dispatch
-
-    @ViewBuilder
-    private func projectEntry(_ project: Project, isArchived: Bool) -> some View {
-        if navigatorMode == "detailed" {
-            detailedProjectRow(project, isArchived: isArchived)
-        } else {
-            ProjectRow(
-                project: project,
-                isSelected: selectedProjectID == project.id,
-                onSelect: { selectProject(project) },
-                onRename: { beginRenameProject(project) },
-                onNewFolder: { _ = store.createFolder(in: project.id, name: "Untitled Folder") },
-                onNewBlob: { _ = store.createBlob(in: project.id) },
-                onViewHidden: { viewHidden(project) },
-                onArchive: { store.archiveProject(project.id) }
-            )
-            .contextMenu { projectContextMenu(project, isArchived: isArchived) }
-        }
-    }
-
-    // MARK: - Detailed project row
-
-    @ViewBuilder
-    private func detailedProjectRow(_ project: Project, isArchived: Bool) -> some View {
-        let isExpanded = isProjectExpanded(project)
-        let hasChildren = !project.folders.isEmpty ||
-            project.blobs.contains { $0.folderID == nil && !$0.isHidden }
-        let folders  = displayFolders(for: project)
-        let rootBlobs = displayRootBlobs(for: project)
-
-        VStack(alignment: .leading, spacing: 0) {
-            // Header row — fixed padding/height regardless of children
-            let isProjectSelected = selectedProjectID == project.id
-                && selectedFolderID == nil
-                && activeBlobID == nil
-            let isRowHovered = hoveredRowID == project.id
-            HStack(spacing: 4) {
-                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(hasChildren
-                        ? (isProjectSelected ? AppColors.shared.accent :
-                           isRowHovered      ? AppColors.shared.contentPrimary :
-                                               AppColors.shared.contentTertiary)
-                        : Color.clear)
-                    .frame(width: 14)
-                Text(project.name)
-                    .font(.system(size: 13))
-                    .foregroundColor(isProjectSelected
-                        ? AppColors.shared.accent
-                        : (isRowHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
-                    .lineLimit(1)
-                Spacer()
-            }
-            .padding(.leading, 4).padding(.trailing, 8).padding(.vertical, 6)
-            .background(isProjectSelected
-                ? AppColors.shared.backgroundHighlight.opacity(0.3) : Color.clear)
-            .overlay(
-                isProjectSelected
-                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.accent)
-                    : nil,
-                alignment: .leading
-            )
-            .contentShape(Rectangle())
-            .onHover { h in
-                hoveredRowID = h ? project.id : (hoveredRowID == project.id ? nil : hoveredRowID)
-            }
-            .onTapGesture { selectProject(project) }
-            .contextMenu { projectContextMenu(project, isArchived: isArchived) }
-
-            if isExpanded {
                 VStack(alignment: .leading, spacing: 0) {
-                    // --- Folders ---
+                    // Folders
                     ForEach(folders) { item in
                         if case .ghost = item {
                             treeGhost()
@@ -223,7 +208,6 @@ struct FileNavigatorView: View {
                         } else if case .folder(let folder) = item {
                             let isDragged = draggedItemID == folder.id
                             detailedFolderRow(folder, in: project)
-                                // Keep in hierarchy but collapse so gesture survives
                                 .frame(height: isDragged ? 0 : nil)
                                 .clipped()
                                 .opacity(isDragged ? 0 : 1)
@@ -232,15 +216,14 @@ struct FileNavigatorView: View {
                     .animation(.spring(response: 0.25, dampingFraction: 0.82),
                                value: folders.map(\.id))
 
-                    // --- Root blobs ---
+                    // Root blobs
                     ForEach(rootBlobs) { item in
                         if case .ghost = item {
                             treeGhost()
                                 .padding(.leading, 22)
                                 .padding(.vertical, 1)
                         } else if case .blob(let blob) = item {
-                            let isDragged   = draggedItemID == blob.id
-                            // Invisible while hovering a folder so the gesture doesn't die
+                            let isDragged = draggedItemID == blob.id
                             let isInvisible = isDragged && hoveredFolderID != nil
                             BlobTreeRow(
                                 blob: blob, projectID: project.id,
@@ -272,6 +255,28 @@ struct FileNavigatorView: View {
                 }
             }
         }
+        .coordinateSpace(name: "sidebarNav")
+        .onPreferenceChange(CardFrameKey.self) { itemFrames = $0 }
+        .overlay(dragOverlay)
+        .alert("Rename Folder", isPresented: $isRenamingFolder) {
+            TextField("Folder name", text: $renameFolderText)
+            Button("Cancel", role: .cancel) {}
+            Button("Rename") {
+                if let fid = renameFolderID, let pid = renameFolderProjectID {
+                    store.renameFolder(fid, in: pid, to: renameFolderText)
+                }
+            }
+        }
+    }
+
+    // MARK: - Expansion helpers (derived from selection — no manual state)
+
+    private func isFolderExpanded(_ folder: BlobFolder, in project: Project) -> Bool {
+        if selectedFolderID == folder.id { return true }
+        if let blobID = activeBlobID,
+           let blob = project.blobs.first(where: { $0.id == blobID }),
+           blob.folderID == folder.id { return true }
+        return false
     }
 
     // MARK: - Detailed folder row
@@ -307,6 +312,18 @@ struct FileNavigatorView: View {
                                            AppColors.shared.contentTertiary)
                     .lineLimit(1)
                 Spacer()
+                if isFolderSelected {
+                    Button {
+                        selectProject(project)
+                    } label: {
+                        Image(systemName: "arrow.uturn.left")
+                            .font(.system(size: 11))
+                            .foregroundColor(folderBackButtonHovered ? AppColors.shared.accent : AppColors.shared.contentTertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { folderBackButtonHovered = $0 }
+                    .opacity(isRowHovered ? 1 : 0)
+                }
             }
             .padding(.leading, 22).padding(.trailing, 8).padding(.vertical, 4)
             // Chevron sits inside the 22px leading space without pushing folder icon right
@@ -328,6 +345,12 @@ struct FileNavigatorView: View {
                     : (isFolderSelected
                         ? AppColors.shared.backgroundHighlight.opacity(0.2)
                         : Color.clear)
+            )
+            .overlay(
+                isFolderSelected
+                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.accent)
+                    : nil,
+                alignment: .leading
             )
             .overlay(
                 isGlowing
@@ -812,6 +835,12 @@ private struct BlobTreeRow: View {
         }
         .padding(.leading, indent).padding(.trailing, 8).padding(.vertical, 4)
         .background(isActive ? AppColors.shared.backgroundHighlight.opacity(0.2) : Color.clear)
+        .overlay(
+            isActive
+                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.accent)
+                : nil,
+            alignment: .leading
+        )
         .overlay(isGlowing
             ? RoundedRectangle(cornerRadius: 4)
                 .stroke(AppColors.shared.confirmation.opacity(glowOpacity), lineWidth: 1)
@@ -855,43 +884,6 @@ private struct BlobDragPreview: View {
     }
 }
 
-// MARK: - Compact ProjectRow
-
-struct ProjectRow: View {
-    let project: Project
-    let isSelected: Bool
-    let onSelect: () -> Void
-    let onRename: () -> Void
-    let onNewFolder: () -> Void
-    let onNewBlob: () -> Void
-    let onViewHidden: () -> Void
-    let onArchive: () -> Void
-
-    @State private var isHovered = false
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(project.name)
-                .font(.system(size: 13))
-                .foregroundColor(isSelected
-                    ? AppColors.shared.accent
-                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
-            Spacer()
-        }
-        .padding(.horizontal, 8).padding(.vertical, 6)
-        .background(isSelected ? AppColors.shared.backgroundHighlight.opacity(0.3) : Color.clear)
-        .overlay(
-            isSelected
-                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.accent)
-                : nil,
-            alignment: .leading
-        )
-        .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
-        .onTapGesture { onSelect() }
-    }
-}
-
 #Preview {
     FileNavigatorView(
         selectedProjectID: .constant(nil),
@@ -901,5 +893,5 @@ struct ProjectRow: View {
     )
     .environmentObject(ProjectStore())
     .environmentObject(AppColors.shared)
-    .frame(width: 200)
+    .frame(width: 220)
 }

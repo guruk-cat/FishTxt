@@ -27,10 +27,10 @@ struct SidebarView: View {
                     activeBlobID: $activeBlobID,
                     isViewingHidden: $isViewingHidden
                 )
-                .frame(width: 200)
+                .frame(width: 220)
             }
         }
-        .frame(width: isSidebarOpen ? 248 : 48)
+        .frame(width: isSidebarOpen ? 268 : 48)
         .background(AppColors.shared.sidebarBackground)
     }
 }
