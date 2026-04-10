@@ -299,14 +299,14 @@ struct FileNavigatorView: View {
                 Image(systemName: "folder.fill")
                     .font(.system(size: 11))
                     .foregroundColor(
-                        isFolderSelected ? AppColors.shared.accent :
+                        isFolderSelected ? AppColors.shared.contentSecondary :
                         isDragHovered    ? AppColors.shared.accent :
                         isRowHovered     ? AppColors.shared.contentPrimary :
                                            AppColors.shared.contentTertiary)
                 Text(folder.name)
                     .font(.system(size: 12))
                     .foregroundColor(
-                        isFolderSelected ? AppColors.shared.accent :
+                        isFolderSelected ? AppColors.shared.contentSecondary :
                         isDragHovered    ? AppColors.shared.accent :
                         isRowHovered     ? AppColors.shared.contentPrimary :
                                            AppColors.shared.contentTertiary)
@@ -318,7 +318,7 @@ struct FileNavigatorView: View {
                     } label: {
                         Image(systemName: "arrow.uturn.left")
                             .font(.system(size: 11))
-                            .foregroundColor(folderBackButtonHovered ? AppColors.shared.accent : AppColors.shared.contentTertiary)
+                            .foregroundColor(folderBackButtonHovered ? AppColors.shared.contentSecondary : AppColors.shared.contentTertiary)
                     }
                     .buttonStyle(.plain)
                     .onHover { folderBackButtonHovered = $0 }
@@ -331,7 +331,7 @@ struct FileNavigatorView: View {
                 Image(systemName: isFolderExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundColor(hasBlobs
-                        ? (isFolderSelected ? AppColors.shared.accent :
+                        ? (isFolderSelected ? AppColors.shared.contentSecondary :
                            isRowHovered     ? AppColors.shared.contentPrimary :
                                               AppColors.shared.contentTertiary)
                         : Color.clear)
@@ -348,7 +348,7 @@ struct FileNavigatorView: View {
             )
             .overlay(
                 isFolderSelected
-                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.accent)
+                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentSecondary)
                     : nil,
                 alignment: .leading
             )
@@ -823,12 +823,12 @@ private struct BlobTreeRow: View {
             Image(systemName: "doc.text")
                 .font(.system(size: 10))
                 .foregroundColor(isActive
-                    ? AppColors.shared.accent
+                    ? AppColors.shared.contentSecondary
                     : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
             Text(title ?? "Untitled")
                 .font(.system(size: 12))
                 .foregroundColor(isActive
-                    ? AppColors.shared.accent
+                    ? AppColors.shared.contentSecondary
                     : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
                 .lineLimit(1)
             Spacer()
@@ -837,7 +837,7 @@ private struct BlobTreeRow: View {
         .background(isActive ? AppColors.shared.backgroundHighlight.opacity(0.2) : Color.clear)
         .overlay(
             isActive
-                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.accent)
+                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentSecondary)
                 : nil,
             alignment: .leading
         )
