@@ -848,7 +848,7 @@ private struct BlobTreeRow: View {
         .onHover { isHovered = $0 }
         .task(id: blob.updatedAt) {
             let result = await Task.detached(priority: .utility) {
-                store.loadBlobExcerpt(blobID: blob.id, in: projectID)
+                await store.loadBlobExcerpt(blobID: blob.id, in: projectID)
             }.value
             title = result.title ?? result.body.flatMap { String($0.prefix(40)) }
         }
@@ -877,7 +877,7 @@ private struct BlobDragPreview: View {
         .frame(width: 160, alignment: .leading)
         .task {
             let result = await Task.detached(priority: .utility) {
-                store.loadBlobExcerpt(blobID: blob.id, in: projectID)
+                await store.loadBlobExcerpt(blobID: blob.id, in: projectID)
             }.value
             title = result.title ?? result.body.flatMap { String($0.prefix(40)) }
         }
