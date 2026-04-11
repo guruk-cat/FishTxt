@@ -27,10 +27,6 @@ The app was designed by June Jung, and the codebase was vibe-coded with Claude b
 
 Much of FishTxt has been written as a native macOS application, but the actual text editor uses [TipTap](https://tiptap.dev/docs/editor/getting-started/overview), an open-source rich text editor framework. Moreover, the [tiptap-footnoes](https://github.com/buttondown/tiptap-footnotes) extension is used for adding references in the text. The editor runs in a javascript environment that is wrapped inside the app through Apple's `WKWebView` library.
 
-### Install
-
-For now, a compressed `.app` is available in `packaging/`. Unzip it and run. Windows or Linux versions are not available.
-
 ### First Launch and Walkthrough
 
 When launching the app for the first time, FishTxt will have a "Welcome" project. This is an example project directory — which functions like any other FishTxt project that a user creates for their own use — and will guide you through the major features of the app. You can safely delete or archive this, if you want, after having been walked through.

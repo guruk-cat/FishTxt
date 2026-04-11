@@ -21,7 +21,7 @@ FishTxt was designed by June Jung, and the codebase was built largely by Claude 
 
 ### Current Version
 
-This version is the Beta version (build 1), currently being tested in real use (by me, June Jung).
+This version is the Beta version (build 2), currently being tested in real use (by me, June Jung).
 
 ### Repository Map
 
