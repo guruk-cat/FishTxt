@@ -152,8 +152,9 @@ class ProjectStore: ObservableObject {
 
         var project = projects[projectIndex]
         var folder = BlobFolder(name: name)
-        folder.sortOrder = (project.folders.max { $0.sortOrder < $1.sortOrder }?.sortOrder ?? -1) + 1
+        folder.sortOrder = (project.folders.min { $0.sortOrder < $1.sortOrder }?.sortOrder ?? 0) - 1
         project.folders.append(folder)
+        rebuildRootSortOrders(&project)
 
         updateProject(project)
         return folder
@@ -224,9 +225,13 @@ class ProjectStore: ObservableObject {
         let blob = Blob(folderID: folderID)
 
         if let folderID = folderID {
-            // Insert at sortOrder 0 in folder, rebuild folder sort orders
+            // Insert before first existing blob in folder
+            let firstFolderSortOrder = project.blobs
+                .filter { $0.folderID == folderID && !$0.isHidden }
+                .min { $0.sortOrder < $1.sortOrder }?
+                .sortOrder ?? 0
             var newBlob = blob
-            newBlob.sortOrder = 0
+            newBlob.sortOrder = firstFolderSortOrder - 1
             project.blobs.append(newBlob)
             rebuildFolderSortOrders(&project, folderID: folderID)
         } else {
@@ -238,7 +243,7 @@ class ProjectStore: ObservableObject {
 
             if let firstSortOrder = firstRootBlobSortOrder {
                 var newBlob = blob
-                newBlob.sortOrder = firstSortOrder
+                newBlob.sortOrder = firstSortOrder - 1
                 project.blobs.append(newBlob)
                 rebuildRootSortOrders(&project)
             } else {

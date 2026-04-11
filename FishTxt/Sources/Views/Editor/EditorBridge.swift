@@ -81,7 +81,10 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     func toggleBlockquote()     { evaluate("window.editorBridge.toggleBlockquote()"); refocusWebView() }
     func addFootnoteReference() { evaluate("window.editorBridge.addFootnoteReference()") }
     func copyAll()              { evaluate("window.editorBridge.copyAll()") }
-    func focus()                { evaluate("window.editorBridge.focus()") }
+    func focus() {
+        refocusWebView()
+        evaluate("window.editorBridge.focus()")
+    }
 
     func setHeading(level: Int) {
         evaluate("window.editorBridge.setHeading(\(level))")
@@ -94,6 +97,18 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     func setContent(_ jsonString: String) {
         let js = "(function(){ var c = \(jsonString); window.editorBridge.setContent(c); })()"
+        evaluate(js)
+    }
+
+    func setContentAndScrollToTop(_ jsonString: String) {
+        let js = """
+        (function(){
+            var c = \(jsonString);
+            window.editorBridge.setContent(c);
+            var ed = document.getElementById('editor');
+            if (ed) ed.scrollTop = 0;
+        })()
+        """
         evaluate(js)
     }
 

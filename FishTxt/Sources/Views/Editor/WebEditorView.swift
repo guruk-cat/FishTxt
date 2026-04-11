@@ -73,8 +73,6 @@ struct WebEditorView: NSViewRepresentable {
                 let scrollMode = UserDefaults.standard.string(forKey: "autoScroll") ?? "regular"
                 self.bridge.setAutoScroll(scrollMode)
                 self.lastScrollMode = scrollMode
-                webView.evaluateJavaScript("window.editorBridge?.focus()", completionHandler: nil)
-                webView.becomeFirstResponder()
             }
         }
     }

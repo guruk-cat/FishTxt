@@ -9,9 +9,6 @@ struct FileNavigatorView: View {
     @Binding var activeBlobID: UUID?
     @Binding var isViewingHidden: Bool
 
-    // Level state: true = Level 2 (viewing project), false = Level 1 (project picker)
-    @State private var isViewingProject: Bool = false
-
     // Rename state
     @State private var isRenamingProject = false
     @State private var renameProjectID: UUID?
@@ -64,8 +61,7 @@ struct FileNavigatorView: View {
     // MARK: - Body
 
     var body: some View {
-        if isViewingProject,
-           let id = selectedProjectID,
+        if let id = selectedProjectID,
            let project = store.projects.first(where: { $0.id == id }) {
             level2ProjectView(project)
         } else {
@@ -91,7 +87,6 @@ struct FileNavigatorView: View {
                         selectedFolderID = nil
                         activeBlobID = nil
                         isViewingHidden = false
-                        isViewingProject = true
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 11, weight: .semibold))
@@ -155,7 +150,6 @@ struct FileNavigatorView: View {
             selectedFolderID = nil
             activeBlobID = nil
             isViewingHidden = false
-            isViewingProject = true
         }
         .contextMenu { projectContextMenu(project, isArchived: isArchived) }
     }
@@ -175,7 +169,6 @@ struct FileNavigatorView: View {
                         .onTapGesture { selectProject(project) }
                     Spacer()
                     Button {
-                        isViewingProject = false
                         selectedProjectID = nil
                         selectedFolderID = nil
                         activeBlobID = nil

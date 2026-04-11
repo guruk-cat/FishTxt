@@ -32,9 +32,12 @@ struct EditView: View {
             hasLoaded = true
             if let json = store.loadBlobContent(blobID: blobID, in: projectID) {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    bridge.setContent(json)
-                    bridge.scrollToTop()
+                    bridge.setContentAndScrollToTop(json)
                     bridge.markClean()
+                }
+            } else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    bridge.focus()
                 }
             }
         }
