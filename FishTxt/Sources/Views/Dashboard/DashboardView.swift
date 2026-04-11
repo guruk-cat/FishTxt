@@ -11,6 +11,7 @@ struct CardFrameKey: PreferenceKey {
 struct DashboardView: View {
     @EnvironmentObject var store: ProjectStore
     @EnvironmentObject var appColors: AppColors
+    @EnvironmentObject var crossPanelDrag: CrossPanelDrag
 
     let projectID: UUID
     let folderID: UUID?
@@ -248,6 +249,11 @@ struct DashboardView: View {
                                             if draggedItemID == nil { draggedItemID = item.id }
                                             guard draggedItemID == item.id else { return }
                                             dragLocation = value.location
+                                            // Publish to navigator so folder rows can react via onHover
+                                            if case .blob(let blob) = item {
+                                                crossPanelDrag.activeBlobID = blob.id
+                                                crossPanelDrag.activeProjectID = projectID
+                                            }
                                             // Check if cursor is over a folder card
                                             var overFolder: UUID? = nil
                                             for folderItem in folderItems {
@@ -269,7 +275,13 @@ struct DashboardView: View {
                                         .onEnded { value in
                                             guard item != .ghost, draggedItemID == item.id else { return }
                                             defer { clearDragState() }
-                                            // Case 1: blob dropped onto a folder
+                                            // Case 0: blob dropped onto a navigator folder (cross-panel)
+                                            if let navFolderID = crossPanelDrag.targetFolderID,
+                                               case .blob(let blob) = item {
+                                                store.moveBlobToFolder(blob.id, to: navFolderID, in: projectID)
+                                                return
+                                            }
+                                            // Case 1: blob dropped onto a dashboard folder
                                             if let targetFolderID = hoveredFolderID {
                                                 if case .blob(let blob) = item {
                                                     store.moveBlobToFolder(blob.id, to: targetFolderID, in: projectID)
@@ -406,6 +418,7 @@ struct DashboardView: View {
         ghostFolderIndex = nil
         ghostBlobIndex = nil
         hoveredFolderID = nil
+        crossPanelDrag.clear()
     }
 
     private func triggerConfirmGlow(for itemID: UUID) {

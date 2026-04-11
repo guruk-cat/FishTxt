@@ -317,7 +317,7 @@ class ProjectStore: ObservableObject {
                     .map { $0.sortOrder }
 
                 if let firstSortOrder = firstRootBlobSortOrder {
-                    project.blobs[index].sortOrder = firstSortOrder
+                    project.blobs[index].sortOrder = firstSortOrder - 1
                 } else {
                     let maxSortOrder = project.blobs
                         .filter { $0.folderID == nil }
@@ -349,7 +349,7 @@ class ProjectStore: ObservableObject {
                 .map { $0.sortOrder }
 
             if let firstSortOrder = firstRootBlobSortOrder {
-                project.blobs[index].sortOrder = firstSortOrder
+                project.blobs[index].sortOrder = firstSortOrder - 1
             } else {
                 let maxSortOrder = project.blobs
                     .filter { $0.folderID == nil }
@@ -453,7 +453,10 @@ class ProjectStore: ObservableObject {
         if let index = project.blobs.firstIndex(where: { $0.id == blobID }) {
             let oldFolderID = project.blobs[index].folderID
             project.blobs[index].folderID = folderID
-            project.blobs[index].sortOrder = 0
+            project.blobs[index].sortOrder = (project.blobs
+                .filter { $0.folderID == folderID && !$0.isHidden && $0.id != blobID }
+                .min { $0.sortOrder < $1.sortOrder }?
+                .sortOrder ?? 0) - 1
 
             // Rebuild sort orders for both old and new contexts
             if let oldFolderID = oldFolderID {

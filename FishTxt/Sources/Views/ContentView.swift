@@ -10,6 +10,7 @@ struct ContentView: View {
     @State var isViewingHidden: Bool = false
 
     @AppStorage("lastProjectID") private var lastProjectIDString: String = ""
+    @StateObject private var crossPanelDrag = CrossPanelDrag()
 
     var body: some View {
         HStack(spacing: 0) {
@@ -59,6 +60,7 @@ struct ContentView: View {
         .frame(minWidth: 700, minHeight: 480)
         .background(AppColors.shared.backgroundSecondary)
         .preferredColorScheme(appColors.isDark ? .dark : .light)
+        .environmentObject(crossPanelDrag)
         .onAppear {
             if let pid = UUID(uuidString: lastProjectIDString),
                store.projects.contains(where: { $0.id == pid && !$0.isArchived }) {

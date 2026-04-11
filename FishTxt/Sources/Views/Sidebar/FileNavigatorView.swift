@@ -4,6 +4,7 @@ struct FileNavigatorView: View {
     
     @EnvironmentObject var store: ProjectStore
     @EnvironmentObject var appColors: AppColors
+    @EnvironmentObject var crossPanelDrag: CrossPanelDrag
     @Binding var selectedProjectID: UUID?
     @Binding var selectedFolderID: UUID?
     @Binding var activeBlobID: UUID?
@@ -279,6 +280,7 @@ struct FileNavigatorView: View {
         let isFolderExpanded = isFolderExpanded(folder, in: project)
         let hasBlobs  = project.blobs.contains { $0.folderID == folder.id && !$0.isHidden }
         let isDragHovered = hoveredFolderID == folder.id
+            || (crossPanelDrag.activeProjectID == project.id && crossPanelDrag.targetFolderID == folder.id)
         let isGlowing = confirmGlowItemID == folder.id
         let blobs     = displayFolderBlobs(folder: folder, project: project)
 
@@ -354,6 +356,9 @@ struct FileNavigatorView: View {
             .contentShape(Rectangle())
             .onHover { h in
                 hoveredRowID = h ? folder.id : (hoveredRowID == folder.id ? nil : hoveredRowID)
+                if crossPanelDrag.activeBlobID != nil && crossPanelDrag.activeProjectID == project.id {
+                    crossPanelDrag.targetFolderID = h ? folder.id : (crossPanelDrag.targetFolderID == folder.id ? nil : crossPanelDrag.targetFolderID)
+                }
             }
             .onTapGesture {
                 selectedProjectID = project.id; selectedFolderID = folder.id
