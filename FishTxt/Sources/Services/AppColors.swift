@@ -15,6 +15,7 @@ class AppColors: ObservableObject {
     @Published var accent: Color              = .blue
     @Published var confirmation: Color        = .green
     @Published var sidebarBackground: Color   = .black
+    @Published var toolbarBackground: Color   = .black
     @Published var cardBorder: Color          = .gray
     @Published var destructive: Color         = .red
 
@@ -73,6 +74,7 @@ class AppColors: ObservableObject {
         accent              = c("accent")
         confirmation        = c("confirmation")
         sidebarBackground   = c("sidebar_background")
+        toolbarBackground   = c("toolbar_background")
         cardBorder          = c("card_border")
         destructive         = c("destructive")
 

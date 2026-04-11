@@ -9,6 +9,7 @@
     "accent":               [81, 159, 173],
     "confirmation":         [100, 150, 112],
     "sidebar_background":   [26, 38, 44],
+    "toolbar_background":   [17, 27, 32],
     "card_border":          [65, 82, 90],
     "destructive":          [204, 82, 82]
   },
@@ -22,7 +23,8 @@
     "content_tertiary":     [135, 79, 83],
     "accent":               [220, 66, 115],
     "confirmation":         [146,	153,	158],
-    "sidebar_background":   [39,24,27],
+    "sidebar_background":   [39, 24, 27],
+    "toolbar_background":   [27, 14, 18],
     "card_border":          [125,	89,	111],
     "destructive":          [204, 82, 82]
   },
@@ -37,6 +39,7 @@
     "accent":               [125, 148, 52],
     "confirmation":         [168, 111, 144],
     "sidebar_background":   [24, 26, 22],
+    "toolbar_background":   [15, 17, 13],
     "card_border":          [65, 68, 60],
     "destructive":          [204, 82, 82]
   },
@@ -51,6 +54,7 @@
     "accent":               [128,	74,	78],
     "confirmation":         [56,	152,	56],
     "sidebar_background":   [214, 202, 188],
+    "toolbar_background":   [196, 182, 166],
     "card_border":          [186, 172, 155],
     "destructive":          [204, 82, 82]
   }

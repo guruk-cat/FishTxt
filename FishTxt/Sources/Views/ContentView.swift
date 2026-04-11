@@ -60,6 +60,8 @@ struct ContentView: View {
         .frame(minWidth: 700, minHeight: 480)
         .background(AppColors.shared.backgroundSecondary)
         .preferredColorScheme(appColors.isDark ? .dark : .light)
+        .toolbarBackground(appColors.toolbarBackground, for: .windowToolbar)
+        .toolbarBackground(.visible, for: .windowToolbar)
         .environmentObject(crossPanelDrag)
         .onAppear {
             if let pid = UUID(uuidString: lastProjectIDString),
