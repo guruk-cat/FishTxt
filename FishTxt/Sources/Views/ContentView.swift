@@ -9,6 +9,8 @@ struct ContentView: View {
     @State var isSidebarOpen: Bool = true
     @State var isViewingHidden: Bool = false
 
+    @AppStorage("lastProjectID") private var lastProjectIDString: String = ""
+
     var body: some View {
         HStack(spacing: 0) {
             SidebarView(
@@ -57,6 +59,15 @@ struct ContentView: View {
         .frame(minWidth: 700, minHeight: 480)
         .background(AppColors.shared.backgroundSecondary)
         .preferredColorScheme(appColors.isDark ? .dark : .light)
+        .onAppear {
+            if let pid = UUID(uuidString: lastProjectIDString),
+               store.projects.contains(where: { $0.id == pid && !$0.isArchived }) {
+                selectedProjectID = pid
+            }
+        }
+        .onChange(of: selectedProjectID) { newID in
+            lastProjectIDString = newID?.uuidString ?? ""
+        }
     }
 }
 
