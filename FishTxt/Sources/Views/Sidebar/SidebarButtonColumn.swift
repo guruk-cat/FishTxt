@@ -7,21 +7,11 @@ struct SidebarButtonColumn: View {
 
     @Binding var isSidebarOpen: Bool
     @Binding var activePanel: SidebarPanel
-    @Binding var selectedProjectID: UUID?
-    @Binding var selectedFolderID: UUID?
-    @Binding var activeBlobID: UUID?
-    @Binding var isViewingHidden: Bool
 
     // Hover state
     @State private var hoverNavigator: Bool = false
     @State private var hoverMerge: Bool    = false
-    @State private var hoverFolder: Bool   = false
-    @State private var hoverBlob: Bool     = false
     @State private var hoverSettings: Bool = false
-
-    // Confirmation glow state
-    @State private var glowFolder: Bool = false
-    @State private var glowBlob: Bool   = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -37,44 +27,10 @@ struct SidebarButtonColumn: View {
             }
             .buttonStyle(.plain)
             .onHover { hoverNavigator = $0 }
-
-            // New folder button
-            Button(action: {
-                guard let projectID = selectedProjectID else { return }
-                _ = store.createFolder(in: projectID, name: "Untitled Folder")
-                triggerGlow(isFolder: true)
-            }) {
-                Image(systemName: "folder.badge.plus")
-                    .font(.system(size: 16))
-                    .foregroundColor(folderButtonColor)
-                    .frame(width: 32, height: 32)
-                    .animation(.easeInOut(duration: 0.12), value: glowFolder)
-                    .animation(.easeInOut(duration: 0.12), value: hoverFolder)
-            }
-            .buttonStyle(.plain)
-            .disabled(selectedProjectID == nil)
-            .onHover { hoverFolder = $0 }
-
-            // New blob button
-            Button(action: {
-                guard let projectID = selectedProjectID else { return }
-                _ = store.createBlob(in: projectID, folderID: selectedFolderID)
-                triggerGlow(isFolder: false)
-            }) {
-                Image(systemName: "doc.badge.plus")
-                    .font(.system(size: 16))
-                    .foregroundColor(blobButtonColor)
-                    .frame(width: 32, height: 32)
-                    .animation(.easeInOut(duration: 0.12), value: glowBlob)
-                    .animation(.easeInOut(duration: 0.12), value: hoverBlob)
-            }
-            .buttonStyle(.plain)
-            .disabled(selectedProjectID == nil)
-            .onHover { hoverBlob = $0 }
             
             // Blob merge toggle
             Button(action: { togglePanel(.blobMerge) }) {
-                Image(systemName: "arrow.triangle.merge")
+                Image(systemName: "plus.rectangle.on.rectangle")
                     .font(.system(size: 16))
                     .foregroundColor(mergeButtonColor)
                     .frame(width: 32, height: 32)
@@ -145,45 +101,12 @@ struct SidebarButtonColumn: View {
         return AppColors.shared.contentTertiary
     }
 
-    private var folderButtonColor: Color {
-        guard selectedProjectID != nil else { return AppColors.shared.contentTertiary }
-        if glowFolder  { return AppColors.shared.confirmation }
-        if hoverFolder { return AppColors.shared.contentPrimary }
-        return AppColors.shared.contentTertiary
-    }
-
-    private var blobButtonColor: Color {
-        guard selectedProjectID != nil else { return AppColors.shared.contentTertiary }
-        if glowBlob  { return AppColors.shared.confirmation }
-        if hoverBlob { return AppColors.shared.contentPrimary }
-        return AppColors.shared.contentTertiary
-    }
-
-    // MARK: - Glow animation
-
-    private func triggerGlow(isFolder: Bool) {
-        if isFolder {
-            withAnimation(.easeIn(duration: 0.08)) { glowFolder = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                withAnimation(.easeOut(duration: 0.25)) { glowFolder = false }
-            }
-        } else {
-            withAnimation(.easeIn(duration: 0.08)) { glowBlob = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                withAnimation(.easeOut(duration: 0.25)) { glowBlob = false }
-            }
-        }
-    }
 }
 
 #Preview {
     SidebarButtonColumn(
         isSidebarOpen: .constant(false),
-        activePanel: .constant(.navigator),
-        selectedProjectID: .constant(nil),
-        selectedFolderID: .constant(nil),
-        activeBlobID: .constant(nil),
-        isViewingHidden: .constant(false)
+        activePanel: .constant(.navigator)
     )
     .environmentObject(ProjectStore())
     .environmentObject(AppColors.shared)

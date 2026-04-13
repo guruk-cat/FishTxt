@@ -23,6 +23,12 @@ struct DashboardView: View {
     @State private var renameFolderID: UUID?
     @State private var renameFolderText = ""
 
+    // MARK: - Floating island state
+    @State private var hoverFolder: Bool = false
+    @State private var hoverBlob: Bool   = false
+    @State private var glowFolder: Bool  = false
+    @State private var glowBlob: Bool    = false
+
     // MARK: - Drag State
     @State private var draggedItemID: UUID? = nil
     @State private var dragLocation: CGPoint = .zero
@@ -344,6 +350,50 @@ struct DashboardView: View {
                 }
             }
         )
+        .overlay(alignment: .bottomTrailing) {
+            if !isReadOnly {
+                HStack(spacing: 4) {
+                    // New folder button
+                    Button(action: {
+                        _ = store.createFolder(in: projectID, name: "Untitled Folder")
+                        triggerIslandGlow(isFolder: true)
+                    }) {
+                        Image(systemName: glowFolder ? "folder.fill.badge.plus" : "folder.badge.plus")
+                            .font(.system(size: 15))
+                            .foregroundColor(folderIslandColor)
+                            .frame(width: 32, height: 32)
+                            .animation(.easeInOut(duration: 0.12), value: glowFolder)
+                            .animation(.easeInOut(duration: 0.12), value: hoverFolder)
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { hoverFolder = $0 }
+
+                    // New blob button
+                    Button(action: {
+                        _ = store.createBlob(in: projectID, folderID: folderID)
+                        triggerIslandGlow(isFolder: false)
+                    }) {
+                        Image(systemName: glowBlob ? "doc.fill.badge.plus" : "doc.badge.plus")
+                            .font(.system(size: 15))
+                            .foregroundColor(blobIslandColor)
+                            .frame(width: 32, height: 32)
+                            .animation(.easeInOut(duration: 0.12), value: glowBlob)
+                            .animation(.easeInOut(duration: 0.12), value: hoverBlob)
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { hoverBlob = $0 }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(AppColors.shared.backgroundPrimary)
+                        .shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 3)
+                )
+                .padding(.trailing, 16)
+                .padding(.bottom, 16)
+            }
+        }
         .alert("Rename Folder", isPresented: $isRenamingFolder) {
             TextField("Folder name", text: $renameFolderText)
             Button("Rename") {
@@ -430,6 +480,34 @@ struct DashboardView: View {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 confirmGlowItemID = nil
+            }
+        }
+    }
+
+    // MARK: - Floating island helpers
+
+    private var folderIslandColor: Color {
+        if glowFolder  { return AppColors.shared.confirmation }
+        if hoverFolder { return AppColors.shared.contentPrimary }
+        return AppColors.shared.contentTertiary
+    }
+
+    private var blobIslandColor: Color {
+        if glowBlob  { return AppColors.shared.confirmation }
+        if hoverBlob { return AppColors.shared.contentPrimary }
+        return AppColors.shared.contentTertiary
+    }
+
+    private func triggerIslandGlow(isFolder: Bool) {
+        if isFolder {
+            withAnimation(.easeIn(duration: 0.08)) { glowFolder = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+                withAnimation(.easeOut(duration: 0.25)) { glowFolder = false }
+            }
+        } else {
+            withAnimation(.easeIn(duration: 0.08)) { glowBlob = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+                withAnimation(.easeOut(duration: 0.25)) { glowBlob = false }
             }
         }
     }

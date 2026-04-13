@@ -135,8 +135,6 @@ Produces JavaScript snippets for editor theming:
 ### SidebarButtonColumn
 
 - Toggle sidebar visibility
-- New folder button (with glow confirmation)
-- New blob button (with glow confirmation)
 - Disabled git button (placeholder for future feature)
 - Settings button (opens SettingsView sheet)
 
@@ -183,6 +181,11 @@ Supports context menus for:
 #### Read-only mode
 
 When project is archived or viewing hidden items.
+
+#### Floating island buttons
+
+- New folder button (with glow confirmation)
+- New blob button (with glow confirmation)
 
 #### Context menus for
 

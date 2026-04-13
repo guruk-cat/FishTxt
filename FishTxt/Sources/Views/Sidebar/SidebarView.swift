@@ -20,11 +20,7 @@ struct SidebarView: View {
         HStack(spacing: 0) {
             SidebarButtonColumn(
                 isSidebarOpen: $isSidebarOpen,
-                activePanel: $activePanel,
-                selectedProjectID: $selectedProjectID,
-                selectedFolderID: $selectedFolderID,
-                activeBlobID: $activeBlobID,
-                isViewingHidden: $isViewingHidden
+                activePanel: $activePanel
             )
             .frame(width: 48)
 
