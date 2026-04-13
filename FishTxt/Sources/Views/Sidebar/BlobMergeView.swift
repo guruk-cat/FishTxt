@@ -94,6 +94,7 @@ struct BlobMergeView: View {
         .onAppear { loadBlobs() }
         .onChange(of: selectedProjectID) { _ in loadBlobs() }
         .onChange(of: selectedFolderID) { _ in loadBlobs() }
+        .onChange(of: store.projects) { _ in syncBlobs() }
     }
 
     // MARK: - Header
@@ -412,6 +413,43 @@ struct BlobMergeView: View {
         } else {
             checkedBlobIDs.insert(blobID)
         }
+    }
+
+    // Incremental sync triggered by external store changes (e.g. dashboard creates/deletes).
+    // Preserves the user's drag-imposed order: removes IDs that are gone, appends new ones.
+    private func syncBlobs() {
+        guard let projectID = selectedProjectID,
+              let project = store.projects.first(where: { $0.id == projectID }) else {
+            orderedBlobIDs = []
+            blobTitles = [:]
+            checkedBlobIDs = []
+            return
+        }
+
+        let currentBlobs = project.blobs
+            .filter { !$0.isHidden && $0.folderID == selectedFolderID }
+        let currentIDs = Set(currentBlobs.map { $0.id })
+
+        // Drop IDs that no longer exist in the store
+        orderedBlobIDs.removeAll { !currentIDs.contains($0) }
+        checkedBlobIDs = checkedBlobIDs.filter { currentIDs.contains($0) }
+
+        // Append any newly added blobs (in their natural sortOrder) after existing entries
+        let existingSet = Set(orderedBlobIDs)
+        let newBlobs = currentBlobs
+            .filter { !existingSet.contains($0.id) }
+            .sorted { $0.sortOrder < $1.sortOrder }
+        for blob in newBlobs {
+            orderedBlobIDs.append(blob.id)
+            checkedBlobIDs.insert(blob.id)
+        }
+
+        // Refresh titles for all current blobs, drop stale entries
+        for blob in currentBlobs {
+            let excerpt = store.loadBlobExcerpt(blobID: blob.id, in: projectID)
+            blobTitles[blob.id] = excerpt.title ?? "Untitled"
+        }
+        blobTitles = blobTitles.filter { currentIDs.contains($0.key) }
     }
 
     private func loadBlobs() {
