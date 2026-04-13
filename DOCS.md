@@ -77,6 +77,40 @@ Data is stored in `~/Documents/FishTxt/` with one directory per project containi
 
 Welcome project is copied from `Resources/welcome-project/` on first launch.
 
+### Printing
+
+Blobs can be printed to PDF or physical printer via `printBlob(blobID:in:)`. The print flow:
+
+1. Generate HTML from blob's TipTap JSON using `loadBlobHTML()` (preserves headings, lists, bold/italic/underline, blockquotes, and footnotes with two-way linking which can be leveraged *if needed*)
+2. Load the active print profile CSS from `Resources/print-profiles/` subdirectory
+3. Wrap HTML fragment in a minimal `<html>` document with the profile CSS injected
+4. Create a temporary off-screen `WKWebView`, load the document, and invoke `printOperation(with:)` on macOS 13+
+5. Show the system print sheet (which includes "Save as PDF")
+
+**Footnote support**: The HTML renderer handles:
+
+- `footnoteReference` nodes → `<sup><a href="#fn:1" id="ref:1">[1]</a></sup>` (clickable links both ways)
+- `footnotes` / `footnote` nodes → `<ol class="footnotes"><li id="fn:1">...content... <a href="#ref:1">↑</a></li></ol>` (with backlinks)
+
+Print-specific CSS can style footnotes appropriately (e.g., smaller font, page break handling).
+
+### Print Profiles
+
+Print profiles are self-contained CSS files stored in `Resources/print-profiles/`. Each profile:
+
+- Is named `<profileName>.css` (e.g., `palatino_basic.css`, `monospace.css`)
+- Owns all styling: fonts, sizes, margins, headings, lists, blockquotes, footnotes, etc.
+- Is injected verbatim into the `<style>` block of the print document
+- Does NOT use runtime substitution or variables
+
+Selection is persisted via `@AppStorage("printProfile")` (defaults to first available profile if not set). Users select a profile in Settings (see **Settings** section below).
+
+New profiles can be added by:
+
+1. Creating a `.css` file in `FishTxt/Resources/print-profiles/`
+2. Adding it to the Xcode target's "Copy Bundle Resources" build phase (already configured)
+3. Restarting the app; the profile will appear in Settings automatically
+
 ### AppColors (`Sources/Services/AppColors.swift`)
 
 Loads color palettes from `Resources/colors.json` and exposes SwiftUI `Color` properties:
@@ -258,8 +292,11 @@ Modal sheet with @AppStorage bindings:
 - **Appearance**
   - Color palette (dropdown, populated from `colors.json` keys)
   - Auto-scroll mode (regular vs centered, segmented control)
+  - Print profile (dropdown, auto-populated from `.css` files in `Resources/print-profiles/`)
 
 Palette change reactively calls `appColors.loadColors(palette:)`, triggering color updates across app and editor.
+
+Print profile selection is persisted and used whenever the user prints a blob from the dashboard, sidebar, or editor (⌘P in editor).
 
 ## Resources
 
@@ -284,6 +321,8 @@ The sidebar reflects project selection and folder navigation. The dashboard show
 | Task | File(s) |
 | ---- | ------- |
 | Persistence, CRUD, sort order, drag logic | `ProjectStore.swift` |
+| Printing & print profiles | `ProjectStore.printBlob()`, `BlobPrinter`, `Resources/print-profiles/*.css` |
+| Footnote HTML rendering | `ProjectStore.renderNodeHTML()` (cases: `footnoteReference`, `footnotes`, `footnote`) |
 | Color theming (Swift + web) | `AppColors.swift` |
 | Dashboard drag & drop | `DashboardView.swift` |
 | Sidebar tree drag & drop | `FileNavigatorView.swift` |
@@ -291,4 +330,4 @@ The sidebar reflects project selection and folder navigation. The dashboard show
 | Save lifecycle | `EditView.swift` |
 | JS ↔ Swift editor messages | `EditorBridge.swift`, `WebEditorView.toolbarInitJS` |
 | Editor DOM / TipTap internals | `Resources/editor.html` (grep) |
-| Settings & user preferences | `SettingsView.swift` |
+| Settings & user preferences | `SettingsView.swift` (includes print profile picker) |

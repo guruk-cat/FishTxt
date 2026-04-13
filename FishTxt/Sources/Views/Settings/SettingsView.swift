@@ -9,6 +9,9 @@ struct SettingsView: View {
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
     @AppStorage("fontSize") private var fontSize: Double = 16.0
     @AppStorage("autoScroll") private var autoScroll: String = "regular"
+    @AppStorage("printProfile") private var printProfile: String = "default"
+
+    @State private var availablePrintProfiles: [String] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -112,6 +115,16 @@ struct SettingsView: View {
                             .pickerStyle(.segmented)
                             .frame(width: 160)
                         }
+
+                        settingsRow("Print profile") {
+                            Picker("", selection: $printProfile) {
+                                ForEach(availablePrintProfiles, id: \.self) { profile in
+                                    Text(profile.replacingOccurrences(of: "_", with: " ").capitalized).tag(profile)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .frame(width: 140)
+                        }
                     }
                 }
                 .padding(20)
@@ -119,8 +132,11 @@ struct SettingsView: View {
 
             Spacer(minLength: 0)
         }
-        .frame(width: 380, height: 340)
+        .frame(width: 380, height: 380)
         .background(AppColors.shared.backgroundSecondary)
+        .task {
+            loadPrintProfiles()
+        }
     }
 
     // MARK: - Layout helpers
@@ -149,6 +165,18 @@ struct SettingsView: View {
 
             control()
         }
+    }
+
+    private func loadPrintProfiles() {
+        guard let urls = Bundle.main.urls(forResourcesWithExtension: "css", subdirectory: "print-profiles") else {
+            print("[SettingsView] No print profiles found in bundle")
+            availablePrintProfiles = []
+            return
+        }
+        print("[SettingsView] Found \(urls.count) print profiles: \(urls.map { $0.lastPathComponent})")
+        availablePrintProfiles = urls
+            .map { $0.deletingPathExtension().lastPathComponent }
+            .sorted()
     }
 }
 

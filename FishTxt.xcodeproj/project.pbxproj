@@ -29,6 +29,7 @@
 		FT0000000000000000000042 /* EditorBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000041 /* EditorBridge.swift */; };
 		FT0000000000000000000044 /* WebEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000043 /* WebEditorView.swift */; };
 		FT0000000000000000000048 /* editor.html in Resources */ = {isa = PBXBuildFile; fileRef = FT0000000000000000000047 /* editor.html */; };
+		0494D7D72F8CC30E00D5B4CB /* print-profiles in Resources */ = {isa = PBXBuildFile; fileRef = 0494D7D62F8CC30E00D5B4CA /* print-profiles */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -60,6 +61,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		0494D7D62F8CC30E00D5B4CA /* print-profiles */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "print-profiles"; sourceTree = "<group>"; };
 		04E02F7B2F82A40D004885D8 /* welcome-project */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "welcome-project"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -181,6 +183,7 @@
 			children = (
 				FT000000000000000000001D /* colors.json */,
 				FT0000000000000000000047 /* editor.html */,
+				0494D7D62F8CC30E00D5B4CA /* print-profiles */,
 				04E02F7B2F82A40D004885D8 /* welcome-project */,
 			);
 			path = Resources;
@@ -218,6 +221,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				0494D7D62F8CC30E00D5B4CA /* print-profiles */,
 				04E02F7B2F82A40D004885D8 /* welcome-project */,
 			);
 			name = FishTxt;
@@ -267,6 +271,7 @@
 				04966A352F81786C000FF7F5 /* FishTxt.icon in Resources */,
 				FT000000000000000000002E /* colors.json in Resources */,
 				FT0000000000000000000048 /* editor.html in Resources */,
+				0494D7D72F8CC30E00D5B4CB /* print-profiles in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

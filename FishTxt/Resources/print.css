@@ -1,3 +1,0 @@
-/* print.css — injected into the temporary WKWebView used for blob printing.
-   Content is managed separately (parallel branch); this file is loaded at
-   runtime by ProjectStore.printBlob(blobID:in:). */

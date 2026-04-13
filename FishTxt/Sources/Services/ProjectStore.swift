@@ -660,6 +660,16 @@ class ProjectStore: ObservableObject {
                 default:          return result
                 }
             }
+        case "footnoteReference":
+            let refNumber = (node["attrs"] as? [String: Any])?["referenceNumber"] as? String ?? "0"
+            return "<sup><a href=\"#fn:\(refNumber)\" id=\"ref:\(refNumber)\" class=\"footnote-ref\">[\(refNumber)]</a></sup>"
+        case "footnotes":
+            return "<ol class=\"footnotes\">" + children.map { renderNodeHTML($0) }.joined() + "</ol>"
+        case "footnote":
+            let footnoteId = (node["attrs"] as? [String: Any])?["id"] as? String ?? "fn:0"
+            let refNumber = footnoteId.replacingOccurrences(of: "fn:", with: "")
+            let content = children.map { renderNodeHTML($0) }.joined()
+            return "<li id=\"\(footnoteId)\">\(content) <a href=\"#ref:\(refNumber)\" class=\"footnote-backlink\">↑</a></li>"
         default:
             return children.map { renderNodeHTML($0) }.joined()
         }
@@ -695,14 +705,12 @@ class ProjectStore: ObservableObject {
     func printBlob(blobID: UUID, in projectID: UUID) {
         guard let fragment = loadBlobHTML(blobID: blobID, in: projectID) else { return }
 
-        let css: String = {
-            guard let url = Bundle.main.url(forResource: "print", withExtension: "css"),
-                  let str = try? String(contentsOf: url, encoding: .utf8) else {
-                print("[ProjectStore] print.css not found in bundle")
-                return ""
-            }
-            return str
-        }()
+        // Get selected profile, default to first available
+        let profileName = UserDefaults.standard.string(forKey: "printProfile") ?? "default"
+        print("[ProjectStore] Loading profile: \(profileName)")
+        
+        let css = loadPrintProfileCSS(profileName: profileName) ?? loadFirstAvailablePrintProfileCSS() ?? ""
+        print("[ProjectStore] CSS length: \(css.count)")
 
         let document = """
         <!DOCTYPE html>
@@ -718,6 +726,21 @@ class ProjectStore: ObservableObject {
         if #available(macOS 13, *) {
             BlobPrinter.start(html: document)
         }
+    }
+
+    private func loadPrintProfileCSS(profileName: String) -> String? {
+        guard let url = Bundle.main.url(
+            forResource: profileName,
+            withExtension: "css",
+            subdirectory: "print-profiles"
+        ) else { return nil }
+        return try? String(contentsOf: url, encoding: .utf8)
+    }
+
+    private func loadFirstAvailablePrintProfileCSS() -> String? {
+        guard let urls = Bundle.main.urls(forResourcesWithExtension: "css", subdirectory: "print-profiles"),
+              let firstURL = urls.first else { return nil }
+        return try? String(contentsOf: firstURL, encoding: .utf8)
     }
 
     // MARK: - Dashboard Helpers
