@@ -17,7 +17,7 @@ struct SidebarButtonColumn: View {
         VStack(spacing: 12) {
             // File navigator toggle
             Button(action: { togglePanel(.navigator) }) {
-                Image(systemName: "sidebar.left")
+                Image(systemName: "tray.full")
                     .font(.system(size: 16))
                     .foregroundColor(navigatorButtonColor)
                     .frame(width: 32, height: 32)
@@ -43,7 +43,7 @@ struct SidebarButtonColumn: View {
 
             // Git button (coming soon)
             Button(action: {}) {
-                Image(systemName: "arrow.triangle.branch")
+                Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
                     .font(.system(size: 16))
                     .foregroundColor(AppColors.shared.contentTertiary)
                     .frame(width: 32, height: 32)

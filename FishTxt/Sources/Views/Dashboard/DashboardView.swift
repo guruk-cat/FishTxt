@@ -358,7 +358,7 @@ struct DashboardView: View {
                         _ = store.createFolder(in: projectID, name: "Untitled Folder")
                         triggerIslandGlow(isFolder: true)
                     }) {
-                        Image(systemName: glowFolder ? "folder.fill.badge.plus" : "folder.badge.plus")
+                        Image(systemName: glowFolder ? "folder.fill" : "folder")
                             .font(.system(size: 15))
                             .foregroundColor(folderIslandColor)
                             .frame(width: 32, height: 32)
@@ -374,7 +374,7 @@ struct DashboardView: View {
                         _ = store.createBlob(in: projectID, folderID: folderID)
                         triggerIslandGlow(isFolder: false)
                     }) {
-                        Image(systemName: glowBlob ? "doc.fill.badge.plus" : "doc.badge.plus")
+                        Image(systemName: glowBlob ? "text.document.fill" : "text.document")
                             .font(.system(size: 15))
                             .foregroundColor(blobIslandColor)
                             .frame(width: 32, height: 32)
