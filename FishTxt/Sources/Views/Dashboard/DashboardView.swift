@@ -354,35 +354,33 @@ struct DashboardView: View {
             if !isReadOnly {
                 HStack(spacing: 4) {
                     // New folder button
-                    Button(action: {
-                        _ = store.createFolder(in: projectID, name: "Untitled Folder")
-                        triggerIslandGlow(isFolder: true)
-                    }) {
-                        Image(systemName: glowFolder ? "folder.fill" : "folder")
-                            .font(.system(size: 15))
-                            .foregroundColor(folderIslandColor)
-                            .frame(width: 32, height: 32)
-                            .animation(.easeInOut(duration: 0.12), value: glowFolder)
-                            .animation(.easeInOut(duration: 0.12), value: hoverFolder)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(folderID != nil)
-                    .onHover { hoverFolder = $0 }
+                    Image(systemName: glowFolder ? "folder.fill" : "folder")
+                        .font(.system(size: 15))
+                        .foregroundColor(folderIslandColor)
+                        .frame(width: 32, height: 32)
+                        .animation(.easeInOut(duration: 0.1), value: glowFolder)
+                        .animation(.easeInOut(duration: 0.12), value: hoverFolder)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            guard folderID == nil else { return }
+                            _ = store.createFolder(in: projectID, name: "Untitled Folder")
+                            triggerIslandGlow(isFolder: true)
+                        }
+                        .onHover { hoverFolder = $0 }
 
                     // New blob button
-                    Button(action: {
-                        _ = store.createBlob(in: projectID, folderID: folderID)
-                        triggerIslandGlow(isFolder: false)
-                    }) {
-                        Image(systemName: glowBlob ? "text.document.fill" : "text.document")
-                            .font(.system(size: 15))
-                            .foregroundColor(blobIslandColor)
-                            .frame(width: 32, height: 32)
-                            .animation(.easeInOut(duration: 0.12), value: glowBlob)
-                            .animation(.easeInOut(duration: 0.12), value: hoverBlob)
-                    }
-                    .buttonStyle(.plain)
-                    .onHover { hoverBlob = $0 }
+                    Image(systemName: glowBlob ? "text.document.fill" : "text.document")
+                        .font(.system(size: 15))
+                        .foregroundColor(blobIslandColor)
+                        .frame(width: 32, height: 32)
+                        .animation(.easeInOut(duration: 0.1), value: glowBlob)
+                        .animation(.easeInOut(duration: 0.12), value: hoverBlob)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            _ = store.createBlob(in: projectID, folderID: folderID)
+                            triggerIslandGlow(isFolder: false)
+                        }
+                        .onHover { hoverBlob = $0 }
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
