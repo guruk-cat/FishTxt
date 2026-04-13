@@ -17,11 +17,11 @@ FishTxt was designed to be exactly that kind of combination, a set of tools that
 
 ### Authors
 
-FishTxt was designed by June Jung, and the codebase was built largely by Claude Sonnet.
+FishTxt was designed by me, and the codebase was built largely by Claude Sonnet.
 
 ### Current Version
 
-This version is the Beta version (build 2), currently being tested in real use (by me, June Jung).
+This version is the Beta version (build 2), currently being tested in real use (by me).
 
 ### Repository Map
 
