@@ -28,7 +28,11 @@ p {
     text-indent: 1.5em;
 }
 
-p:first-of-type {
+blockquote + p {
+    text-indent: 0;
+}
+
+.footnotes p {
     text-indent: 0;
 }
 
@@ -66,7 +70,7 @@ blockquote {
     font-family: Palatino, serif;
     font-size: 11pt;
     line-height: 1.2;
-    margin: 0;
+    margin: 1.5em 0;
     padding-left: 2em;
     color: #000;
 }
@@ -116,7 +120,9 @@ strong, em, u {
 
 .footnote-ref {
     font-family: Palatino, serif;
-    font-size: 11pt;
+    font-size: 9pt;
+    color: inherit;
+    text-decoration: none;
 }
 
 .footnote-backlink {
