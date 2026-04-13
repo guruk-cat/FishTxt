@@ -10,6 +10,7 @@
 		0494D7D72F8CC30E00D5B4CB /* print-profiles in Resources */ = {isa = PBXBuildFile; fileRef = 0494D7D62F8CC30E00D5B4CA /* print-profiles */; };
 		04966A352F81786C000FF7F5 /* FishTxt.icon in Resources */ = {isa = PBXBuildFile; fileRef = 04966A342F81786C000FF7F5 /* FishTxt.icon */; };
 		049A90272F8CFF2A0012AACE /* BlobMergeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049A90262F8CFF2A0012AACE /* BlobMergeView.swift */; };
+		049A90292F8D19810012AACE /* BlobMergeMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049A90282F8D19810012AACE /* BlobMergeMode.swift */; };
 		049C3D282F8A0EBE003518E2 /* CrossPanelDrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049C3D272F8A0EBE003518E2 /* CrossPanelDrag.swift */; };
 		FT000000000000000000002D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000001C /* Assets.xcassets */; };
 		FT000000000000000000002E /* colors.json in Resources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000001D /* colors.json */; };
@@ -36,6 +37,7 @@
 /* Begin PBXFileReference section */
 		04966A342F81786C000FF7F5 /* FishTxt.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = FishTxt.icon; sourceTree = "<group>"; };
 		049A90262F8CFF2A0012AACE /* BlobMergeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobMergeView.swift; sourceTree = "<group>"; };
+		049A90282F8D19810012AACE /* BlobMergeMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobMergeMode.swift; sourceTree = "<group>"; };
 		049C3D272F8A0EBE003518E2 /* CrossPanelDrag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossPanelDrag.swift; sourceTree = "<group>"; };
 		FT0000000000000000000019 /* FishTxt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FishTxt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FT000000000000000000001A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 		FT0000000000000000000010 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				049A90282F8D19810012AACE /* BlobMergeMode.swift */,
 				FT000000000000000000001F /* Blob.swift */,
 				FT0000000000000000000020 /* BlobFolder.swift */,
 				FT0000000000000000000021 /* DashboardItem.swift */,
@@ -287,6 +290,7 @@
 			files = (
 				FT000000000000000000002F /* FishTxtApp.swift in Sources */,
 				049A90272F8CFF2A0012AACE /* BlobMergeView.swift in Sources */,
+				049A90292F8D19810012AACE /* BlobMergeMode.swift in Sources */,
 				FT0000000000000000000030 /* Blob.swift in Sources */,
 				FT0000000000000000000031 /* BlobFolder.swift in Sources */,
 				FT0000000000000000000032 /* DashboardItem.swift in Sources */,

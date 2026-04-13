@@ -743,6 +743,114 @@ class ProjectStore: ObservableObject {
         return try? String(contentsOf: firstURL, encoding: .utf8)
     }
 
+    // MARK: - Merge
+
+    func mergeBlobs(
+        orderedBlobIDs: [UUID],
+        in projectID: UUID,
+        folderID: UUID?,
+        mode: BlobMergeMode,
+        newHeading: String?,
+        deleteAfterMerge: Bool
+    ) -> UUID? {
+        var mergedNodes: [[String: Any]] = []
+
+        // Mode B: prepend a new H1 heading node
+        if mode == .newHeading, let heading = newHeading, !heading.isEmpty {
+            mergedNodes.append([
+                "type": "heading",
+                "attrs": ["level": 1],
+                "content": [["type": "text", "text": heading]]
+            ])
+        }
+
+        for blobID in orderedBlobIDs {
+            guard let jsonString = loadBlobContent(blobID: blobID, in: projectID),
+                  let data = jsonString.data(using: .utf8),
+                  let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let nodes = root["content"] as? [[String: Any]] else { continue }
+
+            if mode == .newHeading {
+                mergedNodes.append(contentsOf: demoteHeadings(in: nodes))
+            } else {
+                mergedNodes.append(contentsOf: nodes)
+            }
+        }
+
+        guard !mergedNodes.isEmpty else { return nil }
+
+        mergedNodes = consolidateFootnotes(in: mergedNodes)
+
+        // Build the merged JSON string before touching any project state.
+        let newBlob = Blob(folderID: folderID)
+        let doc: [String: Any] = ["type": "doc", "content": mergedNodes]
+        guard let docData = try? JSONSerialization.data(withJSONObject: doc),
+              let jsonString = String(data: docData, encoding: .utf8) else { return nil }
+
+        // Delete source content files synchronously so they're gone before we touch metadata.
+        if deleteAfterMerge {
+            let projectPath = rootPath + "/" + projectID.uuidString
+            for blobID in orderedBlobIDs {
+                try? fileManager.removeItem(atPath: projectPath + "/" + blobID.uuidString + ".json")
+            }
+        }
+
+        // Single synchronous mutateProject: remove sources and insert the new blob atomically.
+        // This avoids the stale-snapshot race that occurs when chaining multiple async
+        // updateProject calls (each captures projects[index] before the previous write settles).
+        mutateProject(projectID) { project in
+            if deleteAfterMerge {
+                let sourceSet = Set(orderedBlobIDs)
+                project.blobs.removeAll { sourceSet.contains($0.id) }
+            }
+
+            var blobToInsert = newBlob
+            if let fid = folderID {
+                let firstOrder = project.blobs
+                    .filter { $0.folderID == fid && !$0.isHidden }
+                    .min { $0.sortOrder < $1.sortOrder }?
+                    .sortOrder ?? 0
+                blobToInsert.sortOrder = firstOrder - 1
+                project.blobs.append(blobToInsert)
+                self.rebuildFolderSortOrders(&project, folderID: fid)
+            } else {
+                if let firstOrder = project.blobs
+                    .filter({ $0.folderID == nil && !$0.isHidden })
+                    .min(by: { $0.sortOrder < $1.sortOrder })
+                    .map({ $0.sortOrder }) {
+                    blobToInsert.sortOrder = firstOrder - 1
+                    project.blobs.append(blobToInsert)
+                    self.rebuildRootSortOrders(&project)
+                } else {
+                    let maxOrder = project.blobs
+                        .filter { $0.folderID == nil }
+                        .max { $0.sortOrder < $1.sortOrder }?
+                        .sortOrder ?? -1
+                    blobToInsert.sortOrder = maxOrder + 1
+                    project.blobs.append(blobToInsert)
+                }
+            }
+        }
+
+        // Write the content file after the blob is in project.blobs, so saveBlobContent's
+        // own mutateProject can update updatedAt correctly.
+        saveBlobContent(jsonString, blobID: newBlob.id, in: projectID)
+
+        return newBlob.id
+    }
+
+    private func demoteHeadings(in nodes: [[String: Any]]) -> [[String: Any]] {
+        nodes.map { node in
+            var mutableNode = node
+            guard let type = mutableNode["type"] as? String, type == "heading",
+                  var attrs = mutableNode["attrs"] as? [String: Any],
+                  let level = attrs["level"] as? Int else { return mutableNode }
+            attrs["level"] = min(level + 1, 3)
+            mutableNode["attrs"] = attrs
+            return mutableNode
+        }
+    }
+
     // MARK: - Dashboard Helpers
 
     func dashboardItems(for projectID: UUID, folderID: UUID?) -> [DashboardItem] {
@@ -798,6 +906,84 @@ class ProjectStore: ObservableObject {
         items.append(contentsOf: blobsInHiddenFolders.map { .blob($0) })
 
         return items
+    }
+
+    // MARK: - Footnote consolidation
+
+    // Strips all `footnotes` container nodes from their inline positions, renumbers every
+    // footnote reference sequentially across the merged document, and appends a single
+    // consolidated `footnotes` container at the very end.
+    private func consolidateFootnotes(in nodes: [[String: Any]]) -> [[String: Any]] {
+        // Separate regular content from footnotes containers
+        var contentNodes: [[String: Any]] = []
+        var allFootnoteItems: [[String: Any]] = []
+
+        for node in nodes {
+            if node["type"] as? String == "footnotes" {
+                if let children = node["content"] as? [[String: Any]] {
+                    allFootnoteItems.append(contentsOf: children)
+                }
+            } else {
+                contentNodes.append(node)
+            }
+        }
+
+        guard !allFootnoteItems.isEmpty else { return nodes }
+
+        // Build data-id → new sequential number map (data-id is the stable cross-reference link)
+        var idToNumber: [String: Int] = [:]
+        var counter = 1
+        for footnote in allFootnoteItems {
+            guard let attrs = footnote["attrs"] as? [String: Any],
+                  let dataID = attrs["data-id"] as? String else { continue }
+            idToNumber[dataID] = counter
+            counter += 1
+        }
+
+        // Update referenceNumber in all inline footnoteReference nodes
+        contentNodes = contentNodes.map { updateFootnoteRefs(in: $0, idToNumber: idToNumber) }
+
+        // Update id on each footnote definition
+        let updatedDefinitions: [[String: Any]] = allFootnoteItems.map { footnote in
+            var mutable = footnote
+            guard var attrs = mutable["attrs"] as? [String: Any],
+                  let dataID = attrs["data-id"] as? String,
+                  let newNumber = idToNumber[dataID] else { return mutable }
+            attrs["id"] = "fn:\(newNumber)"
+            mutable["attrs"] = attrs
+            return mutable
+        }
+
+        let footnotesNode: [String: Any] = [
+            "type": "footnotes",
+            "attrs": ["class": "footnotes"],
+            "content": updatedDefinitions
+        ]
+
+        return contentNodes + [footnotesNode]
+    }
+
+    // Recursively walks a node tree, updating referenceNumber on any footnoteReference nodes.
+    private func updateFootnoteRefs(
+        in node: [String: Any],
+        idToNumber: [String: Int]
+    ) -> [String: Any] {
+        var mutable = node
+
+        if mutable["type"] as? String == "footnoteReference",
+           var attrs = mutable["attrs"] as? [String: Any],
+           let dataID = attrs["data-id"] as? String,
+           let newNumber = idToNumber[dataID] {
+            attrs["referenceNumber"] = String(newNumber)
+            mutable["attrs"] = attrs
+            return mutable
+        }
+
+        if let children = mutable["content"] as? [[String: Any]] {
+            mutable["content"] = children.map { updateFootnoteRefs(in: $0, idToNumber: idToNumber) }
+        }
+
+        return mutable
     }
 
     // MARK: - Private Helpers

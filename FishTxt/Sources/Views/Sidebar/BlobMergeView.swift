@@ -1,10 +1,5 @@
 import SwiftUI
 
-enum BlobMergeMode {
-    case newHeading
-    case simple
-}
-
 // MARK: - Supporting types
 
 private enum MergeListEntry: Identifiable {
@@ -321,7 +316,7 @@ struct BlobMergeView: View {
             .padding(.top, 10)
 
             // Merge button
-            Button(action: {}) {
+            Button(action: performMerge) {
                 Text("Merge")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(
@@ -382,6 +377,26 @@ struct BlobMergeView: View {
     }
 
     // MARK: - Actions
+
+    private func performMerge() {
+        guard let projectID = selectedProjectID else { return }
+        let selected = orderedBlobIDs.filter { checkedBlobIDs.contains($0) }
+        guard !selected.isEmpty else { return }
+
+        let newBlobID = store.mergeBlobs(
+            orderedBlobIDs: selected,
+            in: projectID,
+            folderID: selectedFolderID,
+            mode: mergeMode,
+            newHeading: mergeMode == .newHeading ? newHeadingText : nil,
+            deleteAfterMerge: deleteAfterMerge
+        )
+
+        if let id = newBlobID {
+            loadBlobs()
+            activeBlobID = id
+        }
+    }
 
     private func toggleSelectAll() {
         if allSelected {
