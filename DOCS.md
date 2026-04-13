@@ -55,6 +55,7 @@ This version is the Beta version (build 2), currently being tested in real use (
 - **`BlobFolder`** — id, name, sortOrder. Represents a collection for organizing blobs.
 - **`Blob`** — id, optional `folderID`, sortOrder, `isHidden`, and timestamps. Content stored separately at `<projectID>/<blobID>.json` as TipTap JSON.
 - **`DashboardItem`** — enum wrapping `.folder`, `.blob`, or `.ghost`. Ghost is the drag-reorder placeholder shown during drag operations.
+- **`BlobMergeMode`** — enum with cases `.newHeading` (default) and `.simple`. Shared between `BlobMergeView` and `ProjectStore.mergeBlobs`.
 
 ## Services
 
@@ -67,6 +68,7 @@ The only persistence layer. Handles all project/folder/blob CRUD operations, inc
 - Blob management with individual hide/unhide, move to folder/root
 - Sort order rebuilds across folders and root level
 - Drag-move logic (`moveItem`, `moveBlobToFolder`, `moveBlobToRoot`)
+- Blob merge (`mergeBlobs`) — see below
 - TipTap JSON parsing and extraction:
   - `loadBlobExcerpt` — extracts title (first heading) and body with inline formatting for card previews
   - `loadBlobPlainText` — plain text extraction with optional word limit
@@ -76,6 +78,22 @@ The only persistence layer. Handles all project/folder/blob CRUD operations, inc
 Data is stored in `~/Documents/FishTxt/` with one directory per project containing `project.json` (metadata) and individual `<blobID>.json` files for blob content.
 
 Welcome project is copied from `Resources/welcome-project/` on first launch.
+
+### Blob Merge (`mergeBlobs`)
+
+`mergeBlobs(orderedBlobIDs:in:folderID:mode:newHeading:deleteAfterMerge:) -> UUID?`
+
+Merges an ordered, filtered list of blobs into a new blob in the same context (project root or folder). Steps:
+
+1. Load each source blob's TipTap JSON from disk (all reads happen before any mutations)
+2. In New heading mode: prepend an H1 node; demote all existing headings in each blob's content by one level via `demoteHeadings(in:)`
+3. Concatenate all content node arrays
+4. Run `consolidateFootnotes(in:)` to strip mid-document `footnotes` container nodes, renumber all `footnoteReference` / `footnote` pairs sequentially using `data-id` as the stable key, and append a single consolidated `footnotes` container at the end
+5. If `deleteAfterMerge`: delete source blob content files synchronously from disk
+6. Single `mutateProject` call that atomically removes source blobs from `project.blobs` (if deleting) and inserts the new blob with correct sort order — avoiding the stale-snapshot race that would occur with chained `updateProject` (async) calls
+7. Write the new blob's content file via `saveBlobContent` (after the blob is in `project.blobs`, so `updatedAt` is set correctly)
+
+**Why `mutateProject` instead of `createBlob`/`deleteBlob`**: both of those go through `updateProject`, which dispatches to `DispatchQueue.main.async`. Chaining multiple async snapshots means each one captures a stale `projects[index]` and the last write wins — causing either the new blob or the deleted blobs to be lost. `mutateProject` modifies `projects[index]` in place synchronously, so one mutation sees the result of the previous.
 
 ### Printing
 
@@ -130,25 +148,30 @@ Produces JavaScript snippets for editor theming:
 
 ### SidebarView
 
-48pt button column + optional 220pt file navigator for dual-level navigation.
+48pt button column + optional 220pt panel for dual-level navigation or blob merging.
+
+Holds `@State private var activePanel: SidebarPanel` (`.navigator` / `.blobMerge`) to enforce mutual exclusivity between the two expandable panels. When `isSidebarOpen` is true, the active panel is rendered at 220pt width alongside the 48pt button column (268pt total).
 
 ### SidebarButtonColumn
 
-- Toggle sidebar visibility
+- Toggle file navigator (sets `activePanel = .navigator`, toggles `isSidebarOpen`)
+- Toggle blob merge panel (sets `activePanel = .blobMerge`, toggles `isSidebarOpen`)
 - Disabled git button (placeholder for future feature)
 - Settings button (opens SettingsView sheet)
+
+The two panel-toggle buttons are mutually exclusive: activating one while the other is open switches the panel rather than closing it.
 
 ### FileNavigatorView
 
 Two-level navigation with full drag-reorder support:
 
-#### Level 1: Project Picker
+**(Level 1) Project Picker:**
 
 - Lists live and archived projects
 - Create new project via plus button
 - Tap to enter Level 2
 
-#### Level 2: Project Contents
+**(Level 2) Project Contents:**
 
 - Header with project name and back button
 - Expandable folders with nested blobs
@@ -163,6 +186,34 @@ Supports context menus for:
 - Delete folders and blobs
 - Move blobs to root
 - Archive/restore projects
+
+### BlobMergeView
+
+Expandable sidebar panel for consolidating multiple blobs into one. Occupies the same 220pt width as `FileNavigatorView` and follows the same typography and spacing conventions.
+
+**Layout (top to bottom):**
+
+- `MERGE BLOBS` section header
+- Select All / Deselect All toggle button
+- Draggable, checkable blob list
+- Mode picker (segmented control): **New heading** (default) / **Simple merge**
+- New H1 heading text field (disabled in Simple merge mode)
+- Delete blobs after merge checkbox
+- Merge button
+
+**Blob list behavior:**
+
+- Populated from the current context (`selectedProjectID` + `selectedFolderID`) on appear and on context switch (`loadBlobs()` — full reset)
+- Incrementally synced on external store changes via `onChange(of: store.projects)` → `syncBlobs()`, which preserves the user's drag-imposed order while adding/removing blobs to match the store
+- Drag-to-reorder uses the standard ghost-placeholder pattern: dragged item kept at `height: 0 / opacity: 0` in the `ForEach`, ghost inserted at computed drop target; reorder committed in `.onEnded` with `defer { clearDragState() }`
+- Frame tracking via `MergeListFrameKey` PreferenceKey in a `"mergeList"` named coordinate space anchored to the outer `ZStack` (outside the `ScrollView`)
+
+**Merge modes:**
+
+- **New heading**: prepends a new H1 node, then demotes all existing headings in source blobs by one level (H1→H2, H2→H3, capped at H3) before concatenating
+- **Simple merge**: concatenates source blob content arrays as-is
+
+**After merge:** the new blob opens immediately in the editor (`activeBlobID` is set to the new blob's ID).
 
 ## Dashboard (`Sources/Views/Dashboard/`)
 
@@ -182,10 +233,10 @@ Supports context menus for:
 
 When project is archived or viewing hidden items.
 
-#### Floating island buttons
+#### Floating island of buttons
 
-- New folder button (with glow confirmation)
-- New blob button (with glow confirmation)
+- New folder button
+- New blob button
 
 #### Context menus for
 
@@ -324,6 +375,9 @@ The sidebar reflects project selection and folder navigation. The dashboard show
 | Task | File(s) |
 | ---- | ------- |
 | Persistence, CRUD, sort order, drag logic | `ProjectStore.swift` |
+| Blob merge logic, footnote consolidation | `ProjectStore.mergeBlobs()`, `ProjectStore.consolidateFootnotes()` |
+| Merge panel UI & drag reorder | `BlobMergeView.swift` |
+| Sidebar panel switching (navigator vs. merge) | `SidebarView.swift`, `SidebarButtonColumn.swift` |
 | Printing & print profiles | `ProjectStore.printBlob()`, `BlobPrinter`, `Resources/print-profiles/*.css` |
 | Footnote HTML rendering | `ProjectStore.renderNodeHTML()` (cases: `footnoteReference`, `footnotes`, `footnote`) |
 | Color theming (Swift + web) | `AppColors.swift` |
