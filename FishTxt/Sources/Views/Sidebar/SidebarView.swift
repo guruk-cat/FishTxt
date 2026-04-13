@@ -1,5 +1,10 @@
 import SwiftUI
 
+enum SidebarPanel: Equatable {
+    case navigator
+    case blobMerge
+}
+
 struct SidebarView: View {
     @EnvironmentObject var store: ProjectStore
     @EnvironmentObject var appColors: AppColors
@@ -9,10 +14,13 @@ struct SidebarView: View {
     @Binding var activeBlobID: UUID?
     @Binding var isViewingHidden: Bool
 
+    @State private var activePanel: SidebarPanel = .navigator
+
     var body: some View {
         HStack(spacing: 0) {
             SidebarButtonColumn(
                 isSidebarOpen: $isSidebarOpen,
+                activePanel: $activePanel,
                 selectedProjectID: $selectedProjectID,
                 selectedFolderID: $selectedFolderID,
                 activeBlobID: $activeBlobID,
@@ -20,12 +28,19 @@ struct SidebarView: View {
             )
             .frame(width: 48)
 
-            if isSidebarOpen {
+            if isSidebarOpen && activePanel == .navigator {
                 FileNavigatorView(
                     selectedProjectID: $selectedProjectID,
                     selectedFolderID: $selectedFolderID,
                     activeBlobID: $activeBlobID,
                     isViewingHidden: $isViewingHidden
+                )
+                .frame(width: 220)
+            } else if isSidebarOpen && activePanel == .blobMerge {
+                BlobMergeView(
+                    selectedProjectID: $selectedProjectID,
+                    selectedFolderID: $selectedFolderID,
+                    activeBlobID: $activeBlobID
                 )
                 .frame(width: 220)
             }

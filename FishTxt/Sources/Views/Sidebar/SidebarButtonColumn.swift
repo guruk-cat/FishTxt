@@ -6,13 +6,15 @@ struct SidebarButtonColumn: View {
     @State private var isShowingSettings: Bool = false
 
     @Binding var isSidebarOpen: Bool
+    @Binding var activePanel: SidebarPanel
     @Binding var selectedProjectID: UUID?
     @Binding var selectedFolderID: UUID?
     @Binding var activeBlobID: UUID?
     @Binding var isViewingHidden: Bool
 
     // Hover state
-    @State private var hoverSidebar: Bool  = false
+    @State private var hoverNavigator: Bool = false
+    @State private var hoverMerge: Bool    = false
     @State private var hoverFolder: Bool   = false
     @State private var hoverBlob: Bool     = false
     @State private var hoverSettings: Bool = false
@@ -24,18 +26,17 @@ struct SidebarButtonColumn: View {
     var body: some View {
         VStack(spacing: 12) {
             // File navigator toggle
-            Button(action: { isSidebarOpen.toggle() }) {
+            Button(action: { togglePanel(.navigator) }) {
                 Image(systemName: "sidebar.left")
                     .font(.system(size: 16))
-                    .foregroundColor(isSidebarOpen || hoverSidebar
-                        ? AppColors.shared.contentPrimary
-                        : AppColors.shared.contentTertiary)
+                    .foregroundColor(navigatorButtonColor)
                     .frame(width: 32, height: 32)
                     .animation(.easeInOut(duration: 0.12), value: isSidebarOpen)
-                    .animation(.easeInOut(duration: 0.12), value: hoverSidebar)
+                    .animation(.easeInOut(duration: 0.12), value: activePanel == .navigator)
+                    .animation(.easeInOut(duration: 0.12), value: hoverNavigator)
             }
             .buttonStyle(.plain)
-            .onHover { hoverSidebar = $0 }
+            .onHover { hoverNavigator = $0 }
 
             // New folder button
             Button(action: {
@@ -70,6 +71,19 @@ struct SidebarButtonColumn: View {
             .buttonStyle(.plain)
             .disabled(selectedProjectID == nil)
             .onHover { hoverBlob = $0 }
+            
+            // Blob merge toggle
+            Button(action: { togglePanel(.blobMerge) }) {
+                Image(systemName: "arrow.triangle.merge")
+                    .font(.system(size: 16))
+                    .foregroundColor(mergeButtonColor)
+                    .frame(width: 32, height: 32)
+                    .animation(.easeInOut(duration: 0.12), value: isSidebarOpen)
+                    .animation(.easeInOut(duration: 0.12), value: activePanel == .blobMerge)
+                    .animation(.easeInOut(duration: 0.12), value: hoverMerge)
+            }
+            .buttonStyle(.plain)
+            .onHover { hoverMerge = $0 }
 
             // Git button (coming soon)
             Button(action: {}) {
@@ -106,7 +120,30 @@ struct SidebarButtonColumn: View {
         .padding(.vertical, 12)
     }
 
+    // MARK: - Panel toggle
+
+    private func togglePanel(_ panel: SidebarPanel) {
+        if isSidebarOpen && activePanel == panel {
+            isSidebarOpen = false
+        } else {
+            activePanel = panel
+            isSidebarOpen = true
+        }
+    }
+
     // MARK: - Color helpers
+
+    private var navigatorButtonColor: Color {
+        let isActive = isSidebarOpen && activePanel == .navigator
+        if isActive || hoverNavigator { return AppColors.shared.contentPrimary }
+        return AppColors.shared.contentTertiary
+    }
+
+    private var mergeButtonColor: Color {
+        let isActive = isSidebarOpen && activePanel == .blobMerge
+        if isActive || hoverMerge { return AppColors.shared.contentPrimary }
+        return AppColors.shared.contentTertiary
+    }
 
     private var folderButtonColor: Color {
         guard selectedProjectID != nil else { return AppColors.shared.contentTertiary }
@@ -142,6 +179,7 @@ struct SidebarButtonColumn: View {
 #Preview {
     SidebarButtonColumn(
         isSidebarOpen: .constant(false),
+        activePanel: .constant(.navigator),
         selectedProjectID: .constant(nil),
         selectedFolderID: .constant(nil),
         activeBlobID: .constant(nil),
