@@ -366,6 +366,7 @@ struct DashboardView: View {
                             .animation(.easeInOut(duration: 0.12), value: hoverFolder)
                     }
                     .buttonStyle(.plain)
+                    .disabled(folderID != nil)
                     .onHover { hoverFolder = $0 }
 
                     // New blob button
@@ -487,6 +488,7 @@ struct DashboardView: View {
     // MARK: - Floating island helpers
 
     private var folderIslandColor: Color {
+        guard folderID == nil else { return AppColors.shared.contentTertiary }
         if glowFolder  { return AppColors.shared.confirmation }
         if hoverFolder { return AppColors.shared.contentPrimary }
         return AppColors.shared.contentTertiary
