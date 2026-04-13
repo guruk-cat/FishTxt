@@ -497,6 +497,11 @@ struct DashboardView: View {
                 }) {
                     Label("Copy Blob", systemImage: "doc.on.doc")
                 }
+                Button(action: {
+                    store.printBlob(blobID: blob.id, in: projectID)
+                }) {
+                    Label("Print...", systemImage: "printer")
+                }
                 if folderID != nil {
                     Button(action: {
                         store.moveBlobToRoot(blob.id, in: projectID)

@@ -25,6 +25,11 @@ struct EditView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             saveIsland
+
+            Button("") { store.printBlob(blobID: blobID, in: projectID) }
+                .keyboardShortcut("p", modifiers: .command)
+                .frame(width: 0, height: 0)
+                .hidden()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onReceive(bridge.$isReady.filter { $0 }) { _ in

@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 class ProjectStore: ObservableObject {
     @Published var projects: [Project] = []
@@ -689,6 +690,36 @@ class ProjectStore: ObservableObject {
         }
     }
 
+    // MARK: - Print
+
+    func printBlob(blobID: UUID, in projectID: UUID) {
+        guard let fragment = loadBlobHTML(blobID: blobID, in: projectID) else { return }
+
+        let css: String = {
+            guard let url = Bundle.main.url(forResource: "print", withExtension: "css"),
+                  let str = try? String(contentsOf: url, encoding: .utf8) else {
+                print("[ProjectStore] print.css not found in bundle")
+                return ""
+            }
+            return str
+        }()
+
+        let document = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="UTF-8">
+        <style>\(css)</style>
+        </head>
+        <body>\(fragment)</body>
+        </html>
+        """
+
+        if #available(macOS 13, *) {
+            BlobPrinter.start(html: document)
+        }
+    }
+
     // MARK: - Dashboard Helpers
 
     func dashboardItems(for projectID: UUID, folderID: UUID?) -> [DashboardItem] {
@@ -813,5 +844,42 @@ class ProjectStore: ObservableObject {
                 project.blobs[blobIndex].sortOrder = index
             }
         }
+    }
+}
+
+// MARK: - BlobPrinter
+
+@available(macOS 13, *)
+private final class BlobPrinter: NSObject, WKNavigationDelegate {
+    private let webView: WKWebView
+    private static var active: BlobPrinter?
+
+    override init() {
+        // Letter-sized frame so layout approximates the printed page
+        self.webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 816, height: 1056))
+        super.init()
+        self.webView.navigationDelegate = self
+    }
+
+    static func start(html: String) {
+        let printer = BlobPrinter()
+        active = printer
+        printer.webView.loadHTMLString(html, baseURL: nil)
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        guard let window = NSApplication.shared.keyWindow else {
+            Self.active = nil
+            return
+        }
+        let op = webView.printOperation(with: .shared)
+        op.runModal(for: window, delegate: self,
+                    didRun: #selector(printDidRun(_:success:contextInfo:)),
+                    contextInfo: nil)
+    }
+
+    @objc private func printDidRun(_ op: NSPrintOperation, success: Bool,
+                                   contextInfo: UnsafeMutableRawPointer?) {
+        Self.active = nil
     }
 }

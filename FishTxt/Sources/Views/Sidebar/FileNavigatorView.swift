@@ -787,6 +787,9 @@ struct FileNavigatorView: View {
     @ViewBuilder
     private func blobContextMenu(_ blob: Blob, project: Project, isInFolder: Bool) -> some View {
         if !project.isArchived {
+            Button { store.printBlob(blobID: blob.id, in: project.id) } label: {
+                Label("Print...", systemImage: "printer")
+            }
             if isInFolder {
                 Button { store.moveBlobToRoot(blob.id, in: project.id) } label: {
                     Label("Send Back to Root", systemImage: "arrow.up")
