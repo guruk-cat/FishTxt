@@ -12,6 +12,7 @@
 		049A90272F8CFF2A0012AACE /* BlobMergeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049A90262F8CFF2A0012AACE /* BlobMergeView.swift */; };
 		049A90292F8D19810012AACE /* BlobMergeMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049A90282F8D19810012AACE /* BlobMergeMode.swift */; };
 		049C3D282F8A0EBE003518E2 /* CrossPanelDrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049C3D272F8A0EBE003518E2 /* CrossPanelDrag.swift */; };
+		04B704F72F8DEE0E00D06833 /* BlobOutlineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B704F62F8DEDCA00D06833 /* BlobOutlineView.swift */; };
 		FT000000000000000000002D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000001C /* Assets.xcassets */; };
 		FT000000000000000000002E /* colors.json in Resources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000001D /* colors.json */; };
 		FT000000000000000000002F /* FishTxtApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FT000000000000000000001E /* FishTxtApp.swift */; };
@@ -39,6 +40,7 @@
 		049A90262F8CFF2A0012AACE /* BlobMergeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobMergeView.swift; sourceTree = "<group>"; };
 		049A90282F8D19810012AACE /* BlobMergeMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobMergeMode.swift; sourceTree = "<group>"; };
 		049C3D272F8A0EBE003518E2 /* CrossPanelDrag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossPanelDrag.swift; sourceTree = "<group>"; };
+		04B704F62F8DEDCA00D06833 /* BlobOutlineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobOutlineView.swift; sourceTree = "<group>"; };
 		FT0000000000000000000019 /* FishTxt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FishTxt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FT000000000000000000001A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FT000000000000000000001B /* FishTxt.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FishTxt.entitlements; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 			children = (
 				049A90262F8CFF2A0012AACE /* BlobMergeView.swift */,
 				FT000000000000000000002A /* FileNavigatorView.swift */,
+				04B704F62F8DEDCA00D06833 /* BlobOutlineView.swift */,
 				FT000000000000000000002B /* SidebarButtonColumn.swift */,
 				FT000000000000000000002C /* SidebarView.swift */,
 			);
@@ -304,6 +307,7 @@
 				FT000000000000000000003B /* FileNavigatorView.swift in Sources */,
 				FT000000000000000000003C /* SidebarButtonColumn.swift in Sources */,
 				049C3D282F8A0EBE003518E2 /* CrossPanelDrag.swift in Sources */,
+				04B704F72F8DEE0E00D06833 /* BlobOutlineView.swift in Sources */,
 				FT000000000000000000003D /* SidebarView.swift in Sources */,
 				FT0000000000000000000040 /* SettingsView.swift in Sources */,
 				FT0000000000000000000042 /* EditorBridge.swift in Sources */,
