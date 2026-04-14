@@ -8,7 +8,7 @@ struct SettingsView: View {
     @AppStorage("colorPalette") private var colorPalette: String = "coast"
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
     @AppStorage("fontSize") private var fontSize: Double = 16.0
-    @AppStorage("autoScroll") private var autoScroll: String = "regular"
+    @AppStorage("autoScroll") private var autoScroll: String = "On"
     @AppStorage("printProfile") private var printProfile: String = "default"
 
     @State private var availablePrintProfiles: [String] = []
@@ -44,20 +44,11 @@ struct SettingsView: View {
 
                     // MARK: Editor
                     settingsSection("Editor") {
-                        settingsRow("Font") {
-                            TextField("Font family", text: $fontFamily)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 13, design: .monospaced))
-                                .foregroundColor(AppColors.shared.contentPrimary)
-                                .frame(width: 140)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(AppColors.shared.backgroundPrimary)
-                                .cornerRadius(5)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 5)
-                                        .stroke(AppColors.shared.cardBorder, lineWidth: 1)
-                                )
+                        settingsRow("Font family") {
+                            Picker("", selection: $fontFamily) {
+                                Text("Menlo").tag("Menlo")
+                            }
+                            .pickerStyle(.menu)
                         }
 
                         settingsRow("Font size") {
@@ -65,7 +56,7 @@ struct SettingsView: View {
                                 Button(action: { if fontSize > 10 { fontSize -= 1 } }) {
                                     Image(systemName: "minus")
                                         .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(AppColors.shared.contentSecondary)
+                                        .foregroundColor(AppColors.shared.contentPrimary)
                                         .frame(width: 22, height: 22)
                                         .background(AppColors.shared.backgroundPrimary)
                                         .cornerRadius(5)
@@ -81,7 +72,7 @@ struct SettingsView: View {
                                 Button(action: { if fontSize < 36 { fontSize += 1 } }) {
                                     Image(systemName: "plus")
                                         .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(AppColors.shared.contentSecondary)
+                                        .foregroundColor(AppColors.shared.contentPrimary)
                                         .frame(width: 22, height: 22)
                                         .background(AppColors.shared.backgroundPrimary)
                                         .cornerRadius(5)
@@ -89,6 +80,14 @@ struct SettingsView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
+                        }
+                        
+                        settingsRow("Auto scroll") {
+                            Picker("", selection: $autoScroll) {
+                                Text("Off").tag("regular")
+                                Text("On").tag("centered")
+                            }
+                            .pickerStyle(.menu)
                         }
                     }
 
@@ -101,19 +100,9 @@ struct SettingsView: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .frame(width: 140)
                             .onChange(of: colorPalette) { newPalette in
                                 appColors.loadColors(palette: newPalette)
                             }
-                        }
-                        
-                        settingsRow("Auto scroll") {
-                            Picker("", selection: $autoScroll) {
-                                Text("Regular").tag("regular")
-                                Text("Centered").tag("centered")
-                            }
-                            .pickerStyle(.segmented)
-                            .frame(width: 160)
                         }
 
                         settingsRow("Print profile") {
@@ -123,7 +112,6 @@ struct SettingsView: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .frame(width: 140)
                         }
                     }
                 }
@@ -146,7 +134,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(AppColors.shared.contentTertiary)
+                .foregroundColor(AppColors.shared.contentSecondary)
                 .tracking(1.0)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -160,10 +148,10 @@ struct SettingsView: View {
         HStack {
             Text(label)
                 .font(.system(size: 13))
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.contentPrimary)
                 .frame(width: 90, alignment: .leading)
 
-            control()
+            control().frame(width: 160, alignment: .trailing)
         }
     }
 
@@ -173,7 +161,6 @@ struct SettingsView: View {
             availablePrintProfiles = []
             return
         }
-        print("[SettingsView] Found \(urls.count) print profiles: \(urls.map { $0.lastPathComponent})")
         availablePrintProfiles = urls
             .map { $0.deletingPathExtension().lastPathComponent }
             .sorted()
