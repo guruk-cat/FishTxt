@@ -95,7 +95,7 @@ struct BlobOutlineView: View {
     @ViewBuilder
     private var contentRows: some View {
         if activeBlobID == nil {
-            emptyLabel("No file open.")
+            emptyLabel("No blob open.")
         } else if headings.isEmpty {
             emptyLabel("No headings.")
         } else {
@@ -130,7 +130,9 @@ struct BlobOutlineView: View {
         .overlay(alignment: .leading) {
             Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundColor(!expandable ? Color.clear : isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary)
+                .foregroundColor(!expandable ? Color.clear :
+                                    isActive ? AppColors.shared.contentSecondary :
+                                    isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary)
                 .animation(.easeInOut(duration: 0.12), value: isHovered)
                 .frame(width: 14)
                 .padding(.leading, indent)
