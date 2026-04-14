@@ -536,6 +536,37 @@ class ProjectStore: ObservableObject {
         )
     }
 
+    // MARK: - Blob Outline
+
+    struct BlobHeading {
+        var level: Int    // 1–6, matching TipTap heading levels
+        var text: String
+    }
+
+    /// Returns every heading node from a blob's TipTap JSON, in document order.
+    func loadBlobHeadings(blobID: UUID, in projectID: UUID) -> [BlobHeading] {
+        guard let jsonString = loadBlobContent(blobID: blobID, in: projectID),
+              let data = jsonString.data(using: .utf8),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let topNodes = root["content"] as? [[String: Any]] else {
+            return []
+        }
+
+        var headings: [BlobHeading] = []
+        for node in topNodes {
+            guard node["type"] as? String == "heading",
+                  let attrs = node["attrs"] as? [String: Any],
+                  let level = attrs["level"] as? Int else { continue }
+            var parts: [String] = []
+            extractText(from: node, into: &parts)
+            let text = parts.joined().trimmingCharacters(in: .whitespacesAndNewlines)
+            if !text.isEmpty {
+                headings.append(BlobHeading(level: level, text: text))
+            }
+        }
+        return headings
+    }
+
     // MARK: - Attributed body builder
 
     private func buildAttributedBody(from nodes: [[String: Any]]) -> AttributedString? {

@@ -3,6 +3,7 @@ import SwiftUI
 enum SidebarPanel: Equatable {
     case navigator
     case blobMerge
+    case blobOutline
 }
 
 struct SidebarView: View {
@@ -36,6 +37,12 @@ struct SidebarView: View {
                 BlobMergeView(
                     selectedProjectID: $selectedProjectID,
                     selectedFolderID: $selectedFolderID,
+                    activeBlobID: $activeBlobID
+                )
+                .frame(width: 220)
+            } else if isSidebarOpen && activePanel == .blobOutline {
+                BlobOutlineView(
+                    selectedProjectID: $selectedProjectID,
                     activeBlobID: $activeBlobID
                 )
                 .frame(width: 220)

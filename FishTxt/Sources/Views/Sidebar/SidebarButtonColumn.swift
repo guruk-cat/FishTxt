@@ -11,6 +11,7 @@ struct SidebarButtonColumn: View {
     // Hover state
     @State private var hoverNavigator: Bool = false
     @State private var hoverMerge: Bool    = false
+    @State private var hoverOutline: Bool  = false
     @State private var hoverSettings: Bool = false
 
     var body: some View {
@@ -40,6 +41,19 @@ struct SidebarButtonColumn: View {
             }
             .buttonStyle(.plain)
             .onHover { hoverMerge = $0 }
+
+            // Blob outline toggle
+            Button(action: { togglePanel(.blobOutline) }) {
+                Image(systemName: "list.dash.header.rectangle")
+                    .font(.system(size: 16))
+                    .foregroundColor(outlineButtonColor)
+                    .frame(width: 32, height: 32)
+                    .animation(.easeInOut(duration: 0.12), value: isSidebarOpen)
+                    .animation(.easeInOut(duration: 0.12), value: activePanel == .blobOutline)
+                    .animation(.easeInOut(duration: 0.12), value: hoverOutline)
+            }
+            .buttonStyle(.plain)
+            .onHover { hoverOutline = $0 }
 
             // Git button (coming soon)
             Button(action: {}) {
@@ -98,6 +112,12 @@ struct SidebarButtonColumn: View {
     private var mergeButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .blobMerge
         if isActive || hoverMerge { return AppColors.shared.contentPrimary }
+        return AppColors.shared.contentTertiary
+    }
+
+    private var outlineButtonColor: Color {
+        let isActive = isSidebarOpen && activePanel == .blobOutline
+        if isActive || hoverOutline { return AppColors.shared.contentPrimary }
         return AppColors.shared.contentTertiary
     }
 
