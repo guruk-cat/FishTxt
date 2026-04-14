@@ -10,6 +10,7 @@ struct BlobOutlineView: View {
     @State private var headings: [ProjectStore.BlobHeading] = []
     @State private var collapsedIndices: Set<Int> = []
     @State private var hoveredIndex: Int? = nil
+    @State private var activeHeadingIndex: Int = -1
 
     static let rowHeight: CGFloat = 26
     private static let baseIndent: CGFloat = 8
@@ -69,6 +70,9 @@ struct BlobOutlineView: View {
         .onAppear { reload() }
         .onChange(of: activeBlobID) { _ in reload() }
         .onChange(of: selectedProjectID) { _ in reload() }
+        .onReceive(NotificationCenter.default.publisher(for: .activeHeadingChanged)) { notif in
+            activeHeadingIndex = notif.object as? Int ?? -1
+        }
     }
 
     // MARK: - Header
@@ -106,10 +110,12 @@ struct BlobOutlineView: View {
         let isHovered = hoveredIndex == index
         let expandable = hasChildren(at: index)
         let isCollapsed = collapsedIndices.contains(index)
+        let isActive = activeHeadingIndex == index
         return HStack(spacing: 0) {
             Text(heading.text)
                 .font(.system(size: 12))
                 .foregroundColor(
+                    isActive ? AppColors.shared.contentSecondary :
                     isHovered
                         ? AppColors.shared.contentPrimary
                         : AppColors.shared.contentTertiary
@@ -128,11 +134,14 @@ struct BlobOutlineView: View {
                 .animation(.easeInOut(duration: 0.12), value: isHovered)
                 .frame(width: 14)
                 .padding(.leading, indent)
+                .onTapGesture{ if expandable { toggleCollapse(at: index) } }
         }
         .frame(height: Self.rowHeight)
+        .background(isActive ? AppColors.shared.backgroundHighlight.opacity(0.2) : Color.clear)
+        .overlay(isActive ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentSecondary) : nil, alignment: .leading)
         .contentShape(Rectangle())
         .onHover { hoveredIndex = $0 ? index : nil }
-        .onTapGesture(count: 2) { if expandable { toggleCollapse(at: index) } }
+        .onTapGesture { NotificationCenter.default.post(name: .scrollToOutlineHeading, object: index) }
     }
 
     private func emptyLabel(_ text: String) -> some View {
@@ -161,9 +170,11 @@ struct BlobOutlineView: View {
               let projectID = selectedProjectID else {
             headings = []
             collapsedIndices = []
+            activeHeadingIndex = -1
             return
         }
         headings = store.loadBlobHeadings(blobID: blobID, in: projectID)
         collapsedIndices = []
+        activeHeadingIndex = -1
     }
 }

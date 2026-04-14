@@ -65,6 +65,10 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             case "hideBlob":
                 self.onHide?()
 
+            case "headingVisible":
+                let index = body["index"] as? Int ?? -1
+                NotificationCenter.default.post(name: .activeHeadingChanged, object: index)
+
             default:
                 break
             }
@@ -89,6 +93,10 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     func setHeading(level: Int) {
         evaluate("window.editorBridge.setHeading(\(level))")
         refocusWebView()
+    }
+
+    func scrollToHeading(index: Int) {
+        evaluate("if(window.scrollToHeading) window.scrollToHeading(\(index))")
     }
 
     func setAutoScroll(_ mode: String) {
@@ -152,10 +160,14 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         }
     }
 
+    // MARK: - Notifications
+
     /// Writes HTML and plain text to the clipboard with proper UTF-8 encoding.
     /// Wraps the HTML fragment in a minimal document with a charset declaration so that
     /// apps like Pages and Word don't misinterpret multi-byte characters (curly quotes,
     /// em-dashes, etc.) as Latin-1.
+    // MARK: - Clipboard
+
     static func writeToClipboard(html: String?, plainText: String?) {
         let pb = NSPasteboard.general
         pb.clearContents()
@@ -169,4 +181,11 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
             pb.setString(text, forType: .string)
         }
     }
+}
+
+// MARK: - Notification names
+
+extension Notification.Name {
+    static let scrollToOutlineHeading = Notification.Name("scrollToOutlineHeading")
+    static let activeHeadingChanged   = Notification.Name("activeHeadingChanged")
 }

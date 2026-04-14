@@ -49,6 +49,11 @@ struct EditView: View {
         .onReceive(NotificationCenter.default.publisher(for: .saveDocument)) { _ in
             performSave(completion: nil)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .scrollToOutlineHeading)) { notif in
+            if let index = notif.object as? Int {
+                bridge.scrollToHeading(index: index)
+            }
+        }
         .onReceive(
             bridge.$isDirty
                 .filter { $0 }

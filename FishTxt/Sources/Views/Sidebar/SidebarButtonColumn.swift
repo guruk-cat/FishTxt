@@ -29,19 +29,6 @@ struct SidebarButtonColumn: View {
             .buttonStyle(.plain)
             .onHover { hoverNavigator = $0 }
             
-            // Blob merge toggle
-            Button(action: { togglePanel(.blobMerge) }) {
-                Image(systemName: "plus.rectangle.on.rectangle")
-                    .font(.system(size: 16))
-                    .foregroundColor(mergeButtonColor)
-                    .frame(width: 32, height: 32)
-                    .animation(.easeInOut(duration: 0.12), value: isSidebarOpen)
-                    .animation(.easeInOut(duration: 0.12), value: activePanel == .blobMerge)
-                    .animation(.easeInOut(duration: 0.12), value: hoverMerge)
-            }
-            .buttonStyle(.plain)
-            .onHover { hoverMerge = $0 }
-
             // Blob outline toggle
             Button(action: { togglePanel(.blobOutline) }) {
                 Image(systemName: "list.dash.header.rectangle")
@@ -54,6 +41,19 @@ struct SidebarButtonColumn: View {
             }
             .buttonStyle(.plain)
             .onHover { hoverOutline = $0 }
+            
+            // Blob merge toggle
+            Button(action: { togglePanel(.blobMerge) }) {
+                Image(systemName: "plus.rectangle.on.rectangle")
+                    .font(.system(size: 16))
+                    .foregroundColor(mergeButtonColor)
+                    .frame(width: 32, height: 32)
+                    .animation(.easeInOut(duration: 0.12), value: isSidebarOpen)
+                    .animation(.easeInOut(duration: 0.12), value: activePanel == .blobMerge)
+                    .animation(.easeInOut(duration: 0.12), value: hoverMerge)
+            }
+            .buttonStyle(.plain)
+            .onHover { hoverMerge = $0 }
 
             // Git button (coming soon)
             Button(action: {}) {
