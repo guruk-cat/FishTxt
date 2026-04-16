@@ -103,6 +103,43 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         evaluate("window.editorBridge.setAutoScrollMode('\(mode)')")
     }
 
+    // MARK: - Editor style (font size + family share one injected <style> tag)
+
+    private var currentFontSize: Double = UserDefaults.standard.double(forKey: "fontSize") > 0
+        ? UserDefaults.standard.double(forKey: "fontSize") : 16.0
+    private var currentFontFamily: String = UserDefaults.standard.string(forKey: "fontFamily") ?? "Menlo"
+
+    func setFontSize(_ size: Double) {
+        currentFontSize = size
+        applyEditorStyle()
+    }
+
+    func setFontFamily(_ family: String) {
+        currentFontFamily = family
+        applyEditorStyle()
+    }
+
+    private func applyEditorStyle() {
+        let size = currentFontSize
+        let maxWidth = Int(820.0 * size / 20.0)
+        let cssFamily = fontFamilyCSS(currentFontFamily)
+        let js = """
+        (function(){
+          var el = document.getElementById('ft-font');
+          if (!el) { el = document.createElement('style'); el.id = 'ft-font'; document.head.appendChild(el); }
+          el.textContent = '.ProseMirror, .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 { font-family: \(cssFamily); } .ProseMirror { font-size: \(Int(size))px; max-width: \(maxWidth)px; }';
+        })()
+        """
+        evaluate(js)
+    }
+
+    private func fontFamilyCSS(_ family: String) -> String {
+        switch family {
+        case "Palatino": return "Palatino, \"Palatino Linotype\", serif"
+        default:         return "Menlo, Consolas, \"Courier New\", monospace"
+        }
+    }
+
     func setContent(_ jsonString: String) {
         let js = "(function(){ var c = \(jsonString); window.editorBridge.setContent(c); })()"
         evaluate(js)

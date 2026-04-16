@@ -18,6 +18,8 @@ struct EditView: View {
     @State private var saveStatus: SaveStatus = .idle
     @State private var hasLoaded = false
     @State private var escMonitor: Any?
+    @AppStorage("fontSize") private var fontSize: Double = 16.0
+    @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -63,6 +65,12 @@ struct EditView: View {
         }
         .onChange(of: appColors.backgroundPrimary) { _ in
             bridge.applyColors()
+        }
+        .onChange(of: fontSize) { newSize in
+            bridge.setFontSize(newSize)
+        }
+        .onChange(of: fontFamily) { newFamily in
+            bridge.setFontFamily(newFamily)
         }
         .onAppear {
             bridge.onClose = { saveAndClose() }

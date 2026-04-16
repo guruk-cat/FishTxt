@@ -4,6 +4,8 @@ import WebKit
 struct WebEditorView: NSViewRepresentable {
     @ObservedObject var bridge: EditorBridge
     @AppStorage("autoScroll") private var autoScrollMode: String = "regular"
+    @AppStorage("fontSize") private var fontSize: Double = 16.0
+    @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -45,6 +47,8 @@ struct WebEditorView: NSViewRepresentable {
 
     func updateNSView(_ nsView: WKWebView, context: Context) {
         context.coordinator.updateAutoScroll(autoScrollMode)
+        context.coordinator.updateFontSize(fontSize)
+        context.coordinator.updateFontFamily(fontFamily)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -56,6 +60,8 @@ struct WebEditorView: NSViewRepresentable {
     class Coordinator: NSObject, WKNavigationDelegate {
         let bridge: EditorBridge
         private var lastScrollMode: String = ""
+        private var lastFontSize: Double = -1
+        private var lastFontFamily: String = ""
 
         init(bridge: EditorBridge) {
             self.bridge = bridge
@@ -67,12 +73,31 @@ struct WebEditorView: NSViewRepresentable {
             bridge.setAutoScroll(mode)
         }
 
+        func updateFontSize(_ size: Double) {
+            guard size != lastFontSize else { return }
+            lastFontSize = size
+            bridge.setFontSize(size)
+        }
+
+        func updateFontFamily(_ family: String) {
+            guard family != lastFontFamily else { return }
+            lastFontFamily = family
+            bridge.setFontFamily(family)
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 self.bridge.applyColors()
                 let scrollMode = UserDefaults.standard.string(forKey: "autoScroll") ?? "regular"
                 self.bridge.setAutoScroll(scrollMode)
                 self.lastScrollMode = scrollMode
+                let fontSize = UserDefaults.standard.double(forKey: "fontSize")
+                let resolvedSize = fontSize > 0 ? fontSize : 16.0
+                self.bridge.setFontSize(resolvedSize)
+                self.lastFontSize = resolvedSize
+                let fontFamily = UserDefaults.standard.string(forKey: "fontFamily") ?? "Menlo"
+                self.bridge.setFontFamily(fontFamily)
+                self.lastFontFamily = fontFamily
             }
         }
     }

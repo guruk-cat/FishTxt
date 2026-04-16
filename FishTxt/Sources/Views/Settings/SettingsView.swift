@@ -47,6 +47,7 @@ struct SettingsView: View {
                         settingsRow("Font family") {
                             Picker("", selection: $fontFamily) {
                                 Text("Menlo").tag("Menlo")
+                                Text("Palatino").tag("Palatino")
                             }
                             .pickerStyle(.menu)
                         }
