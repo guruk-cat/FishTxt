@@ -85,6 +85,7 @@ struct BlobMergeView: View {
                     settingsSection
                 }
                 .padding(.trailing, 4)
+                .padding(.leading, 12)
             }
 
             dragOverlay
