@@ -72,8 +72,8 @@ struct SidebarButtonColumn: View {
             Button(action: { isShowingSettings = true }) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 16))
-                    .foregroundColor(isShowingSettings || hoverSettings
-                        ? AppColors.shared.contentPrimary
+                    .foregroundColor(isShowingSettings ? AppColors.shared.contentSecondary
+                        : hoverSettings ? AppColors.shared.contentPrimary
                         : AppColors.shared.contentTertiary)
                     .frame(width: 32, height: 32)
                     .animation(.easeInOut(duration: 0.12), value: isShowingSettings)
@@ -105,19 +105,22 @@ struct SidebarButtonColumn: View {
 
     private var navigatorButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .navigator
-        if isActive || hoverNavigator { return AppColors.shared.contentPrimary }
+        if isActive {return AppColors.shared.contentSecondary}
+        else if hoverNavigator { return AppColors.shared.contentPrimary }
         return AppColors.shared.contentTertiary
     }
 
     private var mergeButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .blobMerge
-        if isActive || hoverMerge { return AppColors.shared.contentPrimary }
+        if isActive {return AppColors.shared.contentSecondary}
+        else if hoverMerge { return AppColors.shared.contentPrimary }
         return AppColors.shared.contentTertiary
     }
 
     private var outlineButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .blobOutline
-        if isActive || hoverOutline { return AppColors.shared.contentPrimary }
+        if isActive { return AppColors.shared.contentSecondary }
+        else if hoverOutline { return AppColors.shared.contentPrimary }
         return AppColors.shared.contentTertiary
     }
 

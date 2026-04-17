@@ -24,6 +24,7 @@ struct SidebarView: View {
                 activePanel: $activePanel
             )
             .frame(width: 48)
+            .background(AppColors.shared.backgroundPrimary)
 
             if isSidebarOpen && activePanel == .navigator {
                 FileNavigatorView(
@@ -33,6 +34,7 @@ struct SidebarView: View {
                     isViewingHidden: $isViewingHidden
                 )
                 .frame(width: 220)
+                .background(AppColors.shared.sidebarBackground)
             } else if isSidebarOpen && activePanel == .blobMerge {
                 BlobMergeView(
                     selectedProjectID: $selectedProjectID,
@@ -40,16 +42,17 @@ struct SidebarView: View {
                     activeBlobID: $activeBlobID
                 )
                 .frame(width: 220)
+                .background(AppColors.shared.sidebarBackground)
             } else if isSidebarOpen && activePanel == .blobOutline {
                 BlobOutlineView(
                     selectedProjectID: $selectedProjectID,
                     activeBlobID: $activeBlobID
                 )
                 .frame(width: 220)
+                .background(AppColors.shared.sidebarBackground)
             }
         }
         .frame(width: isSidebarOpen ? 268 : 48)
-        .background(AppColors.shared.sidebarBackground)
     }
 }
 
