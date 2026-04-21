@@ -74,7 +74,6 @@ struct EditView: View {
         }
         .onAppear {
             bridge.onClose = { saveAndClose() }
-            bridge.onHide  = { saveAndHide() }
             escMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 if event.keyCode == 53 { // Escape
                     saveAndClose()
@@ -143,13 +142,6 @@ struct EditView: View {
 
     private func saveAndClose() {
         performSave { onClose() }
-    }
-
-    private func saveAndHide() {
-        performSave {
-            store.hideBlob(blobID, in: projectID)
-            onClose()
-        }
     }
 }
 

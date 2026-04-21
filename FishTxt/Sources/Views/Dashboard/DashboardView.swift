@@ -17,7 +17,6 @@ struct DashboardView: View {
     let folderID: UUID?
     @Binding var activeBlobID: UUID?
     @Binding var selectedFolderID: UUID?
-    @Binding var isViewingHidden: Bool
 
     @State private var isRenamingFolder = false
     @State private var renameFolderID: UUID?
@@ -42,11 +41,7 @@ struct DashboardView: View {
     let columns = [GridItem(.adaptive(minimum: 280, maximum: 360), spacing: 12)]
 
     var allItems: [DashboardItem] {
-        if isViewingHidden {
-            return store.hiddenDashboardItems(for: projectID)
-        } else {
-            return store.dashboardItems(for: projectID, folderID: folderID)
-        }
+        store.dashboardItems(for: projectID, folderID: folderID)
     }
 
     var folderItems: [DashboardItem] { allItems.filter { if case .folder = $0 { return true }; return false } }
@@ -78,11 +73,6 @@ struct DashboardView: View {
         return items
     }
 
-    var isReadOnly: Bool {
-        guard let project = store.projects.first(where: { $0.id == projectID }) else { return true }
-        return project.isArchived || isViewingHidden
-    }
-
     var currentFolderName: String? {
         guard let folderID else { return nil }
         return store.projects
@@ -100,35 +90,6 @@ struct DashboardView: View {
             .keyboardShortcut(.escape, modifiers: [])
             .frame(width: 0, height: 0)
             .hidden()
-
-            // Hidden items back button
-            if isViewingHidden {
-                HStack(spacing: 12) {
-                    Button(action: { isViewingHidden = false }) {
-                        HStack(spacing: 5) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 12, weight: .semibold))
-                            Text("Back")
-                                .font(.system(size: 13))
-                        }
-                        .foregroundColor(AppColors.shared.contentSecondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(AppColors.shared.backgroundPrimary)
-                        .cornerRadius(6)
-                    }
-                    .buttonStyle(.plain)
-
-                    Text("Hidden Items")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(AppColors.shared.contentPrimary)
-
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-                .padding(.bottom, 10)
-            }
 
             // Folder breadcrumb header
             if let name = currentFolderName {
@@ -169,7 +130,7 @@ struct DashboardView: View {
                                     item: item,
                                     projectID: projectID,
                                     folderID: folderID,
-                                    isReadOnly: isReadOnly,
+                                    isReadOnly: false,
                                     height: 80,
                                     onBlobTap: { _ in },
                                     onFolderTap: { id in selectedFolderID = id },
@@ -209,7 +170,7 @@ struct DashboardView: View {
                                             store.moveItem(in: projectID, fromIndex: fromIndex, toIndex: toIndex, context: folderID)
                                             triggerConfirmGlow(for: item.id)
                                         },
-                                    including: isReadOnly ? .subviews : .all
+                                    including: .all
                                 )
                                 .contextMenu { contextMenuContent(for: item) }
                             }
@@ -226,11 +187,9 @@ struct DashboardView: View {
                                     item: item,
                                     projectID: projectID,
                                     folderID: folderID,
-                                    isReadOnly: isReadOnly,
+                                    isReadOnly: false,
                                     height: 200,
-                                    onBlobTap: { blobID in
-                                        if !isReadOnly { activeBlobID = blobID }
-                                    },
+                                    onBlobTap: { blobID in activeBlobID = blobID },
                                     onFolderTap: { _ in },
                                     isDropPreview: false,
                                     isDropConfirm: confirmGlowItemID == item.id,
@@ -304,7 +263,7 @@ struct DashboardView: View {
                                             store.moveItem(in: projectID, fromIndex: fromIndex, toIndex: toIndex, context: folderID)
                                             triggerConfirmGlow(for: item.id)
                                         },
-                                    including: isReadOnly ? .subviews : .all
+                                    including: .all
                                 )
                                 .contextMenu { contextMenuContent(for: item) }
                             }
@@ -351,8 +310,7 @@ struct DashboardView: View {
             }
         )
         .overlay(alignment: .bottomTrailing) {
-            if !isReadOnly {
-                HStack(spacing: 4) {
+            HStack(spacing: 4) {
                     // New folder button
                     Image(systemName: glowFolder ? "folder.fill" : "folder")
                         .font(.system(size: 15))
@@ -391,7 +349,6 @@ struct DashboardView: View {
                 )
                 .padding(.trailing, 16)
                 .padding(.bottom, 16)
-            }
         }
         .alert("Rename Folder", isPresented: $isRenamingFolder) {
             TextField("Folder name", text: $renameFolderText)
@@ -519,86 +476,46 @@ struct DashboardView: View {
         switch item {
         case .folder(let folder):
             if folderID == nil {
-                if isViewingHidden {
-                    Button(action: {
-                        store.unhideFolder(folder.id, in: projectID)
-                    }) {
-                        Label("Restore Folder", systemImage: "eye")
-                    }
-                    Divider()
-                    Button(role: .destructive, action: {
-                        store.deleteFolder(folder.id, in: projectID)
-                    }) {
-                        Label("Delete Folder", systemImage: "trash")
-                            .foregroundColor(AppColors.shared.destructive)
-                    }
-                } else if !isReadOnly {
-                    Button(action: {
-                        renameFolderID = folder.id
-                        renameFolderText = folder.name
-                        isRenamingFolder = true
-                    }) {
-                        Label("Rename Folder", systemImage: "pencil")
-                    }
-                    Button(action: {
-                        store.hideFolder(folder.id, in: projectID)
-                    }) {
-                        Label("Hide Folder", systemImage: "eye.slash")
-                    }
-                    Divider()
-                    Button(role: .destructive, action: {
-                        store.deleteFolder(folder.id, in: projectID)
-                    }) {
-                        Label("Delete Folder", systemImage: "trash")
-                            .foregroundColor(AppColors.shared.destructive)
-                    }
+                Button(action: {
+                    renameFolderID = folder.id
+                    renameFolderText = folder.name
+                    isRenamingFolder = true
+                }) {
+                    Label("Rename Folder", systemImage: "pencil")
+                }
+                Divider()
+                Button(role: .destructive, action: {
+                    store.deleteFolder(folder.id, in: projectID)
+                }) {
+                    Label("Delete Folder", systemImage: "trash")
+                        .foregroundColor(AppColors.shared.destructive)
                 }
             }
 
         case .blob(let blob):
-            if isViewingHidden {
+            Button(action: {
+                print("Copy blob \(blob.id)")
+            }) {
+                Label("Copy Blob", systemImage: "doc.on.doc")
+            }
+            Button(action: {
+                store.printBlob(blobID: blob.id, in: projectID)
+            }) {
+                Label("Print...", systemImage: "printer")
+            }
+            if folderID != nil {
                 Button(action: {
-                    store.unhideBlob(blob.id, in: projectID)
+                    store.moveBlobToRoot(blob.id, in: projectID)
                 }) {
-                    Label("Restore Blob", systemImage: "eye")
+                    Label("Send Back to Root", systemImage: "arrow.up")
                 }
-                Divider()
-                Button(role: .destructive, action: {
-                    store.deleteBlob(blob.id, in: projectID)
-                }) {
-                    Label("Delete Blob", systemImage: "trash")
-                        .foregroundColor(AppColors.shared.destructive)
-                }
-            } else if !isReadOnly {
-                Button(action: {
-                    print("Copy blob \(blob.id)")
-                }) {
-                    Label("Copy Blob", systemImage: "doc.on.doc")
-                }
-                Button(action: {
-                    store.printBlob(blobID: blob.id, in: projectID)
-                }) {
-                    Label("Print...", systemImage: "printer")
-                }
-                if folderID != nil {
-                    Button(action: {
-                        store.moveBlobToRoot(blob.id, in: projectID)
-                    }) {
-                        Label("Send Back to Root", systemImage: "arrow.up")
-                    }
-                }
-                Button(action: {
-                    store.hideBlob(blob.id, in: projectID)
-                }) {
-                    Label("Hide Blob", systemImage: "eye.slash")
-                }
-                Divider()
-                Button(role: .destructive, action: {
-                    store.deleteBlob(blob.id, in: projectID)
-                }) {
-                    Label("Delete Blob", systemImage: "trash")
-                        .foregroundColor(AppColors.shared.destructive)
-                }
+            }
+            Divider()
+            Button(role: .destructive, action: {
+                store.deleteBlob(blob.id, in: projectID)
+            }) {
+                Label("Delete Blob", systemImage: "trash")
+                    .foregroundColor(AppColors.shared.destructive)
             }
 
         case .ghost:

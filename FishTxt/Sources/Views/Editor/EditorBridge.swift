@@ -22,8 +22,6 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     /// Called when the web toolbar's Close button is tapped.
     var onClose: (() -> Void)?
-    /// Called when the web toolbar's Hide button is tapped.
-    var onHide: (() -> Void)?
 
     // MARK: - JS → Swift (WKScriptMessageHandler)
 
@@ -61,9 +59,6 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
             case "closeEditor":
                 self.onClose?()
-
-            case "hideBlob":
-                self.onHide?()
 
             case "headingVisible":
                 let index = body["index"] as? Int ?? -1

@@ -7,7 +7,6 @@ struct ContentView: View {
     @State var selectedFolderID: UUID?
     @State var activeBlobID: UUID?
     @State var isSidebarOpen: Bool = true
-    @State var isViewingHidden: Bool = false
 
     @AppStorage("lastProjectID") private var lastProjectIDString: String = ""
     @StateObject private var crossPanelDrag = CrossPanelDrag()
@@ -18,8 +17,7 @@ struct ContentView: View {
                 isSidebarOpen: $isSidebarOpen,
                 selectedProjectID: $selectedProjectID,
                 selectedFolderID: $selectedFolderID,
-                activeBlobID: $activeBlobID,
-                isViewingHidden: $isViewingHidden
+                activeBlobID: $activeBlobID
             )
 
             // Main content area (fills remaining space)
@@ -34,8 +32,7 @@ struct ContentView: View {
                             projectID: projectID,
                             folderID: selectedFolderID,
                             activeBlobID: $activeBlobID,
-                            selectedFolderID: $selectedFolderID,
-                            isViewingHidden: $isViewingHidden
+                            selectedFolderID: $selectedFolderID
                         )
                     }
 
@@ -65,7 +62,7 @@ struct ContentView: View {
         .environmentObject(crossPanelDrag)
         .onAppear {
             if let pid = UUID(uuidString: lastProjectIDString),
-               store.projects.contains(where: { $0.id == pid && !$0.isArchived }) {
+               store.projects.contains(where: { $0.id == pid }) {
                 selectedProjectID = pid
             }
         }

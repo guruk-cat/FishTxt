@@ -47,13 +47,13 @@ This version is the Beta version (build 2), currently being tested in real use (
 ## Entry & Shell
 
 - **`Sources/App/FishTxtApp.swift`** — `@main` entry point. Installs `ProjectStore` and `AppColors` as environment objects, wires a `⌘S` `saveDocument` notification, and flushes a save on app quit via `AppDelegate`.
-- **`Sources/Views/ContentView.swift`** — root layout. `SidebarView` on the left; on the right either `DashboardView` (when no blob is active) or `EditView` (when `activeBlobID != nil`). State lives here: `selectedProjectID`, `selectedFolderID`, `activeBlobID`, `isSidebarOpen`, `isViewingHidden`.
+- **`Sources/Views/ContentView.swift`** — root layout. `SidebarView` on the left; on the right either `DashboardView` (when no blob is active) or `EditView` (when `activeBlobID != nil`). State lives here: `selectedProjectID`, `selectedFolderID`, `activeBlobID`, `isSidebarOpen`.
 
 ## Data Model (`Sources/Models/`)
 
-- **`Project`** — contains `folders`, `hiddenFolders`, `blobs`, and `isArchived` flag. Serialized to `~/Documents/FishTxt/<projectID>/project.json`.
+- **`Project`** — contains `folders` and `blobs`. Serialized to `~/Documents/FishTxt/<projectID>/project.json`.
 - **`BlobFolder`** — id, name, sortOrder. Represents a collection for organizing blobs.
-- **`Blob`** — id, optional `folderID`, sortOrder, `isHidden`, and timestamps. Content stored separately at `<projectID>/<blobID>.json` as TipTap JSON.
+- **`Blob`** — id, optional `folderID`, sortOrder, and timestamps. Content stored separately at `<projectID>/<blobID>.json` as TipTap JSON.
 - **`DashboardItem`** — enum wrapping `.folder`, `.blob`, or `.ghost`. Ghost is the drag-reorder placeholder shown during drag operations.
 - **`BlobMergeMode`** — enum with cases `.newHeading` (default) and `.simple`. Shared between `BlobMergeView` and `ProjectStore.mergeBlobs`.
 
@@ -63,14 +63,15 @@ This version is the Beta version (build 2), currently being tested in real use (
 
 The only persistence layer. Handles all project/folder/blob CRUD operations, including:
 
-- Project lifecycle (create, delete, rename, archive/restore)
-- Folder management with hide/unhide support
-- Blob management with individual hide/unhide, move to folder/root
+- Project lifecycle (create, delete, rename)
+- Folder management
+- Blob management with move to folder/root
 - Sort order rebuilds across folders and root level
 - Drag-move logic (`moveItem`, `moveBlobToFolder`, `moveBlobToRoot`)
 - Blob merge (`mergeBlobs`) — see below
 - TipTap JSON parsing and extraction:
   - `loadBlobExcerpt` — extracts title (first heading) and body with inline formatting for card previews
+  - `loadBlobHeadings` — returns all heading nodes in document order as `[BlobHeading]` (level + plain text); used by `BlobOutlineView`
   - `loadBlobPlainText` — plain text extraction with optional word limit
   - `loadBlobHTML` — full HTML generation preserving structure
   - `loadBlobContent` — raw TipTap JSON
@@ -155,11 +156,12 @@ Holds `@State private var activePanel: SidebarPanel` (`.navigator` / `.blobMerge
 ### SidebarButtonColumn
 
 - Toggle file navigator (sets `activePanel = .navigator`, toggles `isSidebarOpen`)
+- Toggle blob outline panel (sets `activePanel = .blobOutline`, toggles `isSidebarOpen`)
 - Toggle blob merge panel (sets `activePanel = .blobMerge`, toggles `isSidebarOpen`)
 - Disabled git button (placeholder for future feature)
 - Settings button (opens SettingsView sheet)
 
-The two panel-toggle buttons are mutually exclusive: activating one while the other is open switches the panel rather than closing it.
+The three panel-toggle buttons are mutually exclusive: activating one while another is open switches the panel rather than closing it.
 
 ### FileNavigatorView
 
@@ -167,7 +169,7 @@ Two-level navigation with full drag-reorder support:
 
 **(Level 1) Project Picker:**
 
-- Lists live and archived projects
+- Lists all projects
 - Create new project via plus button
 - Tap to enter Level 2
 
@@ -182,10 +184,31 @@ Two-level navigation with full drag-reorder support:
 Supports context menus for:
 
 - Rename folder/project
-- Hide/unhide folders and blobs
 - Delete folders and blobs
 - Move blobs to root
-- Archive/restore projects
+
+### BlobOutlineView
+
+Sidebar panel displaying the heading structure of the currently open blob. Occupies the same 270pt width as the other panels.
+
+**Layout:**
+
+- `OUTLINE` section header
+- Empty states: "No blob open." (when `activeBlobID` is nil) or "No headings." (when the blob has no heading nodes)
+- Heading list, one row per heading node in document order
+
+**Heading rows:**
+
+- Indented by heading level (12pt per level after H1)
+- Collapsible: headings with children show a chevron; clicking the chevron toggles collapse/expand for that subtree
+- Active heading (the heading currently visible in the editor viewport) is highlighted with a background tint and a 2pt left accent bar
+- Clicking a row posts a `scrollToOutlineHeading` notification (carrying the heading's index) which `EditView` receives and forwards to `EditorBridge.scrollToHeading(index:)`
+
+**Active heading tracking:**
+
+The JS side of the editor detects which heading is in the viewport and sends a `headingVisible` message to Swift carrying the heading index. `EditorBridge` re-posts this as an `activeHeadingChanged` notification, which `BlobOutlineView` receives to update `activeHeadingIndex`.
+
+**Data:** Reloads via `store.loadBlobHeadings(blobID:in:)` whenever `activeBlobID` or `selectedProjectID` changes.
 
 ### BlobMergeView
 
@@ -229,10 +252,6 @@ Expandable sidebar panel for consolidating multiple blobs into one. Occupies the
 - ESC key cancels active drag
 - Confirm glow animation on successful drop
 
-#### Read-only mode
-
-When project is archived or viewing hidden items.
-
 #### Floating island of buttons
 
 - New folder button
@@ -240,10 +259,9 @@ When project is archived or viewing hidden items.
 
 #### Context menus for
 
-- Rename/hide/delete folders
-- Hide/delete blobs
+- Rename/delete folders
+- Copy/print/delete blobs
 - Move blobs to root
-- Restore hidden items
 
 ### CardView
 
@@ -320,7 +338,6 @@ Updates auto-scroll mode on settings change via coordinator.
 - `stateUpdate` — reflect formatting state
 - `copyAll` — copy HTML + plain text to clipboard
 - `closeEditor` — trigger save and close
-- `hideBlob` — trigger save and hide
 
 **Swift → JS** (commands):
 
@@ -333,6 +350,11 @@ Updates auto-scroll mode on settings change via coordinator.
 **Clipboard helper**:
 
 - `writeToClipboard(html:plainText:)` — wraps HTML in UTF-8 document wrapper so Pages/Word handle multi-byte characters (curly quotes, em-dashes) correctly
+
+**Notification names** (defined as `Notification.Name` extensions in `EditorBridge.swift`):
+
+- `scrollToOutlineHeading` — posted by `BlobOutlineView` (object: `Int` heading index); received by `EditView` to call `bridge.scrollToHeading(index:)`
+- `activeHeadingChanged` — posted by `EditorBridge` when the JS side reports a `headingVisible` message (object: `Int` heading index); received by `BlobOutlineView` to highlight the active row
 
 ## Settings (`Sources/Views/Settings/`)
 
@@ -366,7 +388,6 @@ Root state lives in `ContentView`:
 - `selectedFolderID` — which folder (if any) is being viewed in dashboard
 - `activeBlobID` — which blob (if any) is open in editor
 - `isSidebarOpen` — sidebar visibility
-- `isViewingHidden` — viewing hidden items panel vs normal items
 
 The sidebar reflects project selection and folder navigation. The dashboard shows items for the selected context (project root or specific folder). The editor appears when `activeBlobID` is set.
 
@@ -377,7 +398,10 @@ The sidebar reflects project selection and folder navigation. The dashboard show
 | Persistence, CRUD, sort order, drag logic | `ProjectStore.swift` |
 | Blob merge logic, footnote consolidation | `ProjectStore.mergeBlobs()`, `ProjectStore.consolidateFootnotes()` |
 | Merge panel UI & drag reorder | `BlobMergeView.swift` |
-| Sidebar panel switching (navigator vs. merge) | `SidebarView.swift`, `SidebarButtonColumn.swift` |
+| Blob outline panel UI & collapse logic | `BlobOutlineView.swift` |
+| Blob outline heading extraction | `ProjectStore.loadBlobHeadings()`, `ProjectStore.BlobHeading` |
+| Outline ↔ editor scroll sync | `EditorBridge.swift` (`scrollToOutlineHeading`, `activeHeadingChanged` notifications) |
+| Sidebar panel switching (navigator / outline / merge) | `SidebarView.swift`, `SidebarButtonColumn.swift` |
 | Printing & print profiles | `ProjectStore.printBlob()`, `BlobPrinter`, `Resources/print-profiles/*.css` |
 | Footnote HTML rendering | `ProjectStore.renderNodeHTML()` (cases: `footnoteReference`, `footnotes`, `footnote`) |
 | Color theming (Swift + web) | `AppColors.swift` |

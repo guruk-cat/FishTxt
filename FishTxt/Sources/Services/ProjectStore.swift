@@ -134,18 +134,6 @@ class ProjectStore: ObservableObject {
         }
     }
 
-    func archiveProject(_ projectID: UUID) {
-        mutateProject(projectID) { project in
-            project.isArchived = true
-        }
-    }
-
-    func restoreProject(_ projectID: UUID) {
-        mutateProject(projectID) { project in
-            project.isArchived = false
-        }
-    }
-
     // MARK: - Folder CRUD
 
     func createFolder(in projectID: UUID, name: String) -> BlobFolder {
@@ -166,9 +154,7 @@ class ProjectStore: ObservableObject {
 
         var project = projects[projectIndex]
 
-        // Remove folder from folders or hiddenFolders
         project.folders.removeAll { $0.id == folderID }
-        project.hiddenFolders.removeAll { $0.id == folderID }
 
         // Remove all blobs in this folder
         project.blobs.removeAll { $0.folderID == folderID }
@@ -183,35 +169,6 @@ class ProjectStore: ObservableObject {
 
         if let index = project.folders.firstIndex(where: { $0.id == folderID }) {
             project.folders[index].name = name
-        } else if let index = project.hiddenFolders.firstIndex(where: { $0.id == folderID }) {
-            project.hiddenFolders[index].name = name
-        }
-
-        updateProject(project)
-    }
-
-    func hideFolder(_ folderID: UUID, in projectID: UUID) {
-        guard let projectIndex = projectIndex(projectID) else { return }
-
-        var project = projects[projectIndex]
-
-        if let index = project.folders.firstIndex(where: { $0.id == folderID }) {
-            let folder = project.folders.remove(at: index)
-            project.hiddenFolders.append(folder)
-        }
-
-        updateProject(project)
-    }
-
-    func unhideFolder(_ folderID: UUID, in projectID: UUID) {
-        guard let projectIndex = projectIndex(projectID) else { return }
-
-        var project = projects[projectIndex]
-
-        if let index = project.hiddenFolders.firstIndex(where: { $0.id == folderID }) {
-            var unHiddenFolder = project.hiddenFolders.remove(at: index)
-            unHiddenFolder.sortOrder = (project.folders.max { $0.sortOrder < $1.sortOrder }?.sortOrder ?? -1) + 1
-            project.folders.append(unHiddenFolder)
         }
 
         updateProject(project)
@@ -228,7 +185,7 @@ class ProjectStore: ObservableObject {
         if let folderID = folderID {
             // Insert before first existing blob in folder
             let firstFolderSortOrder = project.blobs
-                .filter { $0.folderID == folderID && !$0.isHidden }
+                .filter { $0.folderID == folderID }
                 .min { $0.sortOrder < $1.sortOrder }?
                 .sortOrder ?? 0
             var newBlob = blob
@@ -238,7 +195,7 @@ class ProjectStore: ObservableObject {
         } else {
             // Insert before first existing root blob
             let firstRootBlobSortOrder = project.blobs
-                .filter { $0.folderID == nil && !$0.isHidden }
+                .filter { $0.folderID == nil }
                 .min { $0.sortOrder < $1.sortOrder }
                 .map { $0.sortOrder }
 
@@ -289,51 +246,6 @@ class ProjectStore: ObservableObject {
         updateProject(project)
     }
 
-    func hideBlob(_ blobID: UUID, in projectID: UUID) {
-        guard let projectIndex = projectIndex(projectID) else { return }
-
-        var project = projects[projectIndex]
-
-        if let index = project.blobs.firstIndex(where: { $0.id == blobID }) {
-            project.blobs[index].isHidden = true
-        }
-
-        updateProject(project)
-    }
-
-    func unhideBlob(_ blobID: UUID, in projectID: UUID) {
-        guard let projectIndex = projectIndex(projectID) else { return }
-
-        var project = projects[projectIndex]
-
-        if let index = project.blobs.firstIndex(where: { $0.id == blobID }) {
-            project.blobs[index].isHidden = false
-            let blob = project.blobs[index]
-
-            // If blob is at root level, assign sortOrder before first existing root blob
-            if blob.folderID == nil {
-                let firstRootBlobSortOrder = project.blobs
-                    .filter { $0.folderID == nil && !$0.isHidden && $0.id != blobID }
-                    .min { $0.sortOrder < $1.sortOrder }
-                    .map { $0.sortOrder }
-
-                if let firstSortOrder = firstRootBlobSortOrder {
-                    project.blobs[index].sortOrder = firstSortOrder - 1
-                } else {
-                    let maxSortOrder = project.blobs
-                        .filter { $0.folderID == nil }
-                        .max { $0.sortOrder < $1.sortOrder }?
-                        .sortOrder ?? -1
-                    project.blobs[index].sortOrder = maxSortOrder + 1
-                }
-
-                rebuildRootSortOrders(&project)
-            }
-        }
-
-        updateProject(project)
-    }
-
     func moveBlobToRoot(_ blobID: UUID, in projectID: UUID) {
         guard let projectIndex = projectIndex(projectID) else { return }
 
@@ -345,7 +257,7 @@ class ProjectStore: ObservableObject {
 
             // Assign sortOrder before first existing root blob
             let firstRootBlobSortOrder = project.blobs
-                .filter { $0.folderID == nil && !$0.isHidden && $0.id != blobID }
+                .filter { $0.folderID == nil && $0.id != blobID }
                 .min { $0.sortOrder < $1.sortOrder }
                 .map { $0.sortOrder }
 
@@ -394,7 +306,7 @@ class ProjectStore: ObservableObject {
         if let folderID = folderID {
             // Folder context: all items are blobs; fromIndex/toIndex are 0-based within this folder's visible blobs
             var blobs = project.blobs
-                .filter { $0.folderID == folderID && !$0.isHidden }
+                .filter { $0.folderID == folderID }
                 .sorted { $0.sortOrder < $1.sortOrder }
             guard fromIndex >= 0, fromIndex < blobs.count,
                   toIndex >= 0, toIndex < blobs.count else { return }
@@ -411,7 +323,7 @@ class ProjectStore: ObservableObject {
             // Root context: fromIndex/toIndex index into dashboardItems (folders first, then blobs)
             let sortedFolders = project.folders.sorted { $0.sortOrder < $1.sortOrder }
             let sortedRootBlobs = project.blobs
-                .filter { $0.folderID == nil && !$0.isHidden }
+                .filter { $0.folderID == nil }
                 .sorted { $0.sortOrder < $1.sortOrder }
             let folderCount = sortedFolders.count
 
@@ -455,7 +367,7 @@ class ProjectStore: ObservableObject {
             let oldFolderID = project.blobs[index].folderID
             project.blobs[index].folderID = folderID
             project.blobs[index].sortOrder = (project.blobs
-                .filter { $0.folderID == folderID && !$0.isHidden && $0.id != blobID }
+                .filter { $0.folderID == folderID && $0.id != blobID }
                 .min { $0.sortOrder < $1.sortOrder }?
                 .sortOrder ?? 0) - 1
 
@@ -838,7 +750,7 @@ class ProjectStore: ObservableObject {
             var blobToInsert = newBlob
             if let fid = folderID {
                 let firstOrder = project.blobs
-                    .filter { $0.folderID == fid && !$0.isHidden }
+                    .filter { $0.folderID == fid }
                     .min { $0.sortOrder < $1.sortOrder }?
                     .sortOrder ?? 0
                 blobToInsert.sortOrder = firstOrder - 1
@@ -846,7 +758,7 @@ class ProjectStore: ObservableObject {
                 self.rebuildFolderSortOrders(&project, folderID: fid)
             } else {
                 if let firstOrder = project.blobs
-                    .filter({ $0.folderID == nil && !$0.isHidden })
+                    .filter({ $0.folderID == nil })
                     .min(by: { $0.sortOrder < $1.sortOrder })
                     .map({ $0.sortOrder }) {
                     blobToInsert.sortOrder = firstOrder - 1
@@ -890,7 +802,7 @@ class ProjectStore: ObservableObject {
         if let folderID = folderID {
             // Return active blobs in that folder
             let blobs = project.blobs
-                .filter { $0.folderID == folderID && !$0.isHidden }
+                .filter { $0.folderID == folderID }
                 .sorted { $0.sortOrder < $1.sortOrder }
             return blobs.map { .blob($0) }
         } else {
@@ -902,41 +814,12 @@ class ProjectStore: ObservableObject {
             items.append(contentsOf: activeFolders.map { .folder($0) })
 
             let activeRootBlobs = project.blobs
-                .filter { $0.folderID == nil && !$0.isHidden }
+                .filter { $0.folderID == nil }
                 .sorted { $0.sortOrder < $1.sortOrder }
             items.append(contentsOf: activeRootBlobs.map { .blob($0) })
 
             return items
         }
-    }
-
-    func hiddenDashboardItems(for projectID: UUID) -> [DashboardItem] {
-        guard let project = projects.first(where: { $0.id == projectID }) else { return [] }
-
-        var items: [DashboardItem] = []
-
-        // Add hidden folders
-        let hiddenFolders = project.hiddenFolders
-            .sorted { $0.sortOrder < $1.sortOrder }
-        items.append(contentsOf: hiddenFolders.map { .folder($0) })
-
-        // Add individually hidden blobs
-        let hiddenBlobs = project.blobs
-            .filter { $0.isHidden }
-            .sorted { $0.sortOrder < $1.sortOrder }
-        items.append(contentsOf: hiddenBlobs.map { .blob($0) })
-
-        // Add blobs belonging to hidden folders (excluding already-added individually hidden ones)
-        let hiddenBlobIDs = Set(hiddenBlobs.map { $0.id })
-        let blobsInHiddenFolders = project.blobs
-            .filter { blob in
-                !hiddenBlobIDs.contains(blob.id) &&
-                blob.folderID != nil && project.hiddenFolders.contains(where: { $0.id == blob.folderID })
-            }
-            .sorted { $0.sortOrder < $1.sortOrder }
-        items.append(contentsOf: blobsInHiddenFolders.map { .blob($0) })
-
-        return items
     }
 
     // MARK: - Footnote consolidation
@@ -1065,7 +948,7 @@ class ProjectStore: ObservableObject {
         }
 
         let sortedBlobs = project.blobs
-            .filter { $0.folderID == nil && !$0.isHidden }
+            .filter { $0.folderID == nil }
             .sorted { $0.sortOrder < $1.sortOrder }
         for (index, blob) in sortedBlobs.enumerated() {
             if let i = project.blobs.firstIndex(where: { $0.id == blob.id }) {
@@ -1076,7 +959,7 @@ class ProjectStore: ObservableObject {
 
     private func rebuildFolderSortOrders(_ project: inout Project, folderID: UUID) {
         let blobs = project.blobs
-            .filter { $0.folderID == folderID && !$0.isHidden }
+            .filter { $0.folderID == folderID }
             .sorted { $0.sortOrder < $1.sortOrder }
 
         for (index, blob) in blobs.enumerated() {

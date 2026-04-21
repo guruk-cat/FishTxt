@@ -182,7 +182,6 @@ extension WebEditorView {
 
       // ── Chrome → Swift ────────────────────────────────────────────
       on('copy-btn',  function () { eb.copyAll(); });
-      on('hide-btn',  function () { post({ type: 'hideBlob' }); });
       on('close-btn', function () { post({ type: 'closeEditor' }); });
       function post(msg) {
         var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.editorBridge;

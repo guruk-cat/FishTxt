@@ -33,7 +33,7 @@ struct SidebarView: View {
                     activeBlobID: $activeBlobID,
                     isViewingHidden: $isViewingHidden
                 )
-                .frame(width: 220)
+                .frame(width: 270)
                 .background(AppColors.shared.sidebarBackground)
             } else if isSidebarOpen && activePanel == .blobMerge {
                 BlobMergeView(
@@ -41,18 +41,18 @@ struct SidebarView: View {
                     selectedFolderID: $selectedFolderID,
                     activeBlobID: $activeBlobID
                 )
-                .frame(width: 220)
+                .frame(width: 270)
                 .background(AppColors.shared.sidebarBackground)
             } else if isSidebarOpen && activePanel == .blobOutline {
                 BlobOutlineView(
                     selectedProjectID: $selectedProjectID,
                     activeBlobID: $activeBlobID
                 )
-                .frame(width: 220)
+                .frame(width: 270)
                 .background(AppColors.shared.sidebarBackground)
             }
         }
-        .frame(width: isSidebarOpen ? 268 : 48)
+        .frame(width: isSidebarOpen ? 318 : 48)
     }
 }
 

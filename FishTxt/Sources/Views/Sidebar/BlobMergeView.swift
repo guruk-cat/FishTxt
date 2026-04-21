@@ -258,7 +258,7 @@ struct BlobMergeView: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .frame(width: 220, height: Self.rowHeight)
+            .frame(width: 270, height: Self.rowHeight)
             .background(AppColors.shared.sidebarBackground)
             .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
             .opacity(0.85)
@@ -448,7 +448,7 @@ struct BlobMergeView: View {
         // Refresh titles for all current blobs, drop stale entries
         for blob in currentBlobs {
             let excerpt = store.loadBlobExcerpt(blobID: blob.id, in: projectID)
-            blobTitles[blob.id] = excerpt.title ?? "Untitled"
+            blobTitles[blob.id] = excerpt.title ?? excerpt.body.flatMap { String($0.prefix(40)) } ?? "Untitled"
         }
         blobTitles = blobTitles.filter { currentIDs.contains($0.key) }
     }
@@ -470,7 +470,7 @@ struct BlobMergeView: View {
 
         for blob in blobs {
             let excerpt = store.loadBlobExcerpt(blobID: blob.id, in: projectID)
-            blobTitles[blob.id] = excerpt.title ?? "Untitled"
+            blobTitles[blob.id] = excerpt.title ?? excerpt.body.flatMap { String($0.prefix(40)) } ?? "Untitled"
         }
 
         checkedBlobIDs = Set(orderedBlobIDs)
