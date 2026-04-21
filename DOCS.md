@@ -314,7 +314,6 @@ Hosts the WebKit editor and manages save lifecycle:
 - Heading level dropdown (H1/H2/H3)
 - Bullet/ordered list dropdown
 - Copy all (sends content back to Swift)
-- Hide blob
 - Close editor
 
 Uses `WeakMessageHandler` to prevent retain cycle between `WKUserContentController` and `EditorBridge`.
@@ -410,5 +409,5 @@ The sidebar reflects project selection and folder navigation. The dashboard show
 | Card rendering & previews | `CardView.swift` |
 | Save lifecycle | `EditView.swift` |
 | JS ↔ Swift editor messages | `EditorBridge.swift`, `WebEditorView.toolbarInitJS` |
-| Editor DOM / TipTap internals | `Resources/editor.html` (grep) |
+| Editor DOM / TipTap internals | `Resources/editor.html` (grep; file is large and minified) |
 | Settings & user preferences | `SettingsView.swift` (includes print profile picker) |
