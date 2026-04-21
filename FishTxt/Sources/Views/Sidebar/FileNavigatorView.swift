@@ -382,7 +382,7 @@ struct FileNavigatorView: View {
                         .contentShape(Rectangle())
                         .onTapGesture {
                             selectedProjectID = project.id
-                            selectedFolderID = nil
+                            selectedFolderID = folder.id
                             activeBlobID = blob.id
                         }
                         .background(frameTracker(.blob(blob)))

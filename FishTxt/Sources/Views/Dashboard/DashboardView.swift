@@ -83,9 +83,10 @@ struct DashboardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Hidden ESC handler — cancels active drag
+            // Hidden ESC handler — cancels active drag, or navigates up from folder view
             Button("") {
                 if draggedItemID != nil { clearDragState() }
+                else if folderID != nil { selectedFolderID = nil }
             }
             .keyboardShortcut(.escape, modifiers: [])
             .frame(width: 0, height: 0)
