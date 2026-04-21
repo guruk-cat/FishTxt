@@ -1,4 +1,43 @@
 import SwiftUI
+import AppKit
+
+// MARK: Plain text field (no default bezel flash on focus)
+
+private struct PlainTextField: NSViewRepresentable {
+    var placeholder: String
+    @Binding var text: String
+    var isEnabled: Bool = true
+    var textColor: NSColor
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = NSTextField()
+        field.isBezeled = false
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.font = .systemFont(ofSize: 13)
+        field.placeholderString = placeholder
+        field.delegate = context.coordinator
+        return field
+    }
+
+    func updateNSView(_ nsView: NSTextField, context: Context) {
+        if nsView.stringValue != text { nsView.stringValue = text }
+        nsView.isEnabled = isEnabled
+        nsView.textColor = textColor
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+
+    class Coordinator: NSObject, NSTextFieldDelegate {
+        @Binding var text: String
+        init(text: Binding<String>) { _text = text }
+        func controlTextDidChange(_ obj: Notification) {
+            guard let field = obj.object as? NSTextField else { return }
+            text = field.stringValue
+        }
+    }
+}
 
 // MARK: Supporting types
 
@@ -132,24 +171,24 @@ struct BlobMergeView: View {
             }.padding(.bottom, 8)
 
             // New H1 heading text field
-            TextField("New H1 heading…", text: $newHeadingText)
-                .font(.system(size: 13))
-                .textFieldStyle(.plain)
-                .foregroundColor(
-                    mergeMode == .newHeading
-                        ? AppColors.shared.contentPrimary
-                        : AppColors.shared.contentTertiary
-                )
-                .padding(.vertical, 5)
-                .padding(.horizontal, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(AppColors.shared.backgroundSecondary.opacity(
-                            mergeMode == .newHeading ? 0.6 : 0.3
-                        ))
-                )
-                .padding(.top, 8)
-                .disabled(mergeMode == .simple)
+            PlainTextField(
+                placeholder: "New H1 heading…",
+                text: $newHeadingText,
+                isEnabled: mergeMode == .newHeading,
+                textColor: NSColor(mergeMode == .newHeading
+                    ? AppColors.shared.contentPrimary
+                    : AppColors.shared.contentTertiary)
+            )
+            .frame(height: 24)
+            .padding(.vertical, 5)
+            .padding(.horizontal, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(AppColors.shared.backgroundSecondary.opacity(
+                        mergeMode == .newHeading ? 0.6 : 0.3
+                    ))
+            )
+            .padding(.top, 8)
             
             // Merge button
             Button(action: performMerge) {
