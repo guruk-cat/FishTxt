@@ -603,6 +603,12 @@ class ProjectStore: ObservableObject {
                 default:          return result
                 }
             }
+        case "image":
+            let attrs = node["attrs"] as? [String: Any] ?? [:]
+            let src = attrs["src"] as? String ?? ""
+            let alt = (attrs["alt"] as? String ?? "")
+                .replacingOccurrences(of: "\"", with: "&quot;")
+            return "<figure><img src=\"\(src)\" alt=\"\(alt)\"></figure>"
         case "footnoteReference":
             let refNumber = (node["attrs"] as? [String: Any])?["referenceNumber"] as? String ?? "0"
             return "<sup><a href=\"#fn:\(refNumber)\" id=\"ref:\(refNumber)\" class=\"footnote-ref\">[\(refNumber)]</a></sup>"
@@ -655,12 +661,14 @@ class ProjectStore: ObservableObject {
         let css = loadPrintProfileCSS(profileName: profileName) ?? loadFirstAvailablePrintProfileCSS() ?? ""
         print("[ProjectStore] CSS length: \(css.count)")
 
+        let imgMaxWidth = UserDefaults.standard.bool(forKey: "imageLimitHalfWidth") ? "50%" : "100%"
         let document = """
         <!DOCTYPE html>
         <html>
         <head>
         <meta charset="UTF-8">
-        <style>\(css)</style>
+        <style>:root { --ft-print-img-max-width: \(imgMaxWidth); }
+        \(css)</style>
         </head>
         <body>\(fragment)</body>
         </html>

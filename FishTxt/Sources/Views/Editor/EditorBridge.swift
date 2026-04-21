@@ -2,6 +2,7 @@ import Foundation
 import WebKit
 import AppKit
 import Combine
+import UniformTypeIdentifiers
 
 struct EditorState: Equatable {
     var bold        = false
@@ -22,6 +23,8 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     /// Called when the web toolbar's Close button is tapped.
     var onClose: (() -> Void)?
+
+    private var pendingImageInsert: Bool = false
 
     // MARK: - JS → Swift (WKScriptMessageHandler)
 
@@ -64,6 +67,9 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                 let index = body["index"] as? Int ?? -1
                 NotificationCenter.default.post(name: .activeHeadingChanged, object: index)
 
+            case "insertImage":
+                self.openImagePicker()
+
             default:
                 break
             }
@@ -96,6 +102,50 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 
     func setAutoScroll(_ mode: String) {
         evaluate("window.editorBridge.setAutoScrollMode('\(mode)')")
+    }
+
+    // MARK: - Image support
+
+    private func openImagePicker() {
+        DispatchQueue.main.async {
+            let panel = NSOpenPanel()
+            panel.allowedContentTypes = [.jpeg, .png, .gif, .tiff, .bmp, .heic]
+            panel.allowsMultipleSelection = false
+            panel.canChooseDirectories = false
+            panel.begin { [weak self] response in
+                guard response == .OK, let url = panel.url else { return }
+                do {
+                    let data = try Data(contentsOf: url)
+                    let mimeType = url.mimeType
+                    let base64 = data.base64EncodedString()
+                    let src = "data:\(mimeType);base64,\(base64)"
+                    self?.insertImage(src: src)
+                } catch {
+                    print("[EditorBridge] Failed to read image: \(error)")
+                }
+            }
+        }
+    }
+
+    func insertImage(src: String) {
+        webView?.callAsyncJavaScript(
+            "window.editorBridge.insertImage(src)",
+            arguments: ["src": src],
+            in: nil,
+            in: .page,
+            completionHandler: nil
+        )
+    }
+
+    func setImageHalfWidth(_ half: Bool) {
+        let js = """
+        (function(){
+          var el = document.getElementById('ft-img-style');
+          if (!el) { el = document.createElement('style'); el.id = 'ft-img-style'; document.head.appendChild(el); }
+          el.textContent = ':root { --ft-img-max-width: \(half ? "50%" : "100%"); }';
+        })()
+        """
+        evaluate(js)
     }
 
     // MARK: - Editor style (font size + family share one injected <style> tag)
@@ -220,4 +270,13 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
 extension Notification.Name {
     static let scrollToOutlineHeading = Notification.Name("scrollToOutlineHeading")
     static let activeHeadingChanged   = Notification.Name("activeHeadingChanged")
+}
+
+private extension URL {
+    var mimeType: String {
+        if let type = UTType(filenameExtension: pathExtension) {
+            return type.preferredMIMEType ?? "application/octet-stream"
+        }
+        return "application/octet-stream"
+    }
 }

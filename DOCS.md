@@ -106,6 +106,8 @@ Blobs can be printed to PDF or physical printer via `printBlob(blobID:in:)`. The
 4. Create a temporary off-screen `WKWebView`, load the document, and invoke `printOperation(with:)` on macOS 13+
 5. Show the system print sheet (which includes "Save as PDF")
 
+**Image support**: `image` nodes → `<figure><img src="..." alt="..."></figure>`. The `src` is a base64 data URL stored directly in the blob JSON. Print output respects the `imageLimitHalfWidth` setting by injecting `--ft-print-img-max-width: 50%|100%` as a CSS variable before the profile CSS, which print profiles consume via `max-width: var(--ft-print-img-max-width, 100%)` on `figure`.
+
 **Footnote support**: The HTML renderer handles:
 
 - `footnoteReference` nodes → `<sup><a href="#fn:1" id="ref:1">[1]</a></sup>` (clickable links both ways)
@@ -118,9 +120,9 @@ Print-specific CSS can style footnotes appropriately (e.g., smaller font, page b
 Print profiles are self-contained CSS files stored in `Resources/print-profiles/`. Each profile:
 
 - Is named `<profileName>.css` (e.g., `palatino_basic.css`, `monospace.css`)
-- Owns all styling: fonts, sizes, margins, headings, lists, blockquotes, footnotes, etc.
-- Is injected verbatim into the `<style>` block of the print document
-- Does NOT use runtime substitution or variables
+- Owns all styling: fonts, sizes, margins, headings, lists, blockquotes, footnotes, figures, etc.
+- Is injected into the `<style>` block of the print document, preceded by a `:root { --ft-print-img-max-width: ... }` declaration injected by `printBlob` based on the `imageLimitHalfWidth` setting
+- Profiles consume `--ft-print-img-max-width` via `figure { max-width: var(--ft-print-img-max-width, 100%); }`
 
 Selection is persisted via `@AppStorage("printProfile")` (defaults to first available profile if not set). Users select a profile in Settings (see **Settings** section below).
 
@@ -313,12 +315,13 @@ Hosts the WebKit editor and manages save lifecycle:
 - Bold/italic/underline/blockquote toggles
 - Heading level dropdown (H1/H2/H3)
 - Bullet/ordered list dropdown
+- Image insertion (posts `insertImage` to Swift)
 - Copy all (sends content back to Swift)
 - Close editor
 
 Uses `WeakMessageHandler` to prevent retain cycle between `WKUserContentController` and `EditorBridge`.
 
-Updates auto-scroll mode on settings change via coordinator.
+Updates auto-scroll mode, font, and image half-width on settings change via coordinator.
 
 ### EditorBridge
 
@@ -337,6 +340,7 @@ Updates auto-scroll mode on settings change via coordinator.
 - `stateUpdate` — reflect formatting state
 - `copyAll` — copy HTML + plain text to clipboard
 - `closeEditor` — trigger save and close
+- `insertImage` — toolbar "Image" button tapped; Swift opens `NSOpenPanel`, reads the file, base64-encodes it, and calls back via `insertImage(src:)`
 
 **Swift → JS** (commands):
 
@@ -345,6 +349,7 @@ Updates auto-scroll mode on settings change via coordinator.
 - Content: `setContent(_:)`, `getContent(completion:)`
 - Navigation: `scrollToTop()`, `focus()`
 - Theming: `applyColors()`, `setAutoScroll(_:)`
+- Image: `insertImage(src:)` — inserts a `figure > img` block at the cursor using `callAsyncJavaScript` (handles large base64 payloads safely); `setImageHalfWidth(_:)` — injects `--ft-img-max-width: 50%|100%` CSS variable
 
 **Clipboard helper**:
 
@@ -364,9 +369,10 @@ Modal sheet with @AppStorage bindings:
 - **Editor**
   - Font family (text field)
   - Font size (−/+ buttons, range 10–36pt)
+  - Auto-scroll mode (dropdown: Off / On)
+  - Limit image width to half (switch toggle — `imageLimitHalfWidth`; when ON, `--ft-img-max-width` is set to `50%` in the editor and `--ft-print-img-max-width` to `50%` in print output)
 - **Appearance**
   - Color palette (dropdown, populated from `colors.json` keys)
-  - Auto-scroll mode (regular vs centered, segmented control)
   - Print profile (dropdown, auto-populated from `.css` files in `Resources/print-profiles/`)
 
 Palette change reactively calls `appColors.loadColors(palette:)`, triggering color updates across app and editor.

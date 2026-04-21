@@ -6,6 +6,7 @@ struct WebEditorView: NSViewRepresentable {
     @AppStorage("autoScroll") private var autoScrollMode: String = "regular"
     @AppStorage("fontSize") private var fontSize: Double = 16.0
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
+    @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -49,6 +50,7 @@ struct WebEditorView: NSViewRepresentable {
         context.coordinator.updateAutoScroll(autoScrollMode)
         context.coordinator.updateFontSize(fontSize)
         context.coordinator.updateFontFamily(fontFamily)
+        context.coordinator.updateImageHalfWidth(imageLimitHalfWidth)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -62,6 +64,7 @@ struct WebEditorView: NSViewRepresentable {
         private var lastScrollMode: String = ""
         private var lastFontSize: Double = -1
         private var lastFontFamily: String = ""
+        private var lastImageHalfWidth: Bool? = nil
 
         init(bridge: EditorBridge) {
             self.bridge = bridge
@@ -85,6 +88,12 @@ struct WebEditorView: NSViewRepresentable {
             bridge.setFontFamily(family)
         }
 
+        func updateImageHalfWidth(_ half: Bool) {
+            guard half != lastImageHalfWidth else { return }
+            lastImageHalfWidth = half
+            bridge.setImageHalfWidth(half)
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 self.bridge.applyColors()
@@ -98,6 +107,9 @@ struct WebEditorView: NSViewRepresentable {
                 let fontFamily = UserDefaults.standard.string(forKey: "fontFamily") ?? "Menlo"
                 self.bridge.setFontFamily(fontFamily)
                 self.lastFontFamily = fontFamily
+                let halfWidth = UserDefaults.standard.bool(forKey: "imageLimitHalfWidth")
+                self.bridge.setImageHalfWidth(halfWidth)
+                self.lastImageHalfWidth = halfWidth
             }
         }
     }
@@ -144,6 +156,7 @@ extension WebEditorView {
       on('underline-btn', function () { eb.toggleUnderline(); });
       on('quote-btn',     function () { eb.toggleBlockquote(); });
       on('ref-btn',       function () { eb.addFootnoteReference(); });
+      on('image-btn',     function () { post({ type: 'insertImage' }); });
 
       // ── Heading dropdown ──────────────────────────────────────────
       var headingMenu = document.getElementById('heading-menu');

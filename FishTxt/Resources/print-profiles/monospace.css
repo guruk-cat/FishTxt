@@ -122,3 +122,17 @@ strong, em, u {
 .footnote-backlink {
     display: none;
 }
+
+figure {
+    text-align: center;
+    margin: 1.5em auto;
+    page-break-inside: avoid;
+    max-width: var(--ft-print-img-max-width, 100%);
+}
+
+figure img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}

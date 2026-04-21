@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage("fontSize") private var fontSize: Double = 16.0
     @AppStorage("autoScroll") private var autoScroll: String = "On"
     @AppStorage("printProfile") private var printProfile: String = "default"
+    @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
 
     @State private var availablePrintProfiles: [String] = []
 
@@ -90,6 +91,12 @@ struct SettingsView: View {
                             }
                             .pickerStyle(.menu)
                         }
+
+                        settingsRow("Limit img width") {
+                            Toggle("", isOn: $imageLimitHalfWidth)
+                                .toggleStyle(.switch)
+                                .controlSize(.mini)
+                        }
                     }
 
                     // MARK: Appearance
@@ -121,7 +128,7 @@ struct SettingsView: View {
 
             Spacer(minLength: 0)
         }
-        .frame(width: 380, height: 380)
+        .frame(width: 380, height: 420)
         .background(AppColors.shared.backgroundSecondary)
         .task {
             loadPrintProfiles()
@@ -150,7 +157,7 @@ struct SettingsView: View {
             Text(label)
                 .font(.system(size: 13))
                 .foregroundColor(AppColors.shared.contentPrimary)
-                .frame(width: 90, alignment: .leading)
+                .frame(width: 120, alignment: .leading)
 
             control().frame(width: 160, alignment: .trailing)
         }
