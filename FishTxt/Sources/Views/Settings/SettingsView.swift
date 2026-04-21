@@ -8,7 +8,7 @@ struct SettingsView: View {
     @AppStorage("colorPalette") private var colorPalette: String = "coast"
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
     @AppStorage("fontSize") private var fontSize: Double = 16.0
-    @AppStorage("autoScroll") private var autoScroll: String = "On"
+    @AppStorage("autoScroll") private var autoScroll: String = "centered"
     @AppStorage("printProfile") private var printProfile: String = "default"
     @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
 
@@ -85,11 +85,12 @@ struct SettingsView: View {
                         }
                         
                         settingsRow("Auto scroll") {
-                            Picker("", selection: $autoScroll) {
-                                Text("Off").tag("regular")
-                                Text("On").tag("centered")
-                            }
-                            .pickerStyle(.menu)
+                            Toggle("", isOn: Binding(
+                                get: { autoScroll == "centered" },
+                                set: { autoScroll = $0 ? "centered" : "regular" }
+                            ))
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
                         }
 
                         settingsRow("Limit img width") {
