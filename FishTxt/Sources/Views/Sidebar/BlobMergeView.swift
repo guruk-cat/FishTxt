@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Supporting types
+// MARK: Supporting types
 
 private enum MergeListEntry: Identifiable {
     case blob(UUID)
@@ -22,7 +22,7 @@ private struct MergeListFrameKey: PreferenceKey {
     }
 }
 
-// MARK: - View
+// MARK: View
 
 struct BlobMergeView: View {
     @EnvironmentObject var store: ProjectStore
@@ -83,9 +83,10 @@ struct BlobMergeView: View {
                     headerRow
                     blobList
                     settingsSection
+                    mergeSection
                 }
-                .padding(.trailing, 4)
-                .padding(.leading, 12)
+                .padding(.trailing, 8)
+                .padding(.leading, 8)
             }
 
             dragOverlay
@@ -98,51 +99,125 @@ struct BlobMergeView: View {
         .onChange(of: store.projects) { _ in syncBlobs() }
     }
 
-    // MARK: - Header
+    // MARK: Header
 
     private var headerRow: some View {
-        VStack(spacing: 0) {
-            HStack {
+        HStack {
                 Text("MERGE BLOBS")
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.5)
                     .foregroundColor(AppColors.shared.contentSecondary)
                 Spacer()
+        }
+        .padding(.top, 12)
+        .padding(.bottom, 6)
+    }
+    
+    // MARK: Merge section
+    
+    private var mergeSection: some View {
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(AppColors.shared.contentTertiary.opacity(0.2))
+                .frame(height: 1)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
+            
+            HStack {
+                Text("3. Merge")
+                    .font(.system(size: 12))
+                    .tracking(0.5)
+                    .foregroundColor(AppColors.shared.contentSecondary)
+                Spacer()
+            }.padding(.bottom, 8)
+
+            // New H1 heading text field
+            TextField("New H1 heading…", text: $newHeadingText)
+                .font(.system(size: 13))
+                .textFieldStyle(.plain)
+                .foregroundColor(
+                    mergeMode == .newHeading
+                        ? AppColors.shared.contentPrimary
+                        : AppColors.shared.contentTertiary
+                )
+                .padding(.vertical, 5)
+                .padding(.horizontal, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(AppColors.shared.backgroundSecondary.opacity(
+                            mergeMode == .newHeading ? 0.6 : 0.3
+                        ))
+                )
+                .padding(.top, 8)
+                .disabled(mergeMode == .simple)
+            
+            // Merge button
+            Button(action: performMerge) {
+                Text("Merge")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(
+                        hoverMerge
+                            ? AppColors.shared.backgroundPrimary
+                            : AppColors.shared.contentPrimary
+                    )
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(hoverMerge
+                                  ? AppColors.shared.accent
+                                  : AppColors.shared.backgroundSecondary
+                            )
+                    )
+                    .animation(.easeInOut(duration: 0.12), value: hoverMerge)
             }
-            .padding(.horizontal, 8)
-            .padding(.top, 12)
-            .padding(.bottom, 6)
+            .buttonStyle(.plain)
+            .onHover { hoverMerge = $0 }
+            .padding(.top, 10)
+            .padding(.bottom, 12)
+        }
+    }
+
+    // MARK: Blob list
+
+    @ViewBuilder
+    private var blobList: some View {
+        VStack {
+            Rectangle()
+                .fill(AppColors.shared.contentTertiary.opacity(0.2))
+                .frame(height: 1)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
 
             HStack {
+                Text("1. Select Blobs")
+                    .font(.system(size: 12))
+                    .tracking(0.5)
+                    .foregroundColor(AppColors.shared.contentSecondary)
+                
+                Spacer()
+                
                 Button(action: toggleSelectAll) {
                     Text(allSelected ? "Deselect All" : "Select All")
                         .font(.system(size: 11))
                         .foregroundColor(
                             hoverSelectAll
-                                ? AppColors.shared.contentPrimary
-                                : AppColors.shared.contentTertiary
+                            ? AppColors.shared.contentPrimary
+                            : AppColors.shared.contentTertiary
                         )
                         .animation(.easeInOut(duration: 0.12), value: hoverSelectAll)
                 }
                 .buttonStyle(.plain)
                 .onHover { hoverSelectAll = $0 }
                 .disabled(orderedBlobIDs.isEmpty)
-                Spacer()
             }
-            .padding(.horizontal, 8)
             .padding(.bottom, 6)
         }
-    }
-
-    // MARK: - Blob list
-
-    @ViewBuilder
-    private var blobList: some View {
+        
         if orderedBlobIDs.isEmpty {
             Text("No blobs in this context.")
                 .font(.system(size: 12))
                 .foregroundColor(AppColors.shared.contentTertiary)
-                .padding(.horizontal, 8)
                 .padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
@@ -183,7 +258,6 @@ struct BlobMergeView: View {
 
             Spacer()
         }
-        .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .frame(height: Self.rowHeight)
         .contentShape(Rectangle())
@@ -232,7 +306,6 @@ struct BlobMergeView: View {
             .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
             .foregroundColor(AppColors.shared.contentTertiary.opacity(0.4))
             .frame(height: Self.rowHeight - 4)
-            .padding(.horizontal, 8)
             .padding(.vertical, 2)
     }
 
@@ -256,7 +329,6 @@ struct BlobMergeView: View {
                     .lineLimit(1)
                 Spacer()
             }
-            .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .frame(width: 270, height: Self.rowHeight)
             .background(AppColors.shared.sidebarBackground)
@@ -267,85 +339,55 @@ struct BlobMergeView: View {
         }
     }
 
-    // MARK: - Settings section
+    // MARK: Settings section
 
     private var settingsSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             Rectangle()
                 .fill(AppColors.shared.contentTertiary.opacity(0.2))
                 .frame(height: 1)
-                .padding(.horizontal, 8)
                 .padding(.top, 8)
                 .padding(.bottom, 8)
-
-            // Mode picker
-            Picker("", selection: $mergeMode) {
-                Text("New heading").tag(BlobMergeMode.newHeading)
-                Text("Simple merge").tag(BlobMergeMode.simple)
-            }
-            .pickerStyle(.segmented)
-            .padding(.trailing, 8)
-
-            // New H1 heading text field
-            TextField("New H1 heading…", text: $newHeadingText)
+            
+            Text("2. Review Options")
                 .font(.system(size: 12))
-                .textFieldStyle(.plain)
-                .foregroundColor(
-                    mergeMode == .newHeading
-                        ? AppColors.shared.contentPrimary
-                        : AppColors.shared.contentTertiary
-                )
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(AppColors.shared.backgroundSecondary.opacity(
-                            mergeMode == .newHeading ? 0.6 : 0.3
-                        ))
-                )
-                .padding(.horizontal, 8)
-                .padding(.top, 8)
-                .disabled(mergeMode == .simple)
+                .tracking(0.5)
+                .foregroundColor(AppColors.shared.contentSecondary)
+                .padding(.bottom, 4)
+            
+            Spacer()
 
+            // Mode toggle
+            HStack {
+                Text("Add new top-level heading")
+                    .font(.system(size: 12))
+                    .foregroundColor(AppColors.shared.contentPrimary)
+                Spacer()
+                Toggle("", isOn: Binding(
+                    get: { mergeMode == .newHeading },
+                    set: { mergeMode = $0 ? .newHeading : .simple }
+                ))
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+                .labelsHidden()
+            }
+            .padding(.bottom, 8)
+ 
             // Delete after merge
-            Toggle(isOn: $deleteAfterMerge) {
+            HStack {
                 Text("Delete blobs after merge")
                     .font(.system(size: 12))
                     .foregroundColor(AppColors.shared.contentPrimary)
+                Spacer()
+                Toggle("", isOn: $deleteAfterMerge)
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
+                    .labelsHidden()
             }
-            .toggleStyle(.checkbox)
-            .padding(.horizontal, 8)
-            .padding(.top, 10)
-
-            // Merge button
-            Button(action: performMerge) {
-                Text("Merge")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(
-                        hoverMerge
-                            ? AppColors.shared.contentSecondary
-                            : AppColors.shared.contentPrimary
-                    )
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 5)
-                            .fill(AppColors.shared.backgroundHighlight.opacity(
-                                hoverMerge ? 0.35 : 0.2
-                            ))
-                    )
-                    .animation(.easeInOut(duration: 0.12), value: hoverMerge)
-            }
-            .buttonStyle(.plain)
-            .onHover { hoverMerge = $0 }
-            .padding(.horizontal, 8)
-            .padding(.top, 10)
-            .padding(.bottom, 12)
         }
-        .padding(.trailing, 8)
     }
 
-    // MARK: - Drag helpers
+    // MARK: Drag helpers
 
     // ghostDragIndex is the target position in the "without-dragged" subsequence.
     private func computeGhostIndex(cursor: CGPoint) -> Int {
@@ -378,7 +420,7 @@ struct BlobMergeView: View {
         }
     }
 
-    // MARK: - Actions
+    // MARK: Actions
 
     private func performMerge() {
         guard let projectID = selectedProjectID else { return }
@@ -428,7 +470,7 @@ struct BlobMergeView: View {
         }
 
         let currentBlobs = project.blobs
-            .filter { !$0.isHidden && $0.folderID == selectedFolderID }
+            .filter { $0.folderID == selectedFolderID }
         let currentIDs = Set(currentBlobs.map { $0.id })
 
         // Drop IDs that no longer exist in the store
@@ -463,7 +505,7 @@ struct BlobMergeView: View {
         }
 
         let blobs = project.blobs
-            .filter { !$0.isHidden && $0.folderID == selectedFolderID }
+            .filter { $0.folderID == selectedFolderID }
             .sorted { $0.sortOrder < $1.sortOrder }
 
         orderedBlobIDs = blobs.map { $0.id }

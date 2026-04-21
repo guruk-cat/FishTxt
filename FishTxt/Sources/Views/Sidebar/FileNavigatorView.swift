@@ -8,7 +8,6 @@ struct FileNavigatorView: View {
     @Binding var selectedProjectID: UUID?
     @Binding var selectedFolderID: UUID?
     @Binding var activeBlobID: UUID?
-    @Binding var isViewingHidden: Bool
 
     // Rename state
     @State private var isRenamingProject = false
@@ -52,11 +51,8 @@ struct FileNavigatorView: View {
 
     // MARK: - Convenience
 
-    var liveProjects: [Project] {
-        store.projects.filter { !$0.isArchived }.sorted { $0.createdAt < $1.createdAt }
-    }
-    var archivedProjects: [Project] {
-        store.projects.filter { $0.isArchived }.sorted { $0.createdAt < $1.createdAt }
+    var allProjects: [Project] {
+        store.projects.sorted { $0.createdAt < $1.createdAt }
     }
 
     // MARK: - Body
@@ -87,7 +83,6 @@ struct FileNavigatorView: View {
                         selectedProjectID = p.id
                         selectedFolderID = nil
                         activeBlobID = nil
-                        isViewingHidden = false
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 11, weight: .semibold))
@@ -100,22 +95,8 @@ struct FileNavigatorView: View {
                 .padding(.top, 12)
                 .padding(.bottom, 4)
 
-                ForEach(liveProjects) { project in
-                    level1ProjectRow(project, isArchived: false)
-                }
-
-                if !archivedProjects.isEmpty {
-                    Text("ARCHIVED PROJECTS")
-                        .font(.system(size: 11, weight: .semibold))
-                        .tracking(0.5)
-                        .foregroundColor(AppColors.shared.contentSecondary)
-                        .padding(.horizontal, 8)
-                        .padding(.top, 16)
-                        .padding(.bottom, 4)
-
-                    ForEach(archivedProjects) { project in
-                        level1ProjectRow(project, isArchived: true)
-                    }
+                ForEach(allProjects) { project in
+                    level1ProjectRow(project)
                 }
             }
             .padding(.bottom, 12)
@@ -132,7 +113,7 @@ struct FileNavigatorView: View {
     // MARK: - Level 1: Project Row
 
     @ViewBuilder
-    private func level1ProjectRow(_ project: Project, isArchived: Bool) -> some View {
+    private func level1ProjectRow(_ project: Project) -> some View {
         let isRowHovered = hoveredRowID == project.id
 
         HStack(spacing: 6) {
@@ -150,9 +131,8 @@ struct FileNavigatorView: View {
             selectedProjectID = project.id
             selectedFolderID = nil
             activeBlobID = nil
-            isViewingHidden = false
         }
-        .contextMenu { projectContextMenu(project, isArchived: isArchived) }
+        .contextMenu { projectContextMenu(project) }
     }
 
     // MARK: - Level 2: Project Contents
@@ -239,7 +219,7 @@ struct FileNavigatorView: View {
                             .background(frameTracker(.blob(blob)))
                             .simultaneousGesture(
                                 rootBlobDrag(blob: blob, project: project),
-                                including: project.isArchived ? .subviews : .all
+                                including: .all
                             )
                             .contextMenu { blobContextMenu(blob, project: project, isInFolder: false) }
                         }
@@ -278,7 +258,7 @@ struct FileNavigatorView: View {
     @ViewBuilder
     private func detailedFolderRow(_ folder: BlobFolder, in project: Project) -> some View {
         let isFolderExpanded = isFolderExpanded(folder, in: project)
-        let hasBlobs  = project.blobs.contains { $0.folderID == folder.id && !$0.isHidden }
+        let hasBlobs  = project.blobs.contains { $0.folderID == folder.id }
         let isDragHovered = hoveredFolderID == folder.id
             || (crossPanelDrag.activeProjectID == project.id && crossPanelDrag.targetFolderID == folder.id)
         let isGlowing = confirmGlowItemID == folder.id
@@ -361,28 +341,19 @@ struct FileNavigatorView: View {
                 }
             }
             .onTapGesture {
-                selectedProjectID = project.id; selectedFolderID = folder.id
-                activeBlobID = nil; isViewingHidden = false
+                selectedProjectID = project.id; selectedFolderID = folder.id; activeBlobID = nil
             }
             .background(frameTracker(.folder(folder)))
-            .simultaneousGesture(
-                folderDrag(folder: folder, project: project),
-                including: project.isArchived ? .subviews : .all
-            )
+            .simultaneousGesture(folderDrag(folder: folder, project: project))
             .contextMenu {
-                if !project.isArchived {
-                    Button {
-                        renameFolderID = folder.id; renameFolderProjectID = project.id
-                        renameFolderText = folder.name; isRenamingFolder = true
-                    } label: { Label("Rename Folder", systemImage: "pencil") }
-                    Button { store.hideFolder(folder.id, in: project.id) } label: {
-                        Label("Hide Folder", systemImage: "eye.slash")
-                    }
-                    Divider()
-                    Button(role: .destructive) {
-                        store.deleteFolder(folder.id, in: project.id)
-                    } label: { Label("Delete Folder", systemImage: "trash") }
-                }
+                Button {
+                    renameFolderID = folder.id; renameFolderProjectID = project.id
+                    renameFolderText = folder.name; isRenamingFolder = true
+                } label: { Label("Rename Folder", systemImage: "pencil") }
+                Divider()
+                Button(role: .destructive) {
+                    store.deleteFolder(folder.id, in: project.id)
+                } label: { Label("Delete Folder", systemImage: "trash") }
             }
 
             // Blobs inside folder (when expanded)
@@ -417,7 +388,7 @@ struct FileNavigatorView: View {
                         .background(frameTracker(.blob(blob)))
                         .simultaneousGesture(
                             folderBlobDrag(blob: blob, project: project, sourceFolderID: folder.id),
-                            including: project.isArchived ? .subviews : .all
+                            including: .all
                         )
                         .contextMenu { blobContextMenu(blob, project: project, isInFolder: true) }
                     }
@@ -507,7 +478,7 @@ struct FileNavigatorView: View {
 
     private func displayRootBlobs(for project: Project) -> [DashboardItem] {
         var all = project.blobs
-            .filter { $0.folderID == nil && !$0.isHidden }
+            .filter { $0.folderID == nil }
             .sorted { $0.sortOrder < $1.sortOrder }
             .map(DashboardItem.blob)
         guard let id = draggedItemID, draggedProjectID == project.id else { return all }
@@ -528,7 +499,7 @@ struct FileNavigatorView: View {
 
     private func displayFolderBlobs(folder: BlobFolder, project: Project) -> [DashboardItem] {
         var all = project.blobs
-            .filter { $0.folderID == folder.id && !$0.isHidden }
+            .filter { $0.folderID == folder.id }
             .sorted { $0.sortOrder < $1.sortOrder }
             .map(DashboardItem.blob)
         guard let id = draggedItemID,
@@ -618,7 +589,7 @@ struct FileNavigatorView: View {
                     }
                 }
                 hoveredFolderID = nil
-                let others = current.blobs.filter { $0.folderID == nil && !$0.isHidden && $0.id != blob.id }
+                let others = current.blobs.filter { $0.folderID == nil && $0.id != blob.id }
                     .sorted { $0.sortOrder < $1.sortOrder }.map(DashboardItem.blob)
                 ghostRootBlobIndex = ghostIndex(cursor: v.location, among: others)
             }
@@ -631,7 +602,7 @@ struct FileNavigatorView: View {
                     triggerGlow(for: target); return
                 }
                 guard let ghostIdx = ghostRootBlobIndex else { return }
-                let rootBlobs = current.blobs.filter { $0.folderID == nil && !$0.isHidden }
+                let rootBlobs = current.blobs.filter { $0.folderID == nil }
                     .sorted { $0.sortOrder < $1.sortOrder }
                 guard let from = rootBlobs.firstIndex(where: { $0.id == blob.id }) else { return }
                 let to = min(max(ghostIdx, 0), rootBlobs.count - 1)
@@ -662,9 +633,9 @@ struct FileNavigatorView: View {
                 }
                 hoveredFolderID = nil
                 // Are we over the root blob zone or below the folder's content?
-                let rootBlobItems = current.blobs.filter { $0.folderID == nil && !$0.isHidden }
+                let rootBlobItems = current.blobs.filter { $0.folderID == nil }
                     .sorted { $0.sortOrder < $1.sortOrder }.map(DashboardItem.blob)
-                let folderBlobItems = current.blobs.filter { $0.folderID == sourceFolderID && !$0.isHidden }
+                let folderBlobItems = current.blobs.filter { $0.folderID == sourceFolderID }
                     .sorted { $0.sortOrder < $1.sortOrder }.map(DashboardItem.blob)
                 let folderMaxY = folderBlobItems.compactMap { itemFrames[$0.id]?.maxY }.max() ?? 0
                 let isOverRoot = rootBlobItems.contains {
@@ -696,7 +667,7 @@ struct FileNavigatorView: View {
                     store.moveBlobToRoot(blob.id, in: project.id)
                     // Reposition in the now-updated project
                     let updated   = store.projects.first { $0.id == project.id } ?? current
-                    let rootBlobs = updated.blobs.filter { $0.folderID == nil && !$0.isHidden }
+                    let rootBlobs = updated.blobs.filter { $0.folderID == nil }
                         .sorted { $0.sortOrder < $1.sortOrder }
                     if let from = rootBlobs.firstIndex(where: { $0.id == blob.id }) {
                         let to = min(max(ghostIdx, 0), rootBlobs.count - 1)
@@ -711,7 +682,7 @@ struct FileNavigatorView: View {
                 }
                 // Reorder within folder
                 if let ghostIdx = ghostFolderBlobIndex {
-                    let folderBlobs = current.blobs.filter { $0.folderID == sourceFolderID && !$0.isHidden }
+                    let folderBlobs = current.blobs.filter { $0.folderID == sourceFolderID }
                         .sorted { $0.sortOrder < $1.sortOrder }
                     guard let from = folderBlobs.firstIndex(where: { $0.id == blob.id }) else { return }
                     let to = min(max(ghostIdx, 0), folderBlobs.count - 1)
@@ -739,41 +710,21 @@ struct FileNavigatorView: View {
     }
 
     private func selectProject(_ project: Project) {
-        selectedProjectID = project.id; selectedFolderID = nil
-        activeBlobID = nil; isViewingHidden = false
-    }
-    private func viewHidden(_ project: Project) {
-        selectedProjectID = project.id; selectedFolderID = nil
-        activeBlobID = nil; isViewingHidden = true
+        selectedProjectID = project.id; selectedFolderID = nil; activeBlobID = nil
     }
     private func beginRenameProject(_ project: Project) {
         renameProjectID = project.id; renameProjectText = project.name; isRenamingProject = true
     }
 
     @ViewBuilder
-    private func projectContextMenu(_ project: Project, isArchived: Bool) -> some View {
+    private func projectContextMenu(_ project: Project) -> some View {
         Button { selectProject(project) } label: { Label("Open", systemImage: "arrow.right") }
-        if !isArchived {
-            Button { beginRenameProject(project) } label: { Label("Rename", systemImage: "pencil") }
-            Button { _ = store.createFolder(in: project.id, name: "Untitled Folder") } label: {
-                Label("New Folder", systemImage: "folder.badge.plus")
-            }
-            Button { _ = store.createBlob(in: project.id) } label: {
-                Label("New Blob", systemImage: "doc.badge.plus")
-            }
-            Divider()
-            Button { viewHidden(project) } label: {
-                Label("View Hidden Items", systemImage: "eye.slash")
-            }
-            Divider()
-            Button { store.archiveProject(project.id) } label: {
-                Label("Archive Project", systemImage: "archivebox")
-            }
-        } else {
-            Divider()
-            Button { store.restoreProject(project.id) } label: {
-                Label("Restore Project", systemImage: "arrow.uturn.backward")
-            }
+        Button { beginRenameProject(project) } label: { Label("Rename", systemImage: "pencil") }
+        Button { _ = store.createFolder(in: project.id, name: "Untitled Folder") } label: {
+            Label("New Folder", systemImage: "folder.badge.plus")
+        }
+        Button { _ = store.createBlob(in: project.id) } label: {
+            Label("New Blob", systemImage: "doc.badge.plus")
         }
         Divider()
         Button(role: .destructive) {
@@ -786,22 +737,17 @@ struct FileNavigatorView: View {
 
     @ViewBuilder
     private func blobContextMenu(_ blob: Blob, project: Project, isInFolder: Bool) -> some View {
-        if !project.isArchived {
-            Button { store.printBlob(blobID: blob.id, in: project.id) } label: {
-                Label("Print...", systemImage: "printer")
+        Button { store.printBlob(blobID: blob.id, in: project.id) } label: {
+            Label("Print...", systemImage: "printer")
+        }
+        if isInFolder {
+            Button { store.moveBlobToRoot(blob.id, in: project.id) } label: {
+                Label("Send Back to Root", systemImage: "arrow.up")
             }
-            if isInFolder {
-                Button { store.moveBlobToRoot(blob.id, in: project.id) } label: {
-                    Label("Send Back to Root", systemImage: "arrow.up")
-                }
-            }
-            Button { store.hideBlob(blob.id, in: project.id) } label: {
-                Label("Hide Blob", systemImage: "eye.slash")
-            }
-            Divider()
-            Button(role: .destructive) { store.deleteBlob(blob.id, in: project.id) } label: {
-                Label("Delete Blob", systemImage: "trash")
-            }
+        }
+        Divider()
+        Button(role: .destructive) { store.deleteBlob(blob.id, in: project.id) } label: {
+            Label("Delete Blob", systemImage: "trash")
         }
     }
 }
@@ -889,8 +835,7 @@ private struct BlobDragPreview: View {
     FileNavigatorView(
         selectedProjectID: .constant(nil),
         selectedFolderID: .constant(nil),
-        activeBlobID: .constant(nil),
-        isViewingHidden: .constant(false)
+        activeBlobID: .constant(nil)
     )
     .environmentObject(ProjectStore())
     .environmentObject(AppColors.shared)

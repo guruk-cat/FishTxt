@@ -13,7 +13,6 @@ struct SidebarView: View {
     @Binding var selectedProjectID: UUID?
     @Binding var selectedFolderID: UUID?
     @Binding var activeBlobID: UUID?
-    @Binding var isViewingHidden: Bool
 
     @State private var activePanel: SidebarPanel = .navigator
 
@@ -30,8 +29,7 @@ struct SidebarView: View {
                 FileNavigatorView(
                     selectedProjectID: $selectedProjectID,
                     selectedFolderID: $selectedFolderID,
-                    activeBlobID: $activeBlobID,
-                    isViewingHidden: $isViewingHidden
+                    activeBlobID: $activeBlobID
                 )
                 .frame(width: 270)
                 .background(AppColors.shared.sidebarBackground)
@@ -61,8 +59,7 @@ struct SidebarView: View {
         isSidebarOpen: .constant(true),
         selectedProjectID: .constant(nil),
         selectedFolderID: .constant(nil),
-        activeBlobID: .constant(nil),
-        isViewingHidden: .constant(false)
+        activeBlobID: .constant(nil)
     )
     .environmentObject(ProjectStore())
     .environmentObject(AppColors.shared)
