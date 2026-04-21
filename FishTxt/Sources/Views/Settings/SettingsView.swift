@@ -20,7 +20,7 @@ struct SettingsView: View {
             HStack {
                 Text("Settings")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(AppColors.shared.contentPrimary)
+                    .foregroundColor(AppColors.shared.contentSecondary)
                 Spacer()
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark")
@@ -58,7 +58,7 @@ struct SettingsView: View {
                                 Button(action: { if fontSize > 10 { fontSize -= 1 } }) {
                                     Image(systemName: "minus")
                                         .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(AppColors.shared.contentPrimary)
+                                        .foregroundColor(AppColors.shared.contentResting)
                                         .frame(width: 22, height: 22)
                                         .background(AppColors.shared.backgroundPrimary)
                                         .cornerRadius(5)
@@ -68,13 +68,13 @@ struct SettingsView: View {
 
                                 Text("\(Int(fontSize))pt")
                                     .font(.system(size: 13))
-                                    .foregroundColor(AppColors.shared.contentPrimary)
+                                    .foregroundColor(AppColors.shared.contentResting)
                                     .frame(width: 36, alignment: .center)
 
                                 Button(action: { if fontSize < 36 { fontSize += 1 } }) {
                                     Image(systemName: "plus")
                                         .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(AppColors.shared.contentPrimary)
+                                        .foregroundColor(AppColors.shared.contentResting)
                                         .frame(width: 22, height: 22)
                                         .background(AppColors.shared.backgroundPrimary)
                                         .cornerRadius(5)
@@ -90,12 +90,14 @@ struct SettingsView: View {
                                 set: { autoScroll = $0 ? "centered" : "regular" }
                             ))
                             .toggleStyle(.switch)
+                            .tint(AppColors.shared.accent)
                             .controlSize(.mini)
                         }
 
                         settingsRow("Limit img width") {
                             Toggle("", isOn: $imageLimitHalfWidth)
                                 .toggleStyle(.switch)
+                                .tint(AppColors.shared.accent)
                                 .controlSize(.mini)
                         }
                     }
@@ -130,7 +132,7 @@ struct SettingsView: View {
             Spacer(minLength: 0)
         }
         .frame(width: 380, height: 420)
-        .background(AppColors.shared.backgroundSecondary)
+        .background(AppColors.shared.sidebarBackground)
         .task {
             loadPrintProfiles()
         }
@@ -157,7 +159,7 @@ struct SettingsView: View {
         HStack {
             Text(label)
                 .font(.system(size: 13))
-                .foregroundColor(AppColors.shared.contentPrimary)
+                .foregroundColor(AppColors.shared.contentResting)
                 .frame(width: 120, alignment: .leading)
 
             control().frame(width: 160, alignment: .trailing)

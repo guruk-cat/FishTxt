@@ -12,6 +12,7 @@ class AppColors: ObservableObject {
     @Published var contentPrimary: Color      = .white
     @Published var contentSecondary: Color    = .gray
     @Published var contentTertiary: Color     = .gray
+    @Published var contentResting: Color     = .gray
     @Published var accent: Color              = .blue
     @Published var confirmation: Color        = .green
     @Published var sidebarBackground: Color   = .black
@@ -71,6 +72,7 @@ class AppColors: ObservableObject {
         contentPrimary      = c("content_primary")
         contentSecondary    = c("content_secondary")
         contentTertiary     = c("content_tertiary")
+        contentResting      = c("content_resting")
         accent              = c("accent")
         confirmation        = c("confirmation")
         sidebarBackground   = c("sidebar_background")

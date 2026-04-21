@@ -118,7 +118,7 @@ struct BlobOutlineView: View {
                     isActive ? AppColors.shared.contentSecondary :
                     isHovered
                         ? AppColors.shared.contentPrimary
-                        : AppColors.shared.contentTertiary
+                        : AppColors.shared.contentResting
                 )
                 .lineLimit(1)
                 .animation(.easeInOut(duration: 0.12), value: isHovered)
@@ -132,7 +132,7 @@ struct BlobOutlineView: View {
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundColor(!expandable ? Color.clear :
                                     isActive ? AppColors.shared.contentSecondary :
-                                    isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary)
+                                    isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentResting)
                 .animation(.easeInOut(duration: 0.12), value: isHovered)
                 .frame(width: 14)
                 .padding(.leading, indent)

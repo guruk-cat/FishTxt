@@ -158,7 +158,7 @@ struct BlobMergeView: View {
                     .foregroundColor(
                         hoverMerge
                             ? AppColors.shared.backgroundPrimary
-                            : AppColors.shared.contentPrimary
+                            : AppColors.shared.accent
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
@@ -253,7 +253,7 @@ struct BlobMergeView: View {
 
             Text(blobTitles[blobID] ?? "Untitled")
                 .font(.system(size: 12))
-                .foregroundColor(AppColors.shared.contentPrimary)
+                .foregroundColor(AppColors.shared.contentResting)
                 .lineLimit(1)
 
             Spacer()
@@ -325,7 +325,7 @@ struct BlobMergeView: View {
                     )
                 Text(blobTitles[dragID] ?? "Untitled")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.shared.contentPrimary)
+                    .foregroundColor(AppColors.shared.contentResting)
                     .lineLimit(1)
                 Spacer()
             }
@@ -361,7 +361,7 @@ struct BlobMergeView: View {
             HStack {
                 Text("Add new top-level heading")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.shared.contentPrimary)
+                    .foregroundColor(AppColors.shared.contentResting)
                 Spacer()
                 Toggle("", isOn: Binding(
                     get: { mergeMode == .newHeading },
@@ -369,6 +369,7 @@ struct BlobMergeView: View {
                 ))
                 .toggleStyle(.switch)
                 .controlSize(.mini)
+                .tint(AppColors.shared.accent)
                 .labelsHidden()
             }
             .padding(.bottom, 8)
@@ -377,11 +378,12 @@ struct BlobMergeView: View {
             HStack {
                 Text("Delete blobs after merge")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.shared.contentPrimary)
+                    .foregroundColor(AppColors.shared.contentResting)
                 Spacer()
                 Toggle("", isOn: $deleteAfterMerge)
                     .toggleStyle(.switch)
                     .controlSize(.mini)
+                    .tint(AppColors.shared.accent)
                     .labelsHidden()
             }
         }

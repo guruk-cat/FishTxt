@@ -119,7 +119,7 @@ struct FileNavigatorView: View {
         HStack(spacing: 6) {
             Text(project.name)
                 .font(.system(size: 13))
-                .foregroundColor(isRowHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary)
+                .foregroundColor(isRowHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentResting)
             Spacer()
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
@@ -277,14 +277,14 @@ struct FileNavigatorView: View {
                         isFolderSelected ? AppColors.shared.contentSecondary :
                         isDragHovered    ? AppColors.shared.accent :
                         isRowHovered     ? AppColors.shared.contentPrimary :
-                                           AppColors.shared.contentTertiary)
+                                           AppColors.shared.contentResting)
                 Text(folder.name)
                     .font(.system(size: 12))
                     .foregroundColor(
                         isFolderSelected ? AppColors.shared.contentSecondary :
                         isDragHovered    ? AppColors.shared.accent :
                         isRowHovered     ? AppColors.shared.contentPrimary :
-                                           AppColors.shared.contentTertiary)
+                                           AppColors.shared.contentResting)
                     .lineLimit(1)
                 Spacer()
                 if isFolderSelected {
@@ -308,7 +308,7 @@ struct FileNavigatorView: View {
                     .foregroundColor(hasBlobs
                         ? (isFolderSelected ? AppColors.shared.contentSecondary :
                            isRowHovered     ? AppColors.shared.contentPrimary :
-                                              AppColors.shared.contentTertiary)
+                                              AppColors.shared.contentResting)
                         : Color.clear)
                     .frame(width: 14)
                     .padding(.leading, 6)
@@ -771,12 +771,12 @@ private struct BlobTreeRow: View {
                 .font(.system(size: 10))
                 .foregroundColor(isActive
                     ? AppColors.shared.contentSecondary
-                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
+                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentResting))
             Text(title ?? "Untitled")
                 .font(.system(size: 12))
                 .foregroundColor(isActive
                     ? AppColors.shared.contentSecondary
-                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentTertiary))
+                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentResting))
                 .lineLimit(1)
             Spacer()
         }
