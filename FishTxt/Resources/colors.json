@@ -20,7 +20,7 @@
     "background_secondary": [70, 33, 50],
     "background_highlight": [106, 50, 75],
     "content_primary":      [179, 154, 183],
-    "content_secondary":    [168, 131, 196],
+    "content_secondary":    [178, 121, 196],
     "content_tertiary":     [145, 100, 118],
     "content_resting":      [170, 136, 152],
     "accent":               [220, 90, 146],
