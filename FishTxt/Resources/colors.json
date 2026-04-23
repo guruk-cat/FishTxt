@@ -3,7 +3,7 @@
     "background_primary":   [22, 40, 42],
     "background_secondary": [34, 62, 65],
     "background_highlight": [49, 89, 93],
-    "content_primary":      [192, 178, 161],
+    "content_primary":      [182, 188, 171],
     "content_secondary":    [200, 165, 100],
     "content_tertiary":     [120, 140, 142],
     "content_resting":      [168, 186, 188],
