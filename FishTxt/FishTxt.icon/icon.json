@@ -1,20 +1,52 @@
 {
-  "fill" : "automatic",
+  "fill" : {
+    "solid" : "display-p3:0.99219,0.99268,0.99268,1.00000"
+  },
   "groups" : [
     {
       "layers" : [
         {
           "fill" : {
-            "solid" : "display-p3:0.00000,0.63344,0.74695,1.00000"
+            "solid" : "display-p3:0.07190,0.30372,0.33941,1.00000"
           },
           "glass" : false,
-          "image-name" : "Image.png",
-          "name" : "Image",
+          "image-name" : "Image 5.png",
+          "name" : "Image 5",
           "position" : {
-            "scale" : 0.63,
+            "scale" : 0.83,
             "translation-in-points" : [
-              -0.31500000000005457,
-              0
+              -198,
+              -34
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "solid" : "display-p3:0.17809,0.75232,0.84072,1.00000"
+          },
+          "glass" : false,
+          "image-name" : "Image 3.png",
+          "name" : "Image 3",
+          "position" : {
+            "scale" : 0.87,
+            "translation-in-points" : [
+              -0.43499999999994543,
+              14.8359375
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "solid" : "display-p3:0.10940,0.46214,0.51645,1.00000"
+          },
+          "glass" : false,
+          "image-name" : "Image 4.png",
+          "name" : "Image 4",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              12.84375,
+              14.8359375
             ]
           }
         }
