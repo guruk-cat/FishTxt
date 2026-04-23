@@ -21,7 +21,7 @@ FishTxt was designed by me, and the codebase was built largely by Claude Sonnet.
 
 ### Current Version
 
-This version is the Beta version (build 2), currently being tested in real use (by me).
+This version is the Beta version (build 3), currently being tested in real use (by me).
 
 ### Repository Map
 
