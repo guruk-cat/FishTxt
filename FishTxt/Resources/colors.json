@@ -1,5 +1,5 @@
 {
-  "coast":{
+  "morning seafoam":{
     "background_primary":   [23, 41, 43],
     "background_secondary": [35, 63, 66],
     "background_highlight": [50, 90, 94],
@@ -15,12 +15,12 @@
     "destructive":          [204, 82, 82]
   },
 
-  "cherry":{
+  "wild berries":{
     "background_primary":   [51, 24, 36],
     "background_secondary": [77, 37, 55],
     "background_highlight": [117, 55, 83],
     "content_primary":      [217, 187, 222],
-    "content_secondary":    [216, 147, 238],
+    "content_secondary":    [187, 146, 213],
     "content_tertiary":     [176, 121, 143],
     "content_resting":      [206, 165, 184],
     "accent":               [224, 92, 149],
@@ -31,12 +31,12 @@
     "destructive":          [204, 82, 82]
   },
 
-  "cardboard":{
+  "70's carpet":{
     "background_primary":   [46, 31, 18],
     "background_secondary": [73, 52, 30],
     "background_highlight": [104, 75, 43],
     "content_primary":      [224, 191, 152],
-    "content_secondary":    [240, 154, 51],
+    "content_secondary":    [225, 154, 51],
     "content_tertiary":     [156, 135, 109],
     "content_resting":      [199, 176, 146],
     "accent":               [159, 182, 87],
@@ -47,15 +47,15 @@
     "destructive":          [204, 82, 82]
   },
 
-  "oregon":{
+  "oregon coastline":{
     "background_primary":   [28, 32, 38],
     "background_secondary": [49, 56, 66],
     "background_highlight": [70, 80, 95],
     "content_primary":      [191, 197, 205],
-    "content_secondary":    [143, 181, 141],
+    "content_secondary":    [167, 179, 204],
     "content_tertiary":     [129, 138, 151],
     "content_resting":      [170, 182, 200],
-    "accent":               [85, 138, 223],
+    "accent":               [210, 185, 140],
     "confirmation":         [88, 158, 118],
     "sidebar_background":   [38, 44, 52],
     "toolbar_background":   [61, 70, 83],
@@ -63,7 +63,7 @@
     "destructive":          [204, 82, 82]
   },
 
-  "flora":{
+  "douglas fir":{
     "background_primary":   [31, 39, 27],
     "background_secondary": [53, 67, 46],
     "background_highlight": [75, 95, 65],

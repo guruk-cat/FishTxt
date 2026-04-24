@@ -30,7 +30,7 @@ class AppColors: ObservableObject {
     private(set) var rawPalette: [String: [Double]] = [:]
 
     init() {
-        let palette = UserDefaults.standard.string(forKey: "colorPalette") ?? "coast"
+        let palette = UserDefaults.standard.string(forKey: "colorPalette") ?? "morning seafoam"
         loadColors(palette: palette)
     }
 
@@ -50,7 +50,7 @@ class AppColors: ObservableObject {
         if root[palette] != nil {
             resolvedPalette = palette
         } else {
-            resolvedPalette = "coast"
+            resolvedPalette = "morning seafoam"
             UserDefaults.standard.set(resolvedPalette, forKey: "colorPalette")
         }
 

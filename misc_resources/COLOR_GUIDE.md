@@ -19,7 +19,7 @@ The following are key values in `colors.json` and their corresponding usage in t
 | Key | Usage | Luminosity range |
 | --- | ----- | ---------------- |
 | `content_primary` | main body text in the editor, body text in dashboard blob cards, and clickable elements in the sidebar when hovered by mouse | 191–199 |
-| `content_secondary` | headings in the text editor; headings in sidebar panels and settings panel; and selected context (folder or blob) in the sidebar and its expandable panels | 168–178 |
+| `content_secondary` | headings in the text editor; headings in sidebar panels and settings panel; and selected context (folder or blob) in the sidebar and its expandable panels | 160–178 |
 | `content_tertiary` | inactive UI elements that can be clicked (usually turns into `content_primary` when hovered); used to make elements inconspicuous | 133–140 |
 | `content_resting` | similar to `content_tertiary`, but used when legibility is still needed (e.g., list of blobs and folders in the file navigator) | 175–188 |
 | `accent` | cursor color, formatting buttons when active, certain UI elements in the sidebar | varies by palette |
