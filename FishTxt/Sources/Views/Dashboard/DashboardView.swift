@@ -86,7 +86,7 @@ struct DashboardView: View {
             // Hidden ESC handler — cancels active drag, or navigates up from folder view
             Button("") {
                 if draggedItemID != nil { clearDragState() }
-                else if folderID != nil { selectedFolderID = nil }
+                else if selectedFolderID != nil { selectedFolderID = nil }
             }
             .keyboardShortcut(.escape, modifiers: [])
             .frame(width: 0, height: 0)
