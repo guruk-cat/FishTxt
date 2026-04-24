@@ -13,22 +13,18 @@ When writing a long article that covers many sources and topics, it is hard to k
 
 FishTxt was designed to be exactly that kind of combination: a set of tools that you can use from the very beginning of a project all the way to the first or second draft. Of course, you'll likely need at some point an actual, robust document editor like Microsoft Word or Apple Pages. While FishTxt can export to a printer or PDF, this is done through built-in CSS profiles, which is quite different from document editors if that's what you're used to. But remember, FishTxt was designed specifically for the development phase, for longer projects, for the part of your work where it's still unclear what the finished product should really look like. In that regard, FishTxt is not intended to replace your document editor; but it does make you rethink what each tool is best used for.
 
-## Screenshots
+## Screenshot
 
-**Main Editor** (shown in the default `coast` color palette):
+**Main Editor** (shown in the default `morning seafoam` color palette):
 ![editor](./misc_resources/imgs/editor.png)
-
-**Dashboard** (shown in the `cherry` color palette):
-![dashboard](./misc_resources/imgs/dashboard.png)
-
-**Editor with additional formatting** (shown in the `flora` color palette):
-![editor_with_formatting](./misc_resources/imgs/editor2.png)
 
 ## Credits
 
 The app was designed by June Jung, and the codebase was vibe-coded with Claude by Anthropic.
 
 Much of FishTxt has been written from scratch as a native macOS application, but the actual text editor uses [TipTap](https://tiptap.dev/docs/editor/getting-started/overview), an open-source rich text editor framework. Moreover, the [tiptap-footnoes](https://github.com/buttondown/tiptap-footnotes) extension is used for adding in-line references and notes. The editor runs in a javascript environment that is wrapped inside the app through Apple's `WKWebView` library.
+
+For making the `70's carpet` color palette, [Kimbie Dark+](https://marketplace.visualstudio.com/items?itemName=dnamsons.kimbie-dark-plus) was referenced as a starting point. Slight adjustments of hue, saturation, and luminosity were made to cohere with FishTxt's design philosophy. Original work is licensed under [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed.en).
 
 ## Install, First Launch, and Walkthrough
 
