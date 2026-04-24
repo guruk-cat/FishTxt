@@ -71,10 +71,10 @@ The content roles form a spectrum from hue-close to hue-distinct relative to the
 
 **`content_primary`** is the most-used foreground color — body text, primary labels, hovered elements. Because it appears constantly, it cannot be too hue-distinct from the background without causing eye strain. A shift toward a neighboring or near-neutral hue is appropriate; the goal is subtle differentiation, not contrast.
 
-**`content_secondary`** is used for headings and selected states, which appear less frequently. This creates room for more hue distinction. A near-complementary or adjacent hue to the background works well here — the goal is a second "accent-like" color that adds visual interest to headings. Avoid pure complementary pairings (e.g., green text on a red background), as these create vibration and strain even at medium contrast. The hue can either be warmer or colder than the background; any sufficiently distinct hue that reads well as text is valid.
+**`content_secondary`** is used for headings and selected states, which appear less frequently. This creates room for more hue distinction. An adjacent or near-complementary hue to the background works well here — the goal is a second "accent-like" color that adds visual interest to headings. Avoid pure complementary pairings (e.g., green text on a red background), as these create vibration and strain even at medium contrast. The hue can either be warmer or colder than the background; any sufficiently distinct hue that reads well as text is valid. However, if possible, it should stay reasonably close to the `content_primary` hue.
 
-**`accent`** is a special case: it returns to the background's hue family, but at high saturation. It draws attention through vividness rather than hue contrast, keeping it visually coherent with the rest of the palette.
+**`accent`** is a special case: usually, it returns to the background's hue family, but at high saturation. It draws attention through vividness rather than hue contrast, keeping it visually coherent with the rest of the palette. However, if the two main foreground colors are already close to the background hue, `accent` should deviate from this pattern, and provide more hue contrast to the overall palette.
 
-**`confirmation`** should be green when possible. However, if the main hue family of the palette is already green, a different color is acceptable.
+**`confirmation`** should be also a distinct hue. When possible, green should be preferred. However, if the main hue family of the palette is already green, a different color is acceptable.
 
 **`destructive`** is functionally determined and independent of the palette's hue logic.

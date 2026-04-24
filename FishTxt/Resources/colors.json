@@ -31,6 +31,22 @@
     "destructive":          [204, 82, 82]
   },
 
+  "cardboard":{
+    "background_primary":   [46, 31, 18],
+    "background_secondary": [73, 52, 30],
+    "background_highlight": [104, 75, 43],
+    "content_primary":      [224, 191, 152],
+    "content_secondary":    [240, 154, 51],
+    "content_tertiary":     [156, 135, 109],
+    "content_resting":      [199, 176, 146],
+    "accent":               [159, 182, 87],
+    "confirmation":         [138, 177, 176],
+    "sidebar_background":   [59, 41, 23],
+    "toolbar_background":   [92, 66, 38],
+    "card_border":          [66, 46, 26],
+    "destructive":          [204, 82, 82]
+  },
+
   "flora":{
     "background_primary":   [31, 39, 27],
     "background_secondary": [53, 67, 46],
