@@ -47,6 +47,22 @@
     "destructive":          [204, 82, 82]
   },
 
+  "oregon":{
+    "background_primary":   [28, 32, 38],
+    "background_secondary": [49, 56, 66],
+    "background_highlight": [70, 80, 95],
+    "content_primary":      [191, 197, 205],
+    "content_secondary":    [143, 181, 141],
+    "content_tertiary":     [129, 138, 151],
+    "content_resting":      [170, 182, 200],
+    "accent":               [85, 138, 223],
+    "confirmation":         [88, 158, 118],
+    "sidebar_background":   [38, 44, 52],
+    "toolbar_background":   [61, 70, 83],
+    "card_border":          [44, 51, 60],
+    "destructive":          [204, 82, 82]
+  },
+
   "flora":{
     "background_primary":   [31, 39, 27],
     "background_secondary": [53, 67, 46],
