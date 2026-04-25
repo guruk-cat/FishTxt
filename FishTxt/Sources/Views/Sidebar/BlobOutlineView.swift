@@ -82,7 +82,7 @@ struct BlobOutlineView: View {
             Text("OUTLINE")
                 .font(.system(size: 11, weight: .semibold))
                 .tracking(0.5)
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
             Spacer()
         }
         .padding(.horizontal, 8)
@@ -115,10 +115,10 @@ struct BlobOutlineView: View {
             Text(heading.text)
                 .font(.system(size: 12))
                 .foregroundColor(
-                    isActive ? AppColors.shared.contentSecondary :
+                    isActive ? AppColors.shared.textHeading :
                     isHovered
-                        ? AppColors.shared.contentPrimary
-                        : AppColors.shared.contentResting
+                        ? AppColors.shared.textBody
+                        : AppColors.shared.textResting
                 )
                 .lineLimit(1)
                 .animation(.easeInOut(duration: 0.12), value: isHovered)
@@ -131,16 +131,16 @@ struct BlobOutlineView: View {
             Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundColor(!expandable ? Color.clear :
-                                    isActive ? AppColors.shared.contentSecondary :
-                                    isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentResting)
+                                    isActive ? AppColors.shared.textHeading :
+                                    isHovered ? AppColors.shared.textBody : AppColors.shared.textResting)
                 .animation(.easeInOut(duration: 0.12), value: isHovered)
                 .frame(width: 14)
                 .padding(.leading, indent)
                 .onTapGesture{ if expandable { toggleCollapse(at: index) } }
         }
         .frame(height: Self.rowHeight)
-        .background(isActive ? AppColors.shared.backgroundHighlight.opacity(0.2) : Color.clear)
-        .overlay(isActive ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentSecondary) : nil, alignment: .leading)
+        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.2) : Color.clear)
+        .overlay(isActive ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.textHeading) : nil, alignment: .leading)
         .contentShape(Rectangle())
         .onHover { hoveredIndex = $0 ? index : nil }
         .onTapGesture { NotificationCenter.default.post(name: .scrollToOutlineHeading, object: index) }
@@ -149,7 +149,7 @@ struct BlobOutlineView: View {
     private func emptyLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 12))
-            .foregroundColor(AppColors.shared.contentTertiary)
+            .foregroundColor(AppColors.shared.textMuted)
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)

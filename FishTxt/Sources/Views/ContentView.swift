@@ -22,7 +22,7 @@ struct ContentView: View {
 
             // Main content area (fills remaining space)
             ZStack {
-                AppColors.shared.backgroundSecondary
+                AppColors.shared.surfaceSunken
                     .ignoresSafeArea()
 
                 if let projectID = selectedProjectID {
@@ -50,14 +50,14 @@ struct ContentView: View {
                 } else {
                     Text("Select a project")
                         .font(.system(size: 16))
-                        .foregroundColor(AppColors.shared.contentTertiary)
+                        .foregroundColor(AppColors.shared.textMuted)
                 }
             }
         }
         .frame(minWidth: 700, minHeight: 480)
-        .background(AppColors.shared.backgroundSecondary)
+        .background(AppColors.shared.surfaceSunken)
         .preferredColorScheme(appColors.isDark ? .dark : .light)
-        .toolbarBackground(appColors.toolbarBackground, for: .windowToolbar)
+        .toolbarBackground(appColors.chromeToolbar, for: .windowToolbar)
         .toolbarBackground(.visible, for: .windowToolbar)
         .environmentObject(crossPanelDrag)
         .onAppear {

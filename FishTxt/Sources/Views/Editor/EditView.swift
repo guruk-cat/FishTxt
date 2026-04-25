@@ -63,7 +63,7 @@ struct EditView: View {
         ) { _ in
             performSave(completion: nil)
         }
-        .onChange(of: appColors.backgroundPrimary) { _ in
+        .onChange(of: appColors.surface) { _ in
             bridge.applyColors()
         }
         .onChange(of: fontSize) { newSize in
@@ -109,15 +109,15 @@ struct EditView: View {
                     .font(.system(size: 11))
                     .foregroundColor(
                         saveStatus == .saving
-                            ? AppColors.shared.contentSecondary
+                            ? AppColors.shared.textHeading
                             : AppColors.shared.confirmation
                     )
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(AppColors.shared.backgroundPrimary.opacity(0.95))
+            .background(AppColors.shared.surface.opacity(0.95))
             .cornerRadius(8)
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(AppColors.shared.cardBorder, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(AppColors.shared.borderCard, lineWidth: 1))
             .padding(14)
             .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .bottomTrailing)))
         }
@@ -148,7 +148,7 @@ struct EditView: View {
 
 #Preview {
     ZStack {
-        AppColors.shared.backgroundSecondary.ignoresSafeArea()
+        AppColors.shared.surfaceSunken.ignoresSafeArea()
         EditView(blobID: UUID(), projectID: UUID(), onClose: {})
             .environmentObject(ProjectStore())
             .environmentObject(AppColors.shared)

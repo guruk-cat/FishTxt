@@ -59,7 +59,7 @@ struct SidebarButtonColumn: View {
             Button(action: {}) {
                 Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
                     .font(.system(size: 16))
-                    .foregroundColor(AppColors.shared.contentTertiary)
+                    .foregroundColor(AppColors.shared.textMuted)
                     .frame(width: 32, height: 32)
             }
             .buttonStyle(.plain)
@@ -72,9 +72,9 @@ struct SidebarButtonColumn: View {
             Button(action: { isShowingSettings = true }) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 16))
-                    .foregroundColor(isShowingSettings ? AppColors.shared.contentSecondary
-                        : hoverSettings ? AppColors.shared.contentPrimary
-                        : AppColors.shared.contentTertiary)
+                    .foregroundColor(isShowingSettings ? AppColors.shared.accent
+                        : hoverSettings ? AppColors.shared.textBody
+                        : AppColors.shared.textMuted)
                     .frame(width: 32, height: 32)
                     .animation(.easeInOut(duration: 0.12), value: isShowingSettings)
                     .animation(.easeInOut(duration: 0.12), value: hoverSettings)
@@ -105,23 +105,23 @@ struct SidebarButtonColumn: View {
 
     private var navigatorButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .navigator
-        if isActive {return AppColors.shared.contentSecondary}
-        else if hoverNavigator { return AppColors.shared.contentPrimary }
-        return AppColors.shared.contentTertiary
+        if isActive { return AppColors.shared.accent }
+        else if hoverNavigator { return AppColors.shared.textBody }
+        return AppColors.shared.textMuted
     }
 
     private var mergeButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .blobMerge
-        if isActive {return AppColors.shared.contentSecondary}
-        else if hoverMerge { return AppColors.shared.contentPrimary }
-        return AppColors.shared.contentTertiary
+        if isActive { return AppColors.shared.accent }
+        else if hoverMerge { return AppColors.shared.textBody }
+        return AppColors.shared.textMuted
     }
 
     private var outlineButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .blobOutline
-        if isActive { return AppColors.shared.contentSecondary }
-        else if hoverOutline { return AppColors.shared.contentPrimary }
-        return AppColors.shared.contentTertiary
+        if isActive { return AppColors.shared.accent }
+        else if hoverOutline { return AppColors.shared.textBody }
+        return AppColors.shared.textMuted
     }
 
 }

@@ -20,16 +20,16 @@ struct SettingsView: View {
             HStack {
                 Text("Settings")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(AppColors.shared.contentSecondary)
+                    .foregroundColor(AppColors.shared.textHeading)
                 Spacer()
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(AppColors.shared.contentTertiary)
+                        .foregroundColor(AppColors.shared.textMuted)
                         .frame(width: 22, height: 22)
-                        .background(AppColors.shared.backgroundPrimary)
+                        .background(AppColors.shared.surface)
                         .cornerRadius(5)
-                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.cardBorder, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             }
@@ -37,7 +37,7 @@ struct SettingsView: View {
             .padding(.vertical, 14)
 
             Divider()
-                .background(AppColors.shared.cardBorder)
+                .background(AppColors.shared.borderCard)
 
             // Settings form
             ScrollView {
@@ -58,27 +58,27 @@ struct SettingsView: View {
                                 Button(action: { if fontSize > 10 { fontSize -= 1 } }) {
                                     Image(systemName: "minus")
                                         .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(AppColors.shared.contentResting)
+                                        .foregroundColor(AppColors.shared.textResting)
                                         .frame(width: 22, height: 22)
-                                        .background(AppColors.shared.backgroundPrimary)
+                                        .background(AppColors.shared.surface)
                                         .cornerRadius(5)
-                                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.cardBorder, lineWidth: 1))
+                                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
                                 }
                                 .buttonStyle(.plain)
 
                                 Text("\(Int(fontSize))pt")
                                     .font(.system(size: 13))
-                                    .foregroundColor(AppColors.shared.contentResting)
+                                    .foregroundColor(AppColors.shared.textResting)
                                     .frame(width: 36, alignment: .center)
 
                                 Button(action: { if fontSize < 36 { fontSize += 1 } }) {
                                     Image(systemName: "plus")
                                         .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(AppColors.shared.contentResting)
+                                        .foregroundColor(AppColors.shared.textResting)
                                         .frame(width: 22, height: 22)
-                                        .background(AppColors.shared.backgroundPrimary)
+                                        .background(AppColors.shared.surface)
                                         .cornerRadius(5)
-                                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.cardBorder, lineWidth: 1))
+                                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -132,7 +132,7 @@ struct SettingsView: View {
             Spacer(minLength: 0)
         }
         .frame(width: 380, height: 420)
-        .background(AppColors.shared.sidebarBackground)
+        .background(AppColors.shared.chromePanel)
         .task {
             loadPrintProfiles()
         }
@@ -145,7 +145,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
                 .tracking(1.0)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -159,7 +159,7 @@ struct SettingsView: View {
         HStack {
             Text(label)
                 .font(.system(size: 13))
-                .foregroundColor(AppColors.shared.contentResting)
+                .foregroundColor(AppColors.shared.textResting)
                 .frame(width: 120, alignment: .leading)
 
             control().frame(width: 160, alignment: .trailing)

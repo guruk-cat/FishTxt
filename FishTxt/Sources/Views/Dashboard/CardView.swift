@@ -30,10 +30,10 @@ struct CardView: View {
             } else {
                 ZStack(alignment: .topLeading) {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(isHovered ? AppColors.shared.backgroundHighlight : AppColors.shared.backgroundPrimary)
+                        .fill(isHovered ? AppColors.shared.surfaceRaised : AppColors.shared.surface)
 
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(AppColors.shared.cardBorder, lineWidth: 1)
+                        .stroke(AppColors.shared.borderCard, lineWidth: 1)
 
                     // Drop preview glow: shown when this folder is the hover target during a blob drag
                     if isDropPreview {
@@ -96,11 +96,11 @@ struct CardView: View {
         VStack(spacing: 8) {
             Image(systemName: "folder.fill")
                 .font(.system(size: 24))
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
 
             Text(folder.name)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
         }
@@ -115,7 +115,7 @@ struct CardView: View {
                 // Empty state — centered
                 Text("Empty")
                     .font(.system(size: 16, design: .monospaced))
-                    .foregroundColor(AppColors.shared.contentTertiary)
+                    .foregroundColor(AppColors.shared.textMuted)
                     .italic()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -124,12 +124,12 @@ struct CardView: View {
                     if let title = excerpt?.title {
                         Text(title)
                             .font(.system(size: 16, weight: .bold, design: .monospaced))
-                            .foregroundColor(AppColors.shared.contentSecondary)
+                            .foregroundColor(AppColors.shared.textHeading)
                             .lineLimit(2)
                     }
                     if let body = excerpt?.bodyAttributed {
                         Text(body)
-                            .foregroundColor(AppColors.shared.contentPrimary)
+                            .foregroundColor(AppColors.shared.textBody)
                             .lineSpacing(16 * 0.25)
                             .lineLimit(excerpt?.title != nil ? 8 : 10)
                     }
@@ -156,9 +156,9 @@ struct CardView: View {
                 }) {
                     Image(systemName: copyConfirmed ? "checkmark" : "doc.on.doc")
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(copyConfirmed ? AppColors.shared.confirmation : AppColors.shared.contentSecondary)
+                        .foregroundColor(copyConfirmed ? AppColors.shared.confirmation : AppColors.shared.textHeading)
                         .frame(width: 20, height: 20)
-                        .background(AppColors.shared.backgroundSecondary)
+                        .background(AppColors.shared.surfaceSunken)
                         .cornerRadius(4)
                         .overlay(
                             RoundedRectangle(cornerRadius: 4)
@@ -185,7 +185,7 @@ struct CardView: View {
             .strokeBorder(
                 style: StrokeStyle(lineWidth: 2, dash: [5, 5])
             )
-            .foregroundColor(AppColors.shared.contentTertiary)
+            .foregroundColor(AppColors.shared.textMuted)
             .frame(height: height)
     }
 
@@ -258,7 +258,7 @@ struct CardView: View {
         }
         .padding()
     }
-    .background(AppColors.shared.backgroundSecondary)
+    .background(AppColors.shared.surfaceSunken)
     .environmentObject(AppColors.shared)
     .environmentObject(ProjectStore())
 }

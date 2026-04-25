@@ -114,17 +114,17 @@ struct DashboardView: View {
                             Text("Back")
                                 .font(.system(size: 13))
                         }
-                        .foregroundColor(AppColors.shared.contentSecondary)
+                        .foregroundColor(AppColors.shared.textHeading)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(AppColors.shared.backgroundPrimary)
+                        .background(AppColors.shared.surface)
                         .cornerRadius(6)
                     }
                     .buttonStyle(.plain)
 
                     Text(name)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(AppColors.shared.contentPrimary)
+                        .foregroundColor(AppColors.shared.textBody)
 
                     Spacer()
                 }
@@ -414,7 +414,7 @@ struct DashboardView: View {
                 .padding(.vertical, 6)
                 .background(
                     Capsule()
-                        .fill(AppColors.shared.backgroundPrimary)
+                        .fill(AppColors.shared.surface)
                         .shadow(color: .black.opacity(0.18), radius: 8, x: 0, y: 3)
                 )
                 .padding(.trailing, 16)
@@ -536,16 +536,16 @@ struct DashboardView: View {
     // MARK: - Floating island helpers
 
     private var folderIslandColor: Color {
-        guard folderID == nil else { return AppColors.shared.contentTertiary }
+        guard folderID == nil else { return AppColors.shared.textMuted }
         if glowFolder  { return AppColors.shared.confirmation }
-        if hoverFolder { return AppColors.shared.contentPrimary }
-        return AppColors.shared.contentTertiary
+        if hoverFolder { return AppColors.shared.textBody }
+        return AppColors.shared.textMuted
     }
 
     private var blobIslandColor: Color {
         if glowBlob  { return AppColors.shared.confirmation }
-        if hoverBlob { return AppColors.shared.contentPrimary }
-        return AppColors.shared.contentTertiary
+        if hoverBlob { return AppColors.shared.textBody }
+        return AppColors.shared.textMuted
     }
 
     private func triggerIslandGlow(isFolder: Bool) {

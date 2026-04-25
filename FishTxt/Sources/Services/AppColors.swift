@@ -1,24 +1,29 @@
 import SwiftUI
 
-/// Loads color values from colors.json in the app bundle.
-/// Supports multiple named palettes via the nested JSON format: { "paletteName": { "color_key": [R, G, B] } }
-/// Use AppColors.shared throughout the app instead of hardcoding RGB values.
+/// Loads color palettes from colors.json and exposes SwiftUI Color properties.
+/// Palette structure: { "paletteName": { "color_key": [R, G, B] } }
 class AppColors: ObservableObject {
     static let shared = AppColors()
 
-    @Published var backgroundPrimary: Color   = .black
-    @Published var backgroundSecondary: Color = .black
-    @Published var backgroundHighlight: Color = .black
-    @Published var contentPrimary: Color      = .white
-    @Published var contentSecondary: Color    = .gray
-    @Published var contentTertiary: Color     = .gray
-    @Published var contentResting: Color     = .gray
-    @Published var accent: Color              = .blue
-    @Published var confirmation: Color        = .green
-    @Published var sidebarBackground: Color   = .black
-    @Published var toolbarBackground: Color   = .black
-    @Published var cardBorder: Color          = .gray
-    @Published var destructive: Color         = .red
+    // 60% — writing surface and its text
+    @Published var surface: Color        = .black
+    @Published var surfaceSunken: Color  = .black
+    @Published var surfaceRaised: Color  = .black
+    @Published var textBody: Color       = .white
+    @Published var textResting: Color    = .gray
+    @Published var textMuted: Color      = .gray
+    @Published var borderCard: Color     = .gray
+
+    // 30% — app chrome
+    @Published var chromeSidebar: Color  = .black
+    @Published var chromePanel: Color    = .black
+    @Published var chromeToolbar: Color  = .black
+
+    // 10% — emphasis and accent
+    @Published var textHeading: Color    = .gray
+    @Published var accent: Color         = .blue
+    @Published var confirmation: Color   = .green
+    @Published var destructive: Color    = .red
 
     /// Whether the current palette is a dark theme (used to set preferredColorScheme).
     @Published var isDark: Bool = true
@@ -66,22 +71,23 @@ class AppColors: ObservableObject {
 
         rawPalette = dict
 
-        backgroundPrimary   = c("background_primary")
-        backgroundSecondary = c("background_secondary")
-        backgroundHighlight = c("background_highlight")
-        contentPrimary      = c("content_primary")
-        contentSecondary    = c("content_secondary")
-        contentTertiary     = c("content_tertiary")
-        contentResting      = c("content_resting")
-        accent              = c("accent")
-        confirmation        = c("confirmation")
-        sidebarBackground   = c("sidebar_background")
-        toolbarBackground   = c("toolbar_background")
-        cardBorder          = c("card_border")
-        destructive         = c("destructive")
+        surface        = c("surface")
+        surfaceSunken  = c("surface_sunken")
+        surfaceRaised  = c("surface_raised")
+        textBody       = c("text_body")
+        textResting    = c("text_resting")
+        textMuted      = c("text_muted")
+        borderCard     = c("border_card")
+        chromeSidebar  = c("chrome_sidebar")
+        chromePanel    = c("chrome_panel")
+        chromeToolbar  = c("chrome_toolbar")
+        textHeading    = c("text_heading")
+        accent         = c("accent")
+        confirmation   = c("confirmation")
+        destructive    = c("destructive")
 
-        // Perceived luminance of background_primary — W3C formula
-        if let bg = dict["background_primary"] {
+        // Perceived luminance of surface — W3C formula
+        if let bg = dict["surface"] {
             let luminance = (bg[0] * 299 + bg[1] * 587 + bg[2] * 114) / 1000
             isDark = luminance < 128
         }
@@ -98,14 +104,14 @@ class AppColors: ObservableObject {
         return """
         (function(){
           var r = document.documentElement.style;
-          r.setProperty('--bg-primary',          '\(rgb("background_primary"))');
-          r.setProperty('--bg-secondary',        '\(rgb("background_secondary"))');
-          r.setProperty('--sidebar-background',  '\(rgb("sidebar_background"))');
-          r.setProperty('--content-primary',     '\(rgb("content_primary"))');
-          r.setProperty('--content-secondary',   '\(rgb("content_secondary"))');
-          r.setProperty('--content-tertiary',    '\(rgb("content_tertiary"))');
-          r.setProperty('--accent',              '\(rgb("accent"))');
-          r.setProperty('--confirmation',        '\(rgb("confirmation"))');
+          r.setProperty('--surface',          '\(rgb("surface"))');
+          r.setProperty('--surface-sunken',   '\(rgb("surface_sunken"))');
+          r.setProperty('--chrome-panel',     '\(rgb("chrome_panel"))');
+          r.setProperty('--text-body',        '\(rgb("text_body"))');
+          r.setProperty('--text-heading',     '\(rgb("text_heading"))');
+          r.setProperty('--text-muted',       '\(rgb("text_muted"))');
+          r.setProperty('--accent',           '\(rgb("accent"))');
+          r.setProperty('--confirmation',     '\(rgb("confirmation"))');
         })()
         """
     }
@@ -124,14 +130,14 @@ class AppColors: ObservableObject {
         return """
         (function(){
           var r = document.documentElement.style;
-          r.setProperty('--bg-primary',          '\(rgb("background_primary"))');
-          r.setProperty('--bg-secondary',        '\(rgb("background_secondary"))');
-          r.setProperty('--sidebar-background',  '\(rgb("sidebar_background"))');
-          r.setProperty('--content-primary',     '\(rgb("content_primary"))');
-          r.setProperty('--content-secondary',   '\(rgb("content_secondary"))');
-          r.setProperty('--content-tertiary',    '\(rgb("content_tertiary"))');
-          r.setProperty('--accent',              '\(rgb("accent"))');
-          r.setProperty('--confirmation',        '\(rgb("confirmation"))');
+          r.setProperty('--surface',          '\(rgb("surface"))');
+          r.setProperty('--surface-sunken',   '\(rgb("surface_sunken"))');
+          r.setProperty('--chrome-panel',     '\(rgb("chrome_panel"))');
+          r.setProperty('--text-body',        '\(rgb("text_body"))');
+          r.setProperty('--text-heading',     '\(rgb("text_heading"))');
+          r.setProperty('--text-muted',       '\(rgb("text_muted"))');
+          r.setProperty('--accent',           '\(rgb("accent"))');
+          r.setProperty('--confirmation',     '\(rgb("confirmation"))');
           var sel = document.getElementById('ft-sel');
           if (!sel) { sel = document.createElement('style'); sel.id = 'ft-sel'; document.head.appendChild(sel); }
           sel.textContent = '::selection { background: \(selectionBg); } #custom-cursor { box-shadow: 0 0 4px var(--accent), 0 0 8px var(--accent); }';

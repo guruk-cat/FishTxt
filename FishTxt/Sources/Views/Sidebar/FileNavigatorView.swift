@@ -76,7 +76,7 @@ struct FileNavigatorView: View {
                     Text("PROJECTS")
                         .font(.system(size: 11, weight: .semibold))
                         .tracking(0.5)
-                        .foregroundColor(AppColors.shared.contentSecondary)
+                        .foregroundColor(AppColors.shared.textHeading)
                     Spacer()
                     Button {
                         let p = store.createProject(name: "Untitled Project")
@@ -86,7 +86,7 @@ struct FileNavigatorView: View {
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(plusButtonHovered ? AppColors.shared.contentSecondary : AppColors.shared.contentTertiary)
+                            .foregroundColor(plusButtonHovered ? AppColors.shared.textHeading : AppColors.shared.textMuted)
                     }
                     .buttonStyle(.plain)
                     .onHover { plusButtonHovered = $0 }
@@ -119,7 +119,7 @@ struct FileNavigatorView: View {
         HStack(spacing: 6) {
             Text(project.name)
                 .font(.system(size: 13))
-                .foregroundColor(isRowHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentResting)
+                .foregroundColor(isRowHovered ? AppColors.shared.textBody : AppColors.shared.textResting)
             Spacer()
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
@@ -146,7 +146,7 @@ struct FileNavigatorView: View {
                     Text(project.name.uppercased())
                         .font(.system(size: 11, weight: .semibold))
                         .tracking(0.5)
-                        .foregroundColor(AppColors.shared.contentSecondary)
+                        .foregroundColor(AppColors.shared.textHeading)
                         .onTapGesture { selectProject(project) }
                     Spacer()
                     Button {
@@ -156,7 +156,7 @@ struct FileNavigatorView: View {
                     } label: {
                         Image(systemName: "arrow.uturn.left")
                             .font(.system(size: 11))
-                            .foregroundColor(backButtonHovered ? AppColors.shared.contentSecondary : AppColors.shared.contentTertiary)
+                            .foregroundColor(backButtonHovered ? AppColors.shared.textHeading : AppColors.shared.textMuted)
                     }
                     .buttonStyle(.plain)
                     .onHover { backButtonHovered = $0 }
@@ -274,17 +274,17 @@ struct FileNavigatorView: View {
                 Image(systemName: "folder.fill")
                     .font(.system(size: 11))
                     .foregroundColor(
-                        isFolderSelected ? AppColors.shared.contentSecondary :
+                        isFolderSelected ? AppColors.shared.textHeading :
                         isDragHovered    ? AppColors.shared.accent :
-                        isRowHovered     ? AppColors.shared.contentPrimary :
-                                           AppColors.shared.contentResting)
+                        isRowHovered     ? AppColors.shared.textBody :
+                                           AppColors.shared.textResting)
                 Text(folder.name)
                     .font(.system(size: 12))
                     .foregroundColor(
-                        isFolderSelected ? AppColors.shared.contentSecondary :
+                        isFolderSelected ? AppColors.shared.textHeading :
                         isDragHovered    ? AppColors.shared.accent :
-                        isRowHovered     ? AppColors.shared.contentPrimary :
-                                           AppColors.shared.contentResting)
+                        isRowHovered     ? AppColors.shared.textBody :
+                                           AppColors.shared.textResting)
                     .lineLimit(1)
                 Spacer()
                 if isFolderSelected {
@@ -293,7 +293,7 @@ struct FileNavigatorView: View {
                     } label: {
                         Image(systemName: "arrow.uturn.left")
                             .font(.system(size: 11))
-                            .foregroundColor(folderBackButtonHovered ? AppColors.shared.contentSecondary : AppColors.shared.contentTertiary)
+                            .foregroundColor(folderBackButtonHovered ? AppColors.shared.textHeading : AppColors.shared.textMuted)
                     }
                     .buttonStyle(.plain)
                     .onHover { folderBackButtonHovered = $0 }
@@ -306,9 +306,9 @@ struct FileNavigatorView: View {
                 Image(systemName: isFolderExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundColor(hasBlobs
-                        ? (isFolderSelected ? AppColors.shared.contentSecondary :
-                           isRowHovered     ? AppColors.shared.contentPrimary :
-                                              AppColors.shared.contentResting)
+                        ? (isFolderSelected ? AppColors.shared.textHeading :
+                           isRowHovered     ? AppColors.shared.textBody :
+                                              AppColors.shared.textResting)
                         : Color.clear)
                     .frame(width: 14)
                     .padding(.leading, 6)
@@ -318,12 +318,12 @@ struct FileNavigatorView: View {
                 isDragHovered
                     ? AppColors.shared.accent.opacity(0.12)
                     : (isFolderSelected
-                        ? AppColors.shared.backgroundHighlight.opacity(0.2)
+                        ? AppColors.shared.surfaceRaised.opacity(0.2)
                         : Color.clear)
             )
             .overlay(
                 isFolderSelected
-                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentSecondary)
+                    ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.textHeading)
                     : nil,
                 alignment: .leading
             )
@@ -404,7 +404,7 @@ struct FileNavigatorView: View {
     private func treeGhost() -> some View {
         RoundedRectangle(cornerRadius: 4)
             .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
-            .foregroundColor(AppColors.shared.contentTertiary.opacity(0.4))
+            .foregroundColor(AppColors.shared.textMuted.opacity(0.4))
             .frame(height: Self.rowHeight - 4)
     }
 
@@ -442,14 +442,14 @@ struct FileNavigatorView: View {
     private func dragPreview(icon: String, text: String) -> some View {
         HStack(spacing: 5) {
             Image(systemName: icon).font(.system(size: 11))
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
             Text(text).font(.system(size: 12)).lineLimit(1)
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
         }
         .padding(.horizontal, 8).padding(.vertical, 4)
-        .background(AppColors.shared.backgroundPrimary)
+        .background(AppColors.shared.surface)
         .cornerRadius(5)
-        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
         .frame(width: 160, alignment: .leading)
     }
 
@@ -771,21 +771,21 @@ private struct BlobTreeRow: View {
             Image(systemName: "doc.text")
                 .font(.system(size: 10))
                 .foregroundColor(isActive
-                    ? AppColors.shared.contentSecondary
-                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentResting))
+                    ? AppColors.shared.textHeading
+                    : (isHovered ? AppColors.shared.textBody : AppColors.shared.textResting))
             Text(title ?? "Untitled")
                 .font(.system(size: 12))
                 .foregroundColor(isActive
-                    ? AppColors.shared.contentSecondary
-                    : (isHovered ? AppColors.shared.contentPrimary : AppColors.shared.contentResting))
+                    ? AppColors.shared.textHeading
+                    : (isHovered ? AppColors.shared.textBody : AppColors.shared.textResting))
                 .lineLimit(1)
             Spacer()
         }
         .padding(.leading, indent).padding(.trailing, 8).padding(.vertical, 4)
-        .background(isActive ? AppColors.shared.backgroundHighlight.opacity(0.2) : Color.clear)
+        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.2) : Color.clear)
         .overlay(
             isActive
-                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.contentSecondary)
+                ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.textHeading)
                 : nil,
             alignment: .leading
         )
@@ -814,14 +814,14 @@ private struct BlobDragPreview: View {
     var body: some View {
         HStack(spacing: 5) {
             Image(systemName: "doc.text").font(.system(size: 10))
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
             Text(title ?? "Untitled").font(.system(size: 12)).lineLimit(1)
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
         }
         .padding(.horizontal, 8).padding(.vertical, 4)
-        .background(AppColors.shared.backgroundPrimary)
+        .background(AppColors.shared.surface)
         .cornerRadius(5)
-        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
         .frame(width: 160, alignment: .leading)
         .task {
             let result = await Task.detached(priority: .utility) {

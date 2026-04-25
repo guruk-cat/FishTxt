@@ -145,7 +145,7 @@ struct BlobMergeView: View {
                 Text("MERGE BLOBS")
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(0.5)
-                    .foregroundColor(AppColors.shared.contentSecondary)
+                    .foregroundColor(AppColors.shared.textHeading)
                 Spacer()
         }
         .padding(.top, 12)
@@ -157,7 +157,7 @@ struct BlobMergeView: View {
     private var mergeSection: some View {
         VStack(spacing: 0) {
             Rectangle()
-                .fill(AppColors.shared.contentTertiary.opacity(0.2))
+                .fill(AppColors.shared.textMuted.opacity(0.2))
                 .frame(height: 1)
                 .padding(.top, 8)
                 .padding(.bottom, 8)
@@ -166,7 +166,7 @@ struct BlobMergeView: View {
                 Text("3. Merge")
                     .font(.system(size: 12))
                     .tracking(0.5)
-                    .foregroundColor(AppColors.shared.contentSecondary)
+                    .foregroundColor(AppColors.shared.textHeading)
                 Spacer()
             }.padding(.bottom, 8)
 
@@ -176,15 +176,15 @@ struct BlobMergeView: View {
                 text: $newHeadingText,
                 isEnabled: mergeMode == .newHeading,
                 textColor: NSColor(mergeMode == .newHeading
-                    ? AppColors.shared.contentPrimary
-                    : AppColors.shared.contentTertiary)
+                    ? AppColors.shared.textBody
+                    : AppColors.shared.textMuted)
             )
             .frame(height: 24)
             .padding(.vertical, 5)
             .padding(.horizontal, 8)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.shared.backgroundSecondary.opacity(
+                    .fill(AppColors.shared.surfaceSunken.opacity(
                         mergeMode == .newHeading ? 0.6 : 0.3
                     ))
             )
@@ -196,7 +196,7 @@ struct BlobMergeView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(
                         hoverMerge
-                            ? AppColors.shared.backgroundPrimary
+                            ? AppColors.shared.surface
                             : AppColors.shared.accent
                     )
                     .frame(maxWidth: .infinity)
@@ -205,7 +205,7 @@ struct BlobMergeView: View {
                         RoundedRectangle(cornerRadius: 5)
                             .fill(hoverMerge
                                   ? AppColors.shared.accent
-                                  : AppColors.shared.backgroundSecondary
+                                  : AppColors.shared.surfaceSunken
                             )
                     )
                     .animation(.easeInOut(duration: 0.12), value: hoverMerge)
@@ -223,7 +223,7 @@ struct BlobMergeView: View {
     private var blobList: some View {
         VStack {
             Rectangle()
-                .fill(AppColors.shared.contentTertiary.opacity(0.2))
+                .fill(AppColors.shared.textMuted.opacity(0.2))
                 .frame(height: 1)
                 .padding(.top, 8)
                 .padding(.bottom, 8)
@@ -232,7 +232,7 @@ struct BlobMergeView: View {
                 Text("1. Select Blobs")
                     .font(.system(size: 12))
                     .tracking(0.5)
-                    .foregroundColor(AppColors.shared.contentSecondary)
+                    .foregroundColor(AppColors.shared.textHeading)
                 
                 Spacer()
                 
@@ -241,8 +241,8 @@ struct BlobMergeView: View {
                         .font(.system(size: 11))
                         .foregroundColor(
                             hoverSelectAll
-                            ? AppColors.shared.contentPrimary
-                            : AppColors.shared.contentTertiary
+                            ? AppColors.shared.textBody
+                            : AppColors.shared.textMuted
                         )
                         .animation(.easeInOut(duration: 0.12), value: hoverSelectAll)
                 }
@@ -256,7 +256,7 @@ struct BlobMergeView: View {
         if orderedBlobIDs.isEmpty {
             Text("No blobs in this context.")
                 .font(.system(size: 12))
-                .foregroundColor(AppColors.shared.contentTertiary)
+                .foregroundColor(AppColors.shared.textMuted)
                 .padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
@@ -280,19 +280,19 @@ struct BlobMergeView: View {
         return HStack(spacing: 6) {
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 10))
-                .foregroundColor(AppColors.shared.contentTertiary.opacity(0.5))
+                .foregroundColor(AppColors.shared.textMuted.opacity(0.5))
 
             Image(systemName: isChecked ? "checkmark.square.fill" : "square")
                 .font(.system(size: 12))
                 .foregroundColor(
                     isChecked
                         ? AppColors.shared.accent
-                        : AppColors.shared.contentTertiary
+                        : AppColors.shared.textMuted
                 )
 
             Text(blobTitles[blobID] ?? "Untitled")
                 .font(.system(size: 12))
-                .foregroundColor(AppColors.shared.contentResting)
+                .foregroundColor(AppColors.shared.textResting)
                 .lineLimit(1)
 
             Spacer()
@@ -343,7 +343,7 @@ struct BlobMergeView: View {
     private var ghostRow: some View {
         RoundedRectangle(cornerRadius: 4)
             .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
-            .foregroundColor(AppColors.shared.contentTertiary.opacity(0.4))
+            .foregroundColor(AppColors.shared.textMuted.opacity(0.4))
             .frame(height: Self.rowHeight - 4)
             .padding(.vertical, 2)
     }
@@ -354,23 +354,23 @@ struct BlobMergeView: View {
             HStack(spacing: 6) {
                 Image(systemName: "line.3.horizontal")
                     .font(.system(size: 10))
-                    .foregroundColor(AppColors.shared.contentTertiary.opacity(0.5))
+                    .foregroundColor(AppColors.shared.textMuted.opacity(0.5))
                 Image(systemName: checkedBlobIDs.contains(dragID) ? "checkmark.square.fill" : "square")
                     .font(.system(size: 12))
                     .foregroundColor(
                         checkedBlobIDs.contains(dragID)
                             ? AppColors.shared.accent
-                            : AppColors.shared.contentTertiary
+                            : AppColors.shared.textMuted
                     )
                 Text(blobTitles[dragID] ?? "Untitled")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.shared.contentResting)
+                    .foregroundColor(AppColors.shared.textResting)
                     .lineLimit(1)
                 Spacer()
             }
             .padding(.vertical, 4)
             .frame(width: 270, height: Self.rowHeight)
-            .background(AppColors.shared.sidebarBackground)
+            .background(AppColors.shared.chromePanel)
             .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
             .opacity(0.85)
             .position(x: 110, y: dragLocation.y)
@@ -383,7 +383,7 @@ struct BlobMergeView: View {
     private var settingsSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             Rectangle()
-                .fill(AppColors.shared.contentTertiary.opacity(0.2))
+                .fill(AppColors.shared.textMuted.opacity(0.2))
                 .frame(height: 1)
                 .padding(.top, 8)
                 .padding(.bottom, 8)
@@ -391,7 +391,7 @@ struct BlobMergeView: View {
             Text("2. Review Options")
                 .font(.system(size: 12))
                 .tracking(0.5)
-                .foregroundColor(AppColors.shared.contentSecondary)
+                .foregroundColor(AppColors.shared.textHeading)
                 .padding(.bottom, 4)
             
             Spacer()
@@ -400,7 +400,7 @@ struct BlobMergeView: View {
             HStack {
                 Text("Add new top-level heading")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.shared.contentResting)
+                    .foregroundColor(AppColors.shared.textResting)
                 Spacer()
                 Toggle("", isOn: Binding(
                     get: { mergeMode == .newHeading },
@@ -417,7 +417,7 @@ struct BlobMergeView: View {
             HStack {
                 Text("Delete blobs after merge")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.shared.contentResting)
+                    .foregroundColor(AppColors.shared.textResting)
                 Spacer()
                 Toggle("", isOn: $deleteAfterMerge)
                     .toggleStyle(.switch)
