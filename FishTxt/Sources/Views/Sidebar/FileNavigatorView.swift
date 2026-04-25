@@ -756,6 +756,7 @@ struct FileNavigatorView: View {
 
 private struct BlobTreeRow: View {
     @EnvironmentObject var store: ProjectStore
+    @EnvironmentObject var appColors: AppColors
     let blob: Blob
     let projectID: UUID
     let isActive: Bool

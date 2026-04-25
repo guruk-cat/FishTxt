@@ -47,7 +47,7 @@
     "destructive":          [204, 82, 82]
   },
 
-  "oregon coastline":{
+  "portland fog":{
     "background_primary":   [28, 32, 38],
     "background_secondary": [49, 56, 66],
     "background_highlight": [70, 80, 95],
