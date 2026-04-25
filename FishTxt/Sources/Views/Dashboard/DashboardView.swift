@@ -41,6 +41,8 @@ struct DashboardView: View {
     @State private var createGlowItemID: UUID? = nil
     @State private var createGlowOpacity: Double = 0.0
     @State private var cardFrames: [UUID: CGRect] = [:]
+    @State private var overlayScale: CGFloat = 1.0
+    @State private var overlayOpacity: Double = 0.0
 
     let columns = [GridItem(.adaptive(minimum: 280, maximum: 360), spacing: 12)]
 
@@ -89,8 +91,14 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Hidden ESC handler — cancels active drag, or navigates up from folder view
             Button("") {
-                if draggedItemID != nil { clearDragState() }
-                else if selectedFolderID != nil { selectedFolderID = nil }
+                if draggedItemID != nil {
+                    performLanding {
+                        var t = Transaction(); t.disablesAnimations = true
+                        withTransaction(t) { self.clearDragState() }
+                    }
+                } else if selectedFolderID != nil {
+                    selectedFolderID = nil
+                }
             }
             .keyboardShortcut(.escape, modifiers: [])
             .frame(width: 0, height: 0)
@@ -160,24 +168,42 @@ struct DashboardView: View {
                                     DragGesture(minimumDistance: 8, coordinateSpace: .named("dashboard"))
                                         .onChanged { value in
                                             guard item != .ghost else { return }
-                                            if draggedItemID == nil { draggedItemID = item.id }
+                                            if draggedItemID == nil {
+                                                let baseItems = folderItems.filter { $0.id != item.id }
+                                                draggedItemID = item.id
+                                                ghostFolderIndex = ghostIndex(for: value.location, among: baseItems)
+                                                overlayScale = 0.95
+                                                overlayOpacity = 0.0
+                                                withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                                                    overlayScale = 1.08
+                                                    overlayOpacity = 0.85
+                                                }
+                                            }
                                             guard draggedItemID == item.id else { return }
                                             dragLocation = value.location
                                             let baseItems = folderItems.filter { $0.id != item.id }
-                                            ghostFolderIndex = ghostIndex(for: value.location, among: baseItems)
+                                            withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                                                ghostFolderIndex = ghostIndex(for: value.location, among: baseItems)
+                                            }
                                             ghostBlobIndex = nil
                                             hoveredFolderID = nil
                                         }
                                         .onEnded { value in
                                             guard item != .ghost, draggedItemID == item.id else { return }
-                                            defer { clearDragState() }
-                                            guard let ghostIdx = ghostFolderIndex else { return }
-                                            let allDashItems = store.dashboardItems(for: projectID, folderID: folderID)
-                                            guard let fromIndex = allDashItems.firstIndex(where: { $0.id == item.id }) else { return }
-                                            let toIndex = folderGhostIndexToAllItemsIndex(ghostIdx: ghostIdx)
-                                            guard toIndex != fromIndex else { return }
-                                            store.moveItem(in: projectID, fromIndex: fromIndex, toIndex: toIndex, context: folderID)
-                                            triggerConfirmGlow(for: item.id)
+                                            if let ghostIdx = ghostFolderIndex {
+                                                let allDashItems = store.dashboardItems(for: projectID, folderID: folderID)
+                                                if let fromIndex = allDashItems.firstIndex(where: { $0.id == item.id }) {
+                                                    let toIndex = folderGhostIndexToAllItemsIndex(ghostIdx: ghostIdx)
+                                                    if toIndex != fromIndex {
+                                                        store.moveItem(in: projectID, fromIndex: fromIndex, toIndex: toIndex, context: folderID)
+                                                        triggerConfirmGlow(for: item.id)
+                                                    }
+                                                }
+                                            }
+                                            performLanding {
+                                                var t = Transaction(); t.disablesAnimations = true
+                                                withTransaction(t) { self.clearDragState() }
+                                            }
                                         },
                                     including: .all
                                 )
@@ -223,7 +249,17 @@ struct DashboardView: View {
                                     DragGesture(minimumDistance: 8, coordinateSpace: .named("dashboard"))
                                         .onChanged { value in
                                             guard item != .ghost else { return }
-                                            if draggedItemID == nil { draggedItemID = item.id }
+                                            if draggedItemID == nil {
+                                                let baseItems = blobItems.filter { $0.id != item.id }
+                                                draggedItemID = item.id
+                                                ghostBlobIndex = ghostIndex(for: value.location, among: baseItems)
+                                                overlayScale = 0.95
+                                                overlayOpacity = 0.0
+                                                withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                                                    overlayScale = 1.08
+                                                    overlayOpacity = 0.85
+                                                }
+                                            }
                                             guard draggedItemID == item.id else { return }
                                             dragLocation = value.location
                                             // Publish to navigator so folder rows can react via onHover
@@ -242,20 +278,25 @@ struct DashboardView: View {
                                                 }
                                             }
                                             hoveredFolderID = overFolder
-                                            if overFolder != nil {
-                                                ghostBlobIndex = nil
-                                            } else {
-                                                let baseItems = blobItems.filter { $0.id != item.id }
-                                                ghostBlobIndex = ghostIndex(for: value.location, among: baseItems)
+                                            withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+                                                if overFolder != nil {
+                                                    ghostBlobIndex = nil
+                                                } else {
+                                                    let baseItems = blobItems.filter { $0.id != item.id }
+                                                    ghostBlobIndex = ghostIndex(for: value.location, among: baseItems)
+                                                }
                                             }
                                         }
                                         .onEnded { value in
                                             guard item != .ghost, draggedItemID == item.id else { return }
-                                            defer { clearDragState() }
                                             // Case 0: blob dropped onto a navigator folder (cross-panel)
                                             if let navFolderID = crossPanelDrag.targetFolderID,
                                                case .blob(let blob) = item {
                                                 store.moveBlobToFolder(blob.id, to: navFolderID, in: projectID)
+                                                performLanding {
+                                                    var t = Transaction(); t.disablesAnimations = true
+                                                    withTransaction(t) { self.clearDragState() }
+                                                }
                                                 return
                                             }
                                             // Case 1: blob dropped onto a dashboard folder
@@ -264,16 +305,27 @@ struct DashboardView: View {
                                                     store.moveBlobToFolder(blob.id, to: targetFolderID, in: projectID)
                                                     triggerFolderReceiveGlow(for: targetFolderID)
                                                 }
+                                                performLanding {
+                                                    var t = Transaction(); t.disablesAnimations = true
+                                                    withTransaction(t) { self.clearDragState() }
+                                                }
                                                 return
                                             }
                                             // Case 2: blob reorder
-                                            guard let ghostIdx = ghostBlobIndex else { return }
-                                            let allDashItems = store.dashboardItems(for: projectID, folderID: folderID)
-                                            guard let fromIndex = allDashItems.firstIndex(where: { $0.id == item.id }) else { return }
-                                            let toIndex = blobGhostIndexToAllItemsIndex(ghostIdx: ghostIdx)
-                                            guard toIndex != fromIndex else { return }
-                                            store.moveItem(in: projectID, fromIndex: fromIndex, toIndex: toIndex, context: folderID)
-                                            triggerConfirmGlow(for: item.id)
+                                            if let ghostIdx = ghostBlobIndex {
+                                                let allDashItems = store.dashboardItems(for: projectID, folderID: folderID)
+                                                if let fromIndex = allDashItems.firstIndex(where: { $0.id == item.id }) {
+                                                    let toIndex = blobGhostIndexToAllItemsIndex(ghostIdx: ghostIdx)
+                                                    if toIndex != fromIndex {
+                                                        store.moveItem(in: projectID, fromIndex: fromIndex, toIndex: toIndex, context: folderID)
+                                                        triggerConfirmGlow(for: item.id)
+                                                    }
+                                                }
+                                            }
+                                            performLanding {
+                                                var t = Transaction(); t.disablesAnimations = true
+                                                withTransaction(t) { self.clearDragState() }
+                                            }
                                         },
                                     including: .all
                                 )
@@ -318,7 +370,8 @@ struct DashboardView: View {
                         createGlowOpacity: 0.0
                     )
                     .frame(width: 300)
-                    .opacity(0.7)
+                    .scaleEffect(overlayScale)
+                    .opacity(overlayOpacity)
                     .position(x: dragLocation.x, y: dragLocation.y)
                     .allowsHitTesting(false)
                 }
@@ -390,28 +443,13 @@ struct DashboardView: View {
             return (index: i, frame: frame)
         }
         guard !framed.isEmpty else { return 0 }
-
-        var bestIndex = 0
-        var bestDistance = CGFloat.greatestFiniteMagnitude
+        // Scan in display order (left-to-right, top-to-bottom).
+        // Cursor is "before" card N if it's above card N's row, or in the same row and left of center.
         for entry in framed {
-            let center = CGPoint(x: entry.frame.midX, y: entry.frame.midY)
-            let dist = hypot(cursorPos.x - center.x, cursorPos.y - center.y)
-            if dist < bestDistance {
-                bestDistance = dist
-                bestIndex = entry.index
-            }
+            if cursorPos.y < entry.frame.minY { return entry.index }
+            if cursorPos.y < entry.frame.maxY && cursorPos.x < entry.frame.midX { return entry.index }
         }
-
-        guard let bestFrame = framed.first(where: { $0.index == bestIndex })?.frame else {
-            return bestIndex
-        }
-        if cursorPos.y > bestFrame.midY {
-            return bestIndex + 1
-        } else if cursorPos.y < bestFrame.minY {
-            return bestIndex
-        } else {
-            return cursorPos.x > bestFrame.midX ? bestIndex + 1 : bestIndex
-        }
+        return items.count
     }
 
     // Maps ghost index (position in the reduced folder list) to toIndex for moveItem.
@@ -441,7 +479,19 @@ struct DashboardView: View {
         ghostFolderIndex = nil
         ghostBlobIndex = nil
         hoveredFolderID = nil
+        overlayScale = 1.0
+        overlayOpacity = 0.0
         crossPanelDrag.clear()
+    }
+
+    private func performLanding(then completion: @escaping () -> Void) {
+        withAnimation(.spring(response: 0.8, dampingFraction: 0.85)) {
+            overlayScale = 1.0
+            overlayOpacity = 0.0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            completion()
+        }
     }
 
     private func triggerConfirmGlow(for itemID: UUID) {
