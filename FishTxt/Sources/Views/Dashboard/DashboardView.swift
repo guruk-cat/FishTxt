@@ -36,6 +36,8 @@ struct DashboardView: View {
     @State private var hoveredFolderID: UUID? = nil
     @State private var confirmGlowItemID: UUID? = nil
     @State private var confirmGlowOpacity: Double = 0.0
+    @State private var folderReceiveGlowItemID: UUID? = nil
+    @State private var folderReceiveGlowOpacity: Double = 0.0
     @State private var createGlowItemID: UUID? = nil
     @State private var createGlowOpacity: Double = 0.0
     @State private var cardFrames: [UUID: CGRect] = [:]
@@ -140,6 +142,8 @@ struct DashboardView: View {
                                     isDropPreview: hoveredFolderID == item.id,
                                     isDropConfirm: confirmGlowItemID == item.id,
                                     dropConfirmOpacity: confirmGlowItemID == item.id ? confirmGlowOpacity : 0.0,
+                                    isFolderReceiveGlow: folderReceiveGlowItemID == item.id,
+                                    folderReceiveGlowOpacity: folderReceiveGlowItemID == item.id ? folderReceiveGlowOpacity : 0.0,
                                     isCreateGlow: createGlowItemID == item.id,
                                     createGlowOpacity: createGlowItemID == item.id ? createGlowOpacity : 0.0
                                 )
@@ -198,6 +202,8 @@ struct DashboardView: View {
                                     isDropPreview: false,
                                     isDropConfirm: confirmGlowItemID == item.id,
                                     dropConfirmOpacity: confirmGlowItemID == item.id ? confirmGlowOpacity : 0.0,
+                                    isFolderReceiveGlow: false,
+                                    folderReceiveGlowOpacity: 0.0,
                                     isCreateGlow: createGlowItemID == item.id,
                                     createGlowOpacity: createGlowItemID == item.id ? createGlowOpacity : 0.0
                                 )
@@ -256,7 +262,7 @@ struct DashboardView: View {
                                             if let targetFolderID = hoveredFolderID {
                                                 if case .blob(let blob) = item {
                                                     store.moveBlobToFolder(blob.id, to: targetFolderID, in: projectID)
-                                                    triggerConfirmGlow(for: targetFolderID)
+                                                    triggerFolderReceiveGlow(for: targetFolderID)
                                                 }
                                                 return
                                             }
@@ -306,6 +312,8 @@ struct DashboardView: View {
                         isDropPreview: false,
                         isDropConfirm: false,
                         dropConfirmOpacity: 0.0,
+                        isFolderReceiveGlow: false,
+                        folderReceiveGlowOpacity: 0.0,
                         isCreateGlow: false,
                         createGlowOpacity: 0.0
                     )
@@ -445,6 +453,19 @@ struct DashboardView: View {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 confirmGlowItemID = nil
+            }
+        }
+    }
+
+    private func triggerFolderReceiveGlow(for itemID: UUID) {
+        folderReceiveGlowItemID = itemID
+        folderReceiveGlowOpacity = 1.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeOut(duration: 0.4)) {
+                folderReceiveGlowOpacity = 0.0
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                folderReceiveGlowItemID = nil
             }
         }
     }

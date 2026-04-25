@@ -14,6 +14,8 @@ struct CardView: View {
     let isDropPreview: Bool
     let isDropConfirm: Bool
     let dropConfirmOpacity: Double
+    let isFolderReceiveGlow: Bool
+    let folderReceiveGlowOpacity: Double
     let isCreateGlow: Bool
     let createGlowOpacity: Double
 
@@ -46,6 +48,16 @@ struct CardView: View {
                             .stroke(AppColors.shared.accent.opacity(dropConfirmOpacity), lineWidth: 2)
                             .shadow(
                                 color: AppColors.shared.accent.opacity(dropConfirmOpacity * 0.6),
+                                radius: 6, x: 0, y: 0
+                            )
+                    }
+
+                    // Folder-receive glow: shown when a blob is dropped into this folder, fades out
+                    if isFolderReceiveGlow {
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(AppColors.shared.confirmation.opacity(folderReceiveGlowOpacity), lineWidth: 2)
+                            .shadow(
+                                color: AppColors.shared.confirmation.opacity(folderReceiveGlowOpacity * 0.6),
                                 radius: 6, x: 0, y: 0
                             )
                     }
@@ -204,6 +216,8 @@ struct CardView: View {
                 isDropPreview: false,
                 isDropConfirm: false,
                 dropConfirmOpacity: 0.0,
+                isFolderReceiveGlow: false,
+                folderReceiveGlowOpacity: 0.0,
                 isCreateGlow: false,
                 createGlowOpacity: 0.0
             )
@@ -219,6 +233,8 @@ struct CardView: View {
                 isDropPreview: false,
                 isDropConfirm: false,
                 dropConfirmOpacity: 0.0,
+                isFolderReceiveGlow: false,
+                folderReceiveGlowOpacity: 0.0,
                 isCreateGlow: false,
                 createGlowOpacity: 0.0
             )
@@ -234,6 +250,8 @@ struct CardView: View {
                 isDropPreview: false,
                 isDropConfirm: false,
                 dropConfirmOpacity: 0.0,
+                isFolderReceiveGlow: false,
+                folderReceiveGlowOpacity: 0.0,
                 isCreateGlow: false,
                 createGlowOpacity: 0.0
             )
