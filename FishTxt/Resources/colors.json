@@ -55,7 +55,7 @@
     "surface_sunken":   [49, 56, 66],
     "surface_raised":   [70, 80, 95],
     "text_body":        [191, 197, 205],
-    "text_heading":     [167, 179, 204],
+    "text_heading":     [192, 170, 135],
     "text_muted":       [129, 138, 151],
     "text_resting":     [170, 182, 200],
     "accent":           [210, 185, 140],
