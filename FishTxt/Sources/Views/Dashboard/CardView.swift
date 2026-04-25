@@ -14,6 +14,8 @@ struct CardView: View {
     let isDropPreview: Bool
     let isDropConfirm: Bool
     let dropConfirmOpacity: Double
+    let isCreateGlow: Bool
+    let createGlowOpacity: Double
 
     @State private var isHovered: Bool = false
     @State private var excerpt: ProjectStore.BlobExcerpt?
@@ -38,12 +40,22 @@ struct CardView: View {
                             .shadow(color: AppColors.shared.accent.opacity(0.6), radius: 6, x: 0, y: 0)
                     }
 
-                    // Confirmation glow: shown after successful drop, fades out
+                    // Glow: shown after successful drop, fades out
                     if isDropConfirm {
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.shared.confirmation.opacity(dropConfirmOpacity), lineWidth: 2)
+                            .stroke(AppColors.shared.accent.opacity(dropConfirmOpacity), lineWidth: 2)
                             .shadow(
-                                color: AppColors.shared.confirmation.opacity(dropConfirmOpacity * 0.6),
+                                color: AppColors.shared.accent.opacity(dropConfirmOpacity * 0.6),
+                                radius: 6, x: 0, y: 0
+                            )
+                    }
+
+                    // Create glow: shown after a new item is created, fades out
+                    if isCreateGlow {
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(AppColors.shared.accent.opacity(createGlowOpacity), lineWidth: 2)
+                            .shadow(
+                                color: AppColors.shared.accent.opacity(createGlowOpacity * 0.6),
                                 radius: 6, x: 0, y: 0
                             )
                     }
@@ -191,7 +203,9 @@ struct CardView: View {
                 onFolderTap: { _ in },
                 isDropPreview: false,
                 isDropConfirm: false,
-                dropConfirmOpacity: 0.0
+                dropConfirmOpacity: 0.0,
+                isCreateGlow: false,
+                createGlowOpacity: 0.0
             )
 
             CardView(
@@ -204,7 +218,9 @@ struct CardView: View {
                 onFolderTap: { _ in },
                 isDropPreview: false,
                 isDropConfirm: false,
-                dropConfirmOpacity: 0.0
+                dropConfirmOpacity: 0.0,
+                isCreateGlow: false,
+                createGlowOpacity: 0.0
             )
 
             CardView(
@@ -217,7 +233,9 @@ struct CardView: View {
                 onFolderTap: { _ in },
                 isDropPreview: false,
                 isDropConfirm: false,
-                dropConfirmOpacity: 0.0
+                dropConfirmOpacity: 0.0,
+                isCreateGlow: false,
+                createGlowOpacity: 0.0
             )
         }
         .padding()

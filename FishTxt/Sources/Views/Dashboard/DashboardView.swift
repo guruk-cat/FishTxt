@@ -36,6 +36,8 @@ struct DashboardView: View {
     @State private var hoveredFolderID: UUID? = nil
     @State private var confirmGlowItemID: UUID? = nil
     @State private var confirmGlowOpacity: Double = 0.0
+    @State private var createGlowItemID: UUID? = nil
+    @State private var createGlowOpacity: Double = 0.0
     @State private var cardFrames: [UUID: CGRect] = [:]
 
     let columns = [GridItem(.adaptive(minimum: 280, maximum: 360), spacing: 12)]
@@ -137,7 +139,9 @@ struct DashboardView: View {
                                     onFolderTap: { id in selectedFolderID = id },
                                     isDropPreview: hoveredFolderID == item.id,
                                     isDropConfirm: confirmGlowItemID == item.id,
-                                    dropConfirmOpacity: confirmGlowItemID == item.id ? confirmGlowOpacity : 0.0
+                                    dropConfirmOpacity: confirmGlowItemID == item.id ? confirmGlowOpacity : 0.0,
+                                    isCreateGlow: createGlowItemID == item.id,
+                                    createGlowOpacity: createGlowItemID == item.id ? createGlowOpacity : 0.0
                                 )
                                 .background(
                                     GeometryReader { geo in
@@ -176,7 +180,6 @@ struct DashboardView: View {
                                 .contextMenu { contextMenuContent(for: item) }
                             }
                         }
-                        .animation(.spring(response: 0.30, dampingFraction: 0.80), value: displayFolderItems.map(\.id))
                         .padding(.bottom, displayBlobItems.isEmpty ? 0 : 16)
                     }
 
@@ -194,7 +197,9 @@ struct DashboardView: View {
                                     onFolderTap: { _ in },
                                     isDropPreview: false,
                                     isDropConfirm: confirmGlowItemID == item.id,
-                                    dropConfirmOpacity: confirmGlowItemID == item.id ? confirmGlowOpacity : 0.0
+                                    dropConfirmOpacity: confirmGlowItemID == item.id ? confirmGlowOpacity : 0.0,
+                                    isCreateGlow: createGlowItemID == item.id,
+                                    createGlowOpacity: createGlowItemID == item.id ? createGlowOpacity : 0.0
                                 )
                                 // When hovering over a folder, the dragged blob stays in displayBlobItems
                                 // (invisible) so the LazyVGrid and this gesture remain in the hierarchy.
@@ -269,7 +274,6 @@ struct DashboardView: View {
                                 .contextMenu { contextMenuContent(for: item) }
                             }
                         }
-                        .animation(.spring(response: 0.30, dampingFraction: 0.80), value: displayBlobItems.map(\.id))
                     }
                 }
                 .padding(16)
@@ -301,7 +305,9 @@ struct DashboardView: View {
                         onFolderTap: { _ in },
                         isDropPreview: false,
                         isDropConfirm: false,
-                        dropConfirmOpacity: 0.0
+                        dropConfirmOpacity: 0.0,
+                        isCreateGlow: false,
+                        createGlowOpacity: 0.0
                     )
                     .frame(width: 300)
                     .opacity(0.7)
@@ -322,7 +328,8 @@ struct DashboardView: View {
                         .contentShape(Rectangle())
                         .onTapGesture {
                             guard folderID == nil else { return }
-                            _ = store.createFolder(in: projectID, name: "Untitled Folder")
+                            let newFolder = store.createFolder(in: projectID, name: "Untitled Folder")
+                            triggerCreateGlow(for: newFolder.id)
                             triggerIslandGlow(isFolder: true)
                         }
                         .onHover { hoverFolder = $0 }
@@ -336,7 +343,8 @@ struct DashboardView: View {
                         .animation(.easeInOut(duration: 0.12), value: hoverBlob)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            _ = store.createBlob(in: projectID, folderID: folderID)
+                            let newBlob = store.createBlob(in: projectID, folderID: folderID)
+                            triggerCreateGlow(for: newBlob.id)
                             triggerIslandGlow(isFolder: false)
                         }
                         .onHover { hoverBlob = $0 }
@@ -437,6 +445,19 @@ struct DashboardView: View {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 confirmGlowItemID = nil
+            }
+        }
+    }
+
+    private func triggerCreateGlow(for itemID: UUID) {
+        createGlowItemID = itemID
+        createGlowOpacity = 1.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeOut(duration: 0.4)) {
+                createGlowOpacity = 0.0
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                createGlowItemID = nil
             }
         }
     }
