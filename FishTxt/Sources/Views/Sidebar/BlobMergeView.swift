@@ -197,14 +197,14 @@ struct BlobMergeView: View {
                     .foregroundColor(
                         hoverMerge
                             ? AppColors.shared.surface
-                            : AppColors.shared.accent
+                            : AppColors.shared.metaIndication
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 5)
                             .fill(hoverMerge
-                                  ? AppColors.shared.accent
+                                  ? AppColors.shared.metaIndication
                                   : AppColors.shared.surfaceSunken
                             )
                     )
@@ -286,7 +286,7 @@ struct BlobMergeView: View {
                 .font(.system(size: 12))
                 .foregroundColor(
                     isChecked
-                        ? AppColors.shared.accent
+                        ? AppColors.shared.metaIndication
                         : AppColors.shared.textMuted
                 )
 
@@ -303,7 +303,7 @@ struct BlobMergeView: View {
         .overlay(
             isGlowing
                 ? RoundedRectangle(cornerRadius: 4)
-                    .stroke(AppColors.shared.confirmation.opacity(confirmGlowOpacity), lineWidth: 1)
+                    .stroke(AppColors.shared.metaConfirmation.opacity(confirmGlowOpacity), lineWidth: 1)
                 : nil
         )
         .background(
@@ -359,7 +359,7 @@ struct BlobMergeView: View {
                     .font(.system(size: 12))
                     .foregroundColor(
                         checkedBlobIDs.contains(dragID)
-                            ? AppColors.shared.accent
+                            ? AppColors.shared.metaIndication
                             : AppColors.shared.textMuted
                     )
                 Text(blobTitles[dragID] ?? "Untitled")
@@ -408,7 +408,7 @@ struct BlobMergeView: View {
                 ))
                 .toggleStyle(.switch)
                 .controlSize(.mini)
-                .tint(AppColors.shared.accent)
+                .tint(AppColors.shared.metaIndication)
                 .labelsHidden()
             }
             .padding(.bottom, 8)
@@ -422,7 +422,7 @@ struct BlobMergeView: View {
                 Toggle("", isOn: $deleteAfterMerge)
                     .toggleStyle(.switch)
                     .controlSize(.mini)
-                    .tint(AppColors.shared.accent)
+                    .tint(AppColors.shared.metaIndication)
                     .labelsHidden()
             }
         }

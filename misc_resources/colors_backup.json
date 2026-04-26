@@ -1,0 +1,104 @@
+{
+  "morning seafoam":{
+    "surface":          [23, 41, 43],
+    "surface_sunken":   [35, 63, 66],
+    "surface_raised":   [50, 90, 94],
+    "text_body":        [188, 194, 176],
+    "text_heading":     [206, 170, 103],
+    "text_muted":       [124, 144, 146],
+    "text_resting":     [173, 192, 194],
+    "accent":           [91, 180, 195],
+    "confirmation":     [103, 155, 115],
+    "chrome_sidebar":   [23, 41, 43],
+    "chrome_panel":     [27, 48, 52],
+    "chrome_toolbar":   [42, 77, 81],
+    "border_card":      [30, 55, 58],
+    "destructive":      [204, 82, 82]
+  },
+
+  "wild berries":{
+    "surface":          [51, 24, 36],
+    "surface_sunken":   [77, 37, 55],
+    "surface_raised":   [117, 55, 83],
+    "text_body":        [217, 187, 222],
+    "text_heading":     [187, 146, 213],
+    "text_muted":       [176, 121, 143],
+    "text_resting":     [206, 165, 184],
+    "accent":           [224, 92, 149],
+    "confirmation":     [177, 186, 192],
+    "chrome_sidebar":   [51, 24, 36],
+    "chrome_panel":     [63, 30, 45],
+    "chrome_toolbar":   [103, 49, 74],
+    "border_card":      [76, 36, 55],
+    "destructive":      [204, 82, 82]
+  },
+
+  "70's carpet":{
+    "surface":          [46, 31, 18],
+    "surface_sunken":   [73, 52, 30],
+    "surface_raised":   [104, 75, 43],
+    "text_body":        [224, 191, 152],
+    "text_heading":     [225, 154, 51],
+    "text_muted":       [156, 135, 109],
+    "text_resting":     [199, 176, 146],
+    "accent":           [159, 182, 87],
+    "confirmation":     [138, 177, 176],
+    "chrome_sidebar":   [46, 31, 18],
+    "chrome_panel":     [59, 41, 23],
+    "chrome_toolbar":   [92, 66, 38],
+    "border_card":      [66, 46, 26],
+    "destructive":      [204, 82, 82]
+  },
+
+  "portland fog":{
+    "surface":          [28, 32, 38],
+    "surface_sunken":   [49, 56, 66],
+    "surface_raised":   [70, 80, 95],
+    "text_body":        [191, 197, 205],
+    "text_heading":     [192, 170, 135],
+    "text_muted":       [129, 138, 151],
+    "text_resting":     [170, 182, 200],
+    "accent":           [210, 185, 140],
+    "confirmation":     [88, 158, 118],
+    "chrome_sidebar":   [28, 32, 38],
+    "chrome_panel":     [38, 44, 52],
+    "chrome_toolbar":   [61, 70, 83],
+    "border_card":      [44, 51, 60],
+    "destructive":      [204, 82, 82]
+  },
+
+  "morning parchment":{
+    "surface":          [222, 212, 197],
+    "surface_sunken":   [213, 203, 188],
+    "surface_raised":   [195, 185, 170],
+    "text_body":        [44, 25, 13],
+    "text_heading":     [44, 54, 76],
+    "text_muted":       [120, 110, 100],
+    "text_resting":     [40, 34, 29],
+    "accent":           [174, 78, 20],
+    "confirmation":     [75, 132, 79],
+    "chrome_sidebar":   [187, 177, 161],
+    "chrome_panel":     [203, 193, 178],
+    "chrome_toolbar":   [170, 160, 145],
+    "border_card":      [193, 183, 168],
+    "destructive":      [204, 82, 82]
+  },
+
+  "douglas fir":{
+    "surface":          [31, 39, 27],
+    "surface_sunken":   [53, 67, 46],
+    "surface_raised":   [75, 95, 65],
+    "text_body":        [212, 197, 175],
+    "text_heading":     [226, 171, 111],
+    "text_muted":       [124, 137, 116],
+    "text_resting":     [172, 184, 164],
+    "accent":           [179, 212, 74],
+    "confirmation":     [174, 115, 149],
+    "chrome_sidebar":   [31, 39, 27],
+    "chrome_panel":     [40, 52, 35],
+    "chrome_toolbar":   [64, 82, 56],
+    "border_card":      [46, 58, 39],
+    "destructive":      [204, 82, 82]
+  }
+
+}

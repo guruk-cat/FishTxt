@@ -114,14 +114,8 @@ struct BlobOutlineView: View {
         return HStack(spacing: 0) {
             Text(heading.text)
                 .font(.system(size: 12))
-                .foregroundColor(
-                    isActive ? AppColors.shared.textHeading :
-                    isHovered
-                        ? AppColors.shared.textBody
-                        : AppColors.shared.textResting
-                )
+                .foregroundColor(AppColors.shared.textResting)
                 .lineLimit(1)
-                .animation(.easeInOut(duration: 0.12), value: isHovered)
             Spacer()
         }
         // Reserve 14px for the chevron overlay, then indent per heading level
@@ -130,16 +124,13 @@ struct BlobOutlineView: View {
         .overlay(alignment: .leading) {
             Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundColor(!expandable ? Color.clear :
-                                    isActive ? AppColors.shared.textHeading :
-                                    isHovered ? AppColors.shared.textBody : AppColors.shared.textResting)
-                .animation(.easeInOut(duration: 0.12), value: isHovered)
+                .foregroundColor(!expandable ? Color.clear : AppColors.shared.textResting)
                 .frame(width: 14)
                 .padding(.leading, indent)
                 .onTapGesture{ if expandable { toggleCollapse(at: index) } }
         }
         .frame(height: Self.rowHeight)
-        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.2) : Color.clear)
+        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.2) : isHovered ? AppColors.shared.surfaceRaised.opacity(0.1) : Color.clear)
         .overlay(isActive ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.textHeading) : nil, alignment: .leading)
         .contentShape(Rectangle())
         .onHover { hoveredIndex = $0 ? index : nil }

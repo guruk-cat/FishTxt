@@ -38,16 +38,16 @@ struct CardView: View {
                     // Drop preview glow: shown when this folder is the hover target during a blob drag
                     if isDropPreview {
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.shared.accent, lineWidth: 2)
-                            .shadow(color: AppColors.shared.accent.opacity(0.6), radius: 6, x: 0, y: 0)
+                            .stroke(AppColors.shared.metaIndication, lineWidth: 2)
+                            .shadow(color: AppColors.shared.metaIndication.opacity(0.6), radius: 6, x: 0, y: 0)
                     }
 
                     // Glow: shown after successful drop, fades out
                     if isDropConfirm {
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.shared.accent.opacity(dropConfirmOpacity), lineWidth: 2)
+                            .stroke(AppColors.shared.metaIndication.opacity(dropConfirmOpacity), lineWidth: 2)
                             .shadow(
-                                color: AppColors.shared.accent.opacity(dropConfirmOpacity * 0.6),
+                                color: AppColors.shared.metaIndication.opacity(dropConfirmOpacity * 0.6),
                                 radius: 6, x: 0, y: 0
                             )
                     }
@@ -55,9 +55,9 @@ struct CardView: View {
                     // Folder-receive glow: shown when a blob is dropped into this folder, fades out
                     if isFolderReceiveGlow {
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.shared.confirmation.opacity(folderReceiveGlowOpacity), lineWidth: 2)
+                            .stroke(AppColors.shared.metaConfirmation.opacity(folderReceiveGlowOpacity), lineWidth: 2)
                             .shadow(
-                                color: AppColors.shared.confirmation.opacity(folderReceiveGlowOpacity * 0.6),
+                                color: AppColors.shared.metaConfirmation.opacity(folderReceiveGlowOpacity * 0.6),
                                 radius: 6, x: 0, y: 0
                             )
                     }
@@ -65,9 +65,9 @@ struct CardView: View {
                     // Create glow: shown after a new item is created, fades out
                     if isCreateGlow {
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.shared.accent.opacity(createGlowOpacity), lineWidth: 2)
+                            .stroke(AppColors.shared.metaIndication.opacity(createGlowOpacity), lineWidth: 2)
                             .shadow(
-                                color: AppColors.shared.accent.opacity(createGlowOpacity * 0.6),
+                                color: AppColors.shared.metaIndication.opacity(createGlowOpacity * 0.6),
                                 radius: 6, x: 0, y: 0
                             )
                     }
@@ -156,13 +156,13 @@ struct CardView: View {
                 }) {
                     Image(systemName: copyConfirmed ? "checkmark" : "doc.on.doc")
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(copyConfirmed ? AppColors.shared.confirmation : AppColors.shared.textHeading)
+                        .foregroundColor(copyConfirmed ? AppColors.shared.metaConfirmation : AppColors.shared.textHeading)
                         .frame(width: 20, height: 20)
                         .background(AppColors.shared.surfaceSunken)
                         .cornerRadius(4)
                         .overlay(
                             RoundedRectangle(cornerRadius: 4)
-                                .stroke(AppColors.shared.confirmation.opacity(copyConfirmed ? 1 : 0), lineWidth: 1)
+                                .stroke(AppColors.shared.metaConfirmation.opacity(copyConfirmed ? 1 : 0), lineWidth: 1)
                         )
                         .animation(.easeInOut(duration: 0.15), value: copyConfirmed)
                 }

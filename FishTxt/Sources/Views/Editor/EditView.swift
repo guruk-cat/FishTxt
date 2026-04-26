@@ -103,14 +103,14 @@ struct EditView: View {
                 } else {
                     Image(systemName: "checkmark")
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(AppColors.shared.confirmation)
+                        .foregroundColor(AppColors.shared.metaConfirmation)
                 }
                 Text(saveStatus == .saving ? "Saving..." : "Saved!")
                     .font(.system(size: 11))
                     .foregroundColor(
                         saveStatus == .saving
                             ? AppColors.shared.textHeading
-                            : AppColors.shared.confirmation
+                            : AppColors.shared.metaConfirmation
                     )
             }
             .padding(.horizontal, 10)

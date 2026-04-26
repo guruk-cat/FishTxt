@@ -21,8 +21,8 @@ class AppColors: ObservableObject {
 
     // 10% — emphasis and accent
     @Published var textHeading: Color    = .gray
-    @Published var accent: Color         = .blue
-    @Published var confirmation: Color   = .green
+    @Published var metaIndication: Color  = .blue
+    @Published var metaConfirmation: Color = .green
     @Published var destructive: Color    = .red
 
     /// Whether the current palette is a dark theme (used to set preferredColorScheme).
@@ -35,7 +35,7 @@ class AppColors: ObservableObject {
     private(set) var rawPalette: [String: [Double]] = [:]
 
     init() {
-        let palette = UserDefaults.standard.string(forKey: "colorPalette") ?? "morning seafoam"
+        let palette = UserDefaults.standard.string(forKey: "colorPalette") ?? "oregon coastline"
         loadColors(palette: palette)
     }
 
@@ -55,7 +55,7 @@ class AppColors: ObservableObject {
         if root[palette] != nil {
             resolvedPalette = palette
         } else {
-            resolvedPalette = "morning seafoam"
+            resolvedPalette = "oregon coastline"
             UserDefaults.standard.set(resolvedPalette, forKey: "colorPalette")
         }
 
@@ -82,8 +82,8 @@ class AppColors: ObservableObject {
         chromePanel    = c("chrome_panel")
         chromeToolbar  = c("chrome_toolbar")
         textHeading    = c("text_heading")
-        accent         = c("accent")
-        confirmation   = c("confirmation")
+        metaIndication   = c("meta_indication")
+        metaConfirmation = c("meta_confirmation")
         destructive    = c("destructive")
 
         // Perceived luminance of surface — W3C formula
@@ -110,8 +110,8 @@ class AppColors: ObservableObject {
           r.setProperty('--text-body',        '\(rgb("text_body"))');
           r.setProperty('--text-heading',     '\(rgb("text_heading"))');
           r.setProperty('--text-muted',       '\(rgb("text_muted"))');
-          r.setProperty('--accent',           '\(rgb("accent"))');
-          r.setProperty('--confirmation',     '\(rgb("confirmation"))');
+          r.setProperty('--meta-indication',   '\(rgb("meta_indication"))');
+          r.setProperty('--meta-confirmation', '\(rgb("meta_confirmation"))');
         })()
         """
     }
@@ -124,23 +124,23 @@ class AppColors: ObservableObject {
             return "rgb(\(Int(v[0])),\(Int(v[1])),\(Int(v[2])))"
         }
         let selectionBg: String = {
-            guard let v = rawPalette["accent"], v.count >= 3 else { return "rgba(128,128,128,0.3)" }
+            guard let v = rawPalette["meta_indication"], v.count >= 3 else { return "rgba(128,128,128,0.3)" }
             return "rgba(\(Int(v[0])),\(Int(v[1])),\(Int(v[2])),0.3)"
         }()
         return """
         (function(){
           var r = document.documentElement.style;
-          r.setProperty('--surface',          '\(rgb("surface"))');
-          r.setProperty('--surface-sunken',   '\(rgb("surface_sunken"))');
-          r.setProperty('--chrome-panel',     '\(rgb("chrome_panel"))');
-          r.setProperty('--text-body',        '\(rgb("text_body"))');
-          r.setProperty('--text-heading',     '\(rgb("text_heading"))');
-          r.setProperty('--text-muted',       '\(rgb("text_muted"))');
-          r.setProperty('--accent',           '\(rgb("accent"))');
-          r.setProperty('--confirmation',     '\(rgb("confirmation"))');
+          r.setProperty('--surface',            '\(rgb("surface"))');
+          r.setProperty('--surface-sunken',     '\(rgb("surface_sunken"))');
+          r.setProperty('--chrome-panel',       '\(rgb("chrome_panel"))');
+          r.setProperty('--text-body',          '\(rgb("text_body"))');
+          r.setProperty('--text-heading',       '\(rgb("text_heading"))');
+          r.setProperty('--text-muted',         '\(rgb("text_muted"))');
+          r.setProperty('--meta-indication',    '\(rgb("meta_indication"))');
+          r.setProperty('--meta-confirmation',  '\(rgb("meta_confirmation"))');
           var sel = document.getElementById('ft-sel');
           if (!sel) { sel = document.createElement('style'); sel.id = 'ft-sel'; document.head.appendChild(sel); }
-          sel.textContent = '::selection { background: \(selectionBg); } #custom-cursor { box-shadow: 0 0 4px var(--accent), 0 0 8px var(--accent); }';
+          sel.textContent = '::selection { background: \(selectionBg); } #custom-cursor { box-shadow: 0 0 4px var(--meta-indication), 0 0 8px var(--meta-indication); }';
         })()
         """
     }

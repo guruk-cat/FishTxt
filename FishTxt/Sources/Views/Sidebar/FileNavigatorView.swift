@@ -119,10 +119,11 @@ struct FileNavigatorView: View {
         HStack(spacing: 6) {
             Text(project.name)
                 .font(.system(size: 13))
-                .foregroundColor(isRowHovered ? AppColors.shared.textBody : AppColors.shared.textResting)
+                .foregroundColor(AppColors.shared.textResting)
             Spacer()
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
+        .background(isRowHovered ? AppColors.shared.surfaceRaised.opacity(0.1) : Color.clear)
         .contentShape(Rectangle())
         .onHover { h in
             hoveredRowID = h ? project.id : (hoveredRowID == project.id ? nil : hoveredRowID)
@@ -274,17 +275,13 @@ struct FileNavigatorView: View {
                 Image(systemName: "folder.fill")
                     .font(.system(size: 11))
                     .foregroundColor(
-                        isFolderSelected ? AppColors.shared.textHeading :
-                        isDragHovered    ? AppColors.shared.accent :
-                        isRowHovered     ? AppColors.shared.textBody :
-                                           AppColors.shared.textResting)
+                        isDragHovered ? AppColors.shared.metaIndication :
+                                        AppColors.shared.textResting)
                 Text(folder.name)
                     .font(.system(size: 12))
                     .foregroundColor(
-                        isFolderSelected ? AppColors.shared.textHeading :
-                        isDragHovered    ? AppColors.shared.accent :
-                        isRowHovered     ? AppColors.shared.textBody :
-                                           AppColors.shared.textResting)
+                        isDragHovered ? AppColors.shared.metaIndication :
+                                        AppColors.shared.textResting)
                     .lineLimit(1)
                 Spacer()
                 if isFolderSelected {
@@ -305,21 +302,19 @@ struct FileNavigatorView: View {
             .overlay(alignment: .leading) {
                 Image(systemName: isFolderExpanded ? "chevron.down" : "chevron.right")
                     .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(hasBlobs
-                        ? (isFolderSelected ? AppColors.shared.textHeading :
-                           isRowHovered     ? AppColors.shared.textBody :
-                                              AppColors.shared.textResting)
-                        : Color.clear)
+                    .foregroundColor(hasBlobs ? AppColors.shared.textResting : Color.clear)
                     .frame(width: 14)
                     .padding(.leading, 6)
             }
             .frame(height: Self.rowHeight)
             .background(
                 isDragHovered
-                    ? AppColors.shared.accent.opacity(0.12)
-                    : (isFolderSelected
+                    ? AppColors.shared.metaIndication.opacity(0.12)
+                    : isFolderSelected
                         ? AppColors.shared.surfaceRaised.opacity(0.2)
-                        : Color.clear)
+                        : isRowHovered
+                            ? AppColors.shared.surfaceRaised.opacity(0.1)
+                            : Color.clear
             )
             .overlay(
                 isFolderSelected
@@ -330,7 +325,7 @@ struct FileNavigatorView: View {
             .overlay(
                 isGlowing
                     ? RoundedRectangle(cornerRadius: 4)
-                        .stroke(AppColors.shared.confirmation.opacity(confirmGlowOpacity), lineWidth: 1)
+                        .stroke(AppColors.shared.metaConfirmation.opacity(confirmGlowOpacity), lineWidth: 1)
                     : nil
             )
             .contentShape(Rectangle())
@@ -770,19 +765,15 @@ private struct BlobTreeRow: View {
         HStack(spacing: 4) {
             Image(systemName: "doc.text")
                 .font(.system(size: 10))
-                .foregroundColor(isActive
-                    ? AppColors.shared.textHeading
-                    : (isHovered ? AppColors.shared.textBody : AppColors.shared.textResting))
+                .foregroundColor(AppColors.shared.textResting)
             Text(title ?? "Untitled")
                 .font(.system(size: 12))
-                .foregroundColor(isActive
-                    ? AppColors.shared.textHeading
-                    : (isHovered ? AppColors.shared.textBody : AppColors.shared.textResting))
+                .foregroundColor(AppColors.shared.textResting)
                 .lineLimit(1)
             Spacer()
         }
         .padding(.leading, indent).padding(.trailing, 8).padding(.vertical, 4)
-        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.2) : Color.clear)
+        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.2) : isHovered ? AppColors.shared.surfaceRaised.opacity(0.1) : Color.clear)
         .overlay(
             isActive
                 ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.textHeading)
@@ -791,7 +782,7 @@ private struct BlobTreeRow: View {
         )
         .overlay(isGlowing
             ? RoundedRectangle(cornerRadius: 4)
-                .stroke(AppColors.shared.confirmation.opacity(glowOpacity), lineWidth: 1)
+                .stroke(AppColors.shared.metaConfirmation.opacity(glowOpacity), lineWidth: 1)
             : nil)
         .onHover { isHovered = $0 }
         .task(id: blob.updatedAt) {

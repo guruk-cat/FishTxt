@@ -537,13 +537,13 @@ struct DashboardView: View {
 
     private var folderIslandColor: Color {
         guard folderID == nil else { return AppColors.shared.textMuted }
-        if glowFolder  { return AppColors.shared.confirmation }
+        if glowFolder  { return AppColors.shared.metaConfirmation }
         if hoverFolder { return AppColors.shared.textBody }
         return AppColors.shared.textMuted
     }
 
     private var blobIslandColor: Color {
-        if glowBlob  { return AppColors.shared.confirmation }
+        if glowBlob  { return AppColors.shared.metaConfirmation }
         if hoverBlob { return AppColors.shared.textBody }
         return AppColors.shared.textMuted
     }

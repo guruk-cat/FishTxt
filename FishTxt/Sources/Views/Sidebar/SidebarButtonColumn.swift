@@ -72,7 +72,7 @@ struct SidebarButtonColumn: View {
             Button(action: { isShowingSettings = true }) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 16))
-                    .foregroundColor(isShowingSettings ? AppColors.shared.accent
+                    .foregroundColor(isShowingSettings ? AppColors.shared.textHeading
                         : hoverSettings ? AppColors.shared.textBody
                         : AppColors.shared.textMuted)
                     .frame(width: 32, height: 32)
@@ -105,21 +105,21 @@ struct SidebarButtonColumn: View {
 
     private var navigatorButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .navigator
-        if isActive { return AppColors.shared.accent }
+        if isActive { return AppColors.shared.textHeading }
         else if hoverNavigator { return AppColors.shared.textBody }
         return AppColors.shared.textMuted
     }
 
     private var mergeButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .blobMerge
-        if isActive { return AppColors.shared.accent }
+        if isActive { return AppColors.shared.textHeading }
         else if hoverMerge { return AppColors.shared.textBody }
         return AppColors.shared.textMuted
     }
 
     private var outlineButtonColor: Color {
         let isActive = isSidebarOpen && activePanel == .blobOutline
-        if isActive { return AppColors.shared.accent }
+        if isActive { return AppColors.shared.textHeading }
         else if hoverOutline { return AppColors.shared.textBody }
         return AppColors.shared.textMuted
     }
