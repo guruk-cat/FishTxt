@@ -35,29 +35,3 @@ When launching the app for the first time, FishTxt will have a "Welcome" project
 ## File Persistence
 
 Project files are stored in `~/Documents/FishTxt/`, and user settings are stored through `@AppStorage`.
-
-## Making your own color palettes
-
-If you want to try making your own color theme, you'll have to edit `FishTxt/Resources/colors.json`. Below are the color names in the `.json` file and their corresponding usage:
-
-| key | usage in the app |
-| --- | ---------------- |
-| `background_primary` | text editor background and the sidebar buttons column background |
-| `background_secondary` | dashboard background |
-| `background_highlight` | background for selected text of dashboard cards |
-| `content_primary` | body text color in the editor, formatting and sidebar buttons when hovered |
-| `content_secondary` | headings text color in the editor, sidebar buttons when active, selection indication in the project navigator, UI section headings |
-| `content_tertiary` | inactive UI elements that glow when hovered |
-| `accent` | cursor and checkboxes |
-| `confirmation` | saving, new folder or blob buttons when clicked |
-| `sidebar_background` | background of the *expandable* portion of the sidebar (project navigator, blob outline, etc.) |
-| `toolbar_background` | window title bar color |
-| `card_border` | a thin border around dashboard cards (folders and blobs) |
-| `destructive` | not really in use in this version of the app |
-
-You might want to use `misc_resources/color_preview.py`: a python script that launches a html page, which simulates the look and feel of different UI elements in FishTxt. In the html page, you can select different color themes that ship with the app, and `Cmd + R` should reload any changes you make to the color themes. Tinkering with this is pretty fun. To run the script, open your terminal, and enter:
-
-```bash
-cd path/to/your/FishTxt/download
-python3 misc_resources/color_preview.py
-```
