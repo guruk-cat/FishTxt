@@ -2,7 +2,7 @@
 
 ## FishTxt's UI Layout
 
-With the unfieid, macOS-level toolbar/window title bar at the top, the app's window presents the following elements in order, from left to right:
+With the unifieid, macOS-level toolbar/window title bar at the top, the app's window presents the following elements in order, from left to right:
 
 - Sidebar buttons column. Always present.
 - Sidebar panels. Expandable and Collapsible.
@@ -35,7 +35,7 @@ The following are key values in `colors.json` and their corresponding usage in t
 | `text_resting` | list items in the file navigator and similar contexts where legibility matters but prominence does not |
 | `text_muted` | inactive UI elements that can be clicked; used to make elements inconspicuous |
 | `text_heading` | headings in the editor; headings and section labels in sidebar panels; selected folder/blob in the file navigator; within-panel interactive elements that appear with headings (chevrons, back-buttons) |
-| `meta_indication` | cursor color; active formatting buttons in the editor toolbar|
+| `meta_indication` | cursor color; active formatting buttons in the editor toolbar |
 | `meta_confirmation` | success states (e.g., save confirmation) |
 | `destructive` | delete-related features; rarely visible |
 
