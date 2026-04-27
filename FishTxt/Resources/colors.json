@@ -3,8 +3,8 @@
     "surface":          [22, 39, 41],
     "surface_sunken":   [33, 60, 63],
     "surface_raised":   [48, 86, 89],
-    "text_body":        [198, 184, 160],
-    "text_heading":     [206, 170, 103],
+    "text_body":        [200, 190, 180],
+    "text_heading":     [234, 180, 100],
     "text_muted":       [124, 144, 146],
     "text_resting":     [186, 190, 188],
     "meta_indication":  [91, 180, 195],
@@ -30,6 +30,23 @@
     "chrome_panel":     [40, 52, 35],
     "chrome_toolbar":   [64, 82, 56],
     "border_card":      [46, 58, 39],
+    "destructive":      [204, 82, 82]
+  },
+  
+  "paperlike":{
+    "surface":          [242, 232, 210],
+    "surface_sunken":   [226, 214, 190],
+    "surface_raised":   [212, 200, 174],
+    "text_body":        [70, 58, 42],
+    "text_heading":     [88, 138, 90],
+    "text_muted":       [168, 158, 136],
+    "text_resting":     [112, 100, 80],
+    "meta_indication":  [190, 88, 30],
+    "meta_confirmation":[78, 138, 86],
+    "chrome_sidebar":   [242, 232, 210],
+    "chrome_panel":     [234, 222, 196],
+    "chrome_toolbar":   [248, 240, 224],
+    "border_card":      [218, 206, 182],
     "destructive":      [204, 82, 82]
   }
 }
