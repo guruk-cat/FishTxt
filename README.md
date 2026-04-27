@@ -26,7 +26,7 @@ Much of FishTxt has been written from scratch as a native macOS application, but
 
 ## Install, First Launch, and Walkthrough
 
-A macOS `.app` file is available in the `Application (Beta)/` folder. You'll have to uncompress (unzip) the file. I recommend moving this into your `Applications` folder.
+A macOS `.app` file is available in the `Application (Beta)/` folder. You'll have to uncompress (unzip) the file. I recommend moving this into your `Applications` folder. Current version packaged: Beta (3).
 
 When launching the app for the first time, FishTxt will have a "Welcome" project. This is an example project directory — which functions like any other FishTxt project that a user creates for their own use — and will guide you through the major features of the app. You can safely delete or archive this, if you want, after having been walked through.
 
