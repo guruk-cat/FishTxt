@@ -1,12 +1,12 @@
 {
-  "oregon coastline":{
-    "surface":          [23, 41, 43],
-    "surface_sunken":   [35, 63, 66],
-    "surface_raised":   [50, 90, 94],
-    "text_body":        [188, 194, 176],
+  "coastline":{
+    "surface":          [22, 39, 41],
+    "surface_sunken":   [33, 60, 63],
+    "surface_raised":   [48, 86, 89],
+    "text_body":        [198, 184, 160],
     "text_heading":     [206, 170, 103],
     "text_muted":       [124, 144, 146],
-    "text_resting":     [173, 192, 194],
+    "text_resting":     [186, 190, 188],
     "meta_indication":  [91, 180, 195],
     "meta_confirmation":[103, 155, 115],
     "chrome_sidebar":   [23, 41, 43],
@@ -14,5 +14,22 @@
     "chrome_toolbar":   [42, 77, 81],
     "border_card":      [30, 55, 58],
     "destructive":      [204, 82, 82]
-    }
+    },
+
+  "douglas fir":{
+    "surface":          [31, 39, 27],
+    "surface_sunken":   [53, 67, 46],
+    "surface_raised":   [75, 95, 65],
+    "text_body":        [212, 197, 160],
+    "text_heading":     [226, 171, 111],
+    "text_muted":       [124, 137, 116],
+    "text_resting":     [172, 184, 164],
+    "meta_indication":   [179, 212, 74],
+    "meta_confirmation": [174, 115, 149],
+    "chrome_sidebar":   [31, 39, 27],
+    "chrome_panel":     [40, 52, 35],
+    "chrome_toolbar":   [64, 82, 56],
+    "border_card":      [46, 58, 39],
+    "destructive":      [204, 82, 82]
+  }
 }
