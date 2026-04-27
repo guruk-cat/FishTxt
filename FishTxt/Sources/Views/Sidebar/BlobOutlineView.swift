@@ -130,7 +130,7 @@ struct BlobOutlineView: View {
                 .onTapGesture{ if expandable { toggleCollapse(at: index) } }
         }
         .frame(height: Self.rowHeight)
-        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.2) : isHovered ? AppColors.shared.surfaceRaised.opacity(0.1) : Color.clear)
+        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.3) : isHovered ? AppColors.shared.surfaceRaised.opacity(0.15) : Color.clear)
         .overlay(isActive ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.textHeading) : nil, alignment: .leading)
         .contentShape(Rectangle())
         .onHover { hoveredIndex = $0 ? index : nil }

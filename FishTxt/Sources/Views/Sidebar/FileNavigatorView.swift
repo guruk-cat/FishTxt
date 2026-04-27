@@ -123,7 +123,7 @@ struct FileNavigatorView: View {
             Spacer()
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
-        .background(isRowHovered ? AppColors.shared.surfaceRaised.opacity(0.1) : Color.clear)
+        .background(isRowHovered ? AppColors.shared.surfaceRaised.opacity(0.15) : Color.clear)
         .contentShape(Rectangle())
         .onHover { h in
             hoveredRowID = h ? project.id : (hoveredRowID == project.id ? nil : hoveredRowID)
@@ -311,9 +311,9 @@ struct FileNavigatorView: View {
                 isDragHovered
                     ? AppColors.shared.metaIndication.opacity(0.12)
                     : isFolderSelected
-                        ? AppColors.shared.surfaceRaised.opacity(0.2)
+                        ? AppColors.shared.surfaceRaised.opacity(0.3)
                         : isRowHovered
-                            ? AppColors.shared.surfaceRaised.opacity(0.1)
+                            ? AppColors.shared.surfaceRaised.opacity(0.15)
                             : Color.clear
             )
             .overlay(
@@ -773,7 +773,7 @@ private struct BlobTreeRow: View {
             Spacer()
         }
         .padding(.leading, indent).padding(.trailing, 8).padding(.vertical, 4)
-        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.2) : isHovered ? AppColors.shared.surfaceRaised.opacity(0.1) : Color.clear)
+        .background(isActive ? AppColors.shared.surfaceRaised.opacity(0.3) : isHovered ? AppColors.shared.surfaceRaised.opacity(0.15) : Color.clear)
         .overlay(
             isActive
                 ? Rectangle().frame(width: 2).foregroundColor(AppColors.shared.textHeading)
