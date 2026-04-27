@@ -24,8 +24,6 @@ The app was designed by June Jung, and the codebase was vibe-coded with Claude b
 
 Much of FishTxt has been written from scratch as a native macOS application, but the actual text editor uses [TipTap](https://tiptap.dev/docs/editor/getting-started/overview), an open-source rich text editor framework. Moreover, the [tiptap-footnoes](https://github.com/buttondown/tiptap-footnotes) extension is used for adding in-line references and notes. The editor runs in a javascript environment that is wrapped inside the app through Apple's `WKWebView` library.
 
-For making the `70's carpet` color palette, [Kimbie Dark+](https://marketplace.visualstudio.com/items?itemName=dnamsons.kimbie-dark-plus) was referenced as a starting point. Slight adjustments of hue, saturation, and luminosity were made to cohere with FishTxt's design philosophy. Original work is licensed under [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed.en).
-
 ## Install, First Launch, and Walkthrough
 
 A macOS `.app` file is available in the `Application (Beta)/` folder. You'll have to uncompress (unzip) the file. I recommend moving this into your `Applications` folder.
