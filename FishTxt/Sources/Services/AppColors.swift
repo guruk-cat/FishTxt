@@ -140,7 +140,7 @@ class AppColors: ObservableObject {
           r.setProperty('--meta-confirmation',  '\(rgb("meta_confirmation"))');
           var sel = document.getElementById('ft-sel');
           if (!sel) { sel = document.createElement('style'); sel.id = 'ft-sel'; document.head.appendChild(sel); }
-          sel.textContent = '::selection { background: \(selectionBg); } #custom-cursor { box-shadow: 0 0 4px var(--meta-indication), 0 0 8px var(--meta-indication); }';
+          sel.textContent = '::selection { background: \(selectionBg); }';
         })()
         """
     }
