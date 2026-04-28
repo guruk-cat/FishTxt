@@ -1,22 +1,5 @@
 {
-  "coastline":{
-    "surface":          [22, 39, 41],
-    "surface_sunken":   [33, 60, 63],
-    "surface_raised":   [48, 86, 89],
-    "text_body":        [200, 190, 180],
-    "text_heading":     [234, 180, 100],
-    "text_muted":       [124, 144, 146],
-    "text_resting":     [186, 190, 188],
-    "meta_indication":  [91, 180, 195],
-    "meta_confirmation":[103, 155, 115],
-    "chrome_sidebar":   [23, 41, 43],
-    "chrome_panel":     [27, 48, 52],
-    "chrome_toolbar":   [42, 77, 81],
-    "border_card":      [30, 55, 58],
-    "destructive":      [204, 82, 82]
-    },
-
-  "douglas fir":{
+  "flora-dark":{
     "surface":          [31, 39, 27],
     "surface_sunken":   [53, 67, 46],
     "surface_raised":   [75, 95, 65],
@@ -32,8 +15,42 @@
     "border_card":      [46, 58, 39],
     "destructive":      [204, 82, 82]
   },
+
+  "flora-light":{
+    "surface":          [218, 228, 210],
+    "surface_sunken":   [200, 212, 190],
+    "surface_raised":   [184, 202, 170],
+    "text_body":        [48, 62, 40],
+    "text_heading":     [182, 110, 44],
+    "text_muted":       [144, 158, 136],
+    "text_resting":     [88, 104, 76],
+    "meta_indication":  [100, 148, 28],
+    "meta_confirmation":[148, 86, 120],
+    "chrome_sidebar":   [218, 228, 210],
+    "chrome_panel":     [208, 218, 200],
+    "chrome_toolbar":   [228, 236, 222],
+    "border_card":      [194, 206, 184],
+    "destructive":      [204, 82, 82]
+  },
+
+  "paper-dark":{
+    "surface":          [38, 30, 14],
+    "surface_sunken":   [70, 54, 26],
+    "surface_raised":   [90, 72, 34],
+    "text_body":        [204, 188, 162],
+    "text_heading":     [128, 178, 134],
+    "text_muted":       [142, 126, 102],
+    "text_resting":     [188, 172, 142],
+    "meta_indication":  [196, 104, 38],
+    "meta_confirmation":[84, 158, 92],
+    "chrome_sidebar":   [38, 30, 14],
+    "chrome_panel":     [50, 40, 20],
+    "chrome_toolbar":   [82, 64, 32],
+    "border_card":      [52, 42, 20],
+    "destructive":      [204, 82, 82]
+  },
   
-  "paperlike":{
+  "paper-light":{
     "surface":          [242, 232, 210],
     "surface_sunken":   [226, 214, 190],
     "surface_raised":   [212, 200, 174],

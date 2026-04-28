@@ -12,7 +12,7 @@ Note that the Dashboard will usually also have "cards," which contain text and a
 
 ## Hue Tier Structure
 
-A palette is organized along three hue tiers, loosely following the idea of the 60-30-10 rule:
+A palette is organized mainly along two or three hue tiers:
 
 - **Tier 1:** This is the dominant hue. It includes most "background" elements in the UI, as well as most of the text that appears in them.
 - **Tier 2:** This should be distinguishable from the tier 1 hue, but the contrast should not be too conspicuous.
