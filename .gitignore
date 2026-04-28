@@ -15,3 +15,7 @@ xcuserdata/
 
 swiftpm
 .build/
+
+## Editor source (Vite/Node)
+editor-src/node_modules/
+editor-src/dist/
