@@ -70,7 +70,6 @@ class AppColors: ObservableObject {
         }
 
         rawPalette = dict
-
         surface        = c("surface")
         surfaceSunken  = c("surface_sunken")
         surfaceRaised  = c("surface_raised")
@@ -91,6 +90,7 @@ class AppColors: ObservableObject {
             let luminance = (bg[0] * 299 + bg[1] * 587 + bg[2] * 114) / 1000
             isDark = luminance < 128
         }
+
     }
 
     /// Sets only the CSS custom properties on document.documentElement.
@@ -104,12 +104,12 @@ class AppColors: ObservableObject {
         return """
         (function(){
           var r = document.documentElement.style;
-          r.setProperty('--surface',          '\(rgb("surface"))');
-          r.setProperty('--surface-sunken',   '\(rgb("surface_sunken"))');
-          r.setProperty('--chrome-panel',     '\(rgb("chrome_panel"))');
-          r.setProperty('--text-body',        '\(rgb("text_body"))');
-          r.setProperty('--text-heading',     '\(rgb("text_heading"))');
-          r.setProperty('--text-muted',       '\(rgb("text_muted"))');
+          r.setProperty('--surface',           '\(rgb("surface"))');
+          r.setProperty('--surface-sunken',    '\(rgb("surface_sunken"))');
+          r.setProperty('--chrome-panel',      '\(rgb("chrome_panel"))');
+          r.setProperty('--text-body',         '\(rgb("text_body"))');
+          r.setProperty('--text-heading',      '\(rgb("text_heading"))');
+          r.setProperty('--text-muted',        '\(rgb("text_muted"))');
           r.setProperty('--meta-indication',   '\(rgb("meta_indication"))');
           r.setProperty('--meta-confirmation', '\(rgb("meta_confirmation"))');
         })()
@@ -130,14 +130,14 @@ class AppColors: ObservableObject {
         return """
         (function(){
           var r = document.documentElement.style;
-          r.setProperty('--surface',            '\(rgb("surface"))');
-          r.setProperty('--surface-sunken',     '\(rgb("surface_sunken"))');
-          r.setProperty('--chrome-panel',       '\(rgb("chrome_panel"))');
-          r.setProperty('--text-body',          '\(rgb("text_body"))');
-          r.setProperty('--text-heading',       '\(rgb("text_heading"))');
-          r.setProperty('--text-muted',         '\(rgb("text_muted"))');
-          r.setProperty('--meta-indication',    '\(rgb("meta_indication"))');
-          r.setProperty('--meta-confirmation',  '\(rgb("meta_confirmation"))');
+          r.setProperty('--surface',           '\(rgb("surface"))');
+          r.setProperty('--surface-sunken',    '\(rgb("surface_sunken"))');
+          r.setProperty('--chrome-panel',      '\(rgb("chrome_panel"))');
+          r.setProperty('--text-body',         '\(rgb("text_body"))');
+          r.setProperty('--text-heading',      '\(rgb("text_heading"))');
+          r.setProperty('--text-muted',        '\(rgb("text_muted"))');
+          r.setProperty('--meta-indication',   '\(rgb("meta_indication"))');
+          r.setProperty('--meta-confirmation', '\(rgb("meta_confirmation"))');
           var sel = document.getElementById('ft-sel');
           if (!sel) { sel = document.createElement('style'); sel.id = 'ft-sel'; document.head.appendChild(sel); }
           sel.textContent = '::selection { background: \(selectionBg); }';

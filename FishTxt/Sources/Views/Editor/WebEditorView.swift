@@ -7,7 +7,6 @@ struct WebEditorView: NSViewRepresentable {
     @AppStorage("fontSize") private var fontSize: Double = 16.0
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
     @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
-
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
 

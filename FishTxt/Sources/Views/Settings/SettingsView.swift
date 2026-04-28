@@ -11,7 +11,6 @@ struct SettingsView: View {
     @AppStorage("autoScroll") private var autoScroll: String = "centered"
     @AppStorage("printProfile") private var printProfile: String = "default"
     @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
-
     @State private var availablePrintProfiles: [String] = []
 
     var body: some View {
@@ -100,6 +99,7 @@ struct SettingsView: View {
                                 .tint(AppColors.shared.metaIndication)
                                 .controlSize(.mini)
                         }
+
                     }
 
                     // MARK: Appearance

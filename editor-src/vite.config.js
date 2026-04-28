@@ -7,9 +7,7 @@ export default defineConfig({
     outDir: '../FishTxt/Resources',
     emptyOutDir: false,
     rollupOptions: {
-      output: {
-        entryFileNames: 'editor.html',
-      },
+      input: 'editor.html',
     },
   },
 })
