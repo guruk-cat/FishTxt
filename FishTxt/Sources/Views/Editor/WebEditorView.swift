@@ -7,6 +7,7 @@ struct WebEditorView: NSViewRepresentable {
     @AppStorage("fontSize") private var fontSize: Double = 16.0
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
     @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
+    @AppStorage("astigMode") private var astigMode: Bool = false
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
 
@@ -18,6 +19,15 @@ struct WebEditorView: NSViewRepresentable {
             forMainFrameOnly: true
         )
         config.userContentController.addUserScript(colorScript)
+
+        // Inject astig mode initial state — sets window.__ft_astig and CSS vars at document-start
+        // so main.js can apply the mode in onCreate without any Swift→JS evaluate call.
+        let astigScript = WKUserScript(
+            source: AppColors.shared.astigDocStartJS(),
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        )
+        config.userContentController.addUserScript(astigScript)
 
         // Toolbar init — injected after all module scripts have run, so window.editor
         // and window.editorBridge are guaranteed to exist. No retry loop needed.
@@ -50,6 +60,7 @@ struct WebEditorView: NSViewRepresentable {
         context.coordinator.updateFontSize(fontSize)
         context.coordinator.updateFontFamily(fontFamily)
         context.coordinator.updateImageHalfWidth(imageLimitHalfWidth)
+        context.coordinator.updateAstigMode(astigMode)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -64,6 +75,7 @@ struct WebEditorView: NSViewRepresentable {
         private var lastFontSize: Double = -1
         private var lastFontFamily: String = ""
         private var lastImageHalfWidth: Bool? = nil
+        private var lastAstigMode: Bool? = nil
 
         init(bridge: EditorBridge) {
             self.bridge = bridge
@@ -93,6 +105,12 @@ struct WebEditorView: NSViewRepresentable {
             bridge.setImageHalfWidth(half)
         }
 
+        func updateAstigMode(_ enabled: Bool) {
+            guard enabled != lastAstigMode else { return }
+            lastAstigMode = enabled
+            bridge.setAstigMode(enabled)
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 self.bridge.applyColors()
@@ -109,6 +127,9 @@ struct WebEditorView: NSViewRepresentable {
                 let halfWidth = UserDefaults.standard.bool(forKey: "imageLimitHalfWidth")
                 self.bridge.setImageHalfWidth(halfWidth)
                 self.lastImageHalfWidth = halfWidth
+                let astigEnabled = UserDefaults.standard.bool(forKey: "astigMode")
+                self.bridge.setAstigMode(astigEnabled)
+                self.lastAstigMode = astigEnabled
             }
         }
     }

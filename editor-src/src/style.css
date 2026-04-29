@@ -260,3 +260,28 @@ ol.footnotes li::marker { color: var(--text-muted); }
   0%, 49%  { opacity: 1; }
   50%, 100% { opacity: 0; }
 }
+
+/* ── Astigmatism mode ────────────────────────────────────────────────────── */
+:root {
+  --astig-surface:         rgb(242, 232, 210);
+  --astig-text-body:       rgb(70, 58, 42);
+  --astig-text-heading:    rgb(88, 138, 90);
+  --astig-meta-indication: rgb(190, 88, 30);
+}
+
+.astig-mode .ProseMirror .astig-focus {
+  background: var(--astig-surface);
+  box-shadow: 0 0 0 0.5em var(--astig-surface);
+  border-radius: 4px;
+  color: var(--astig-text-body);
+}
+
+.astig-mode .ProseMirror h1.astig-focus,
+.astig-mode .ProseMirror h2.astig-focus,
+.astig-mode .ProseMirror h3.astig-focus {
+  color: var(--astig-text-heading);
+}
+
+.astig-mode #custom-cursor {
+  background: var(--astig-meta-indication);
+}

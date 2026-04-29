@@ -1,4 +1,4 @@
-import { Editor } from '@tiptap/core'
+import { Editor, Extension } from '@tiptap/core'
 import { Document } from '@tiptap/extension-document'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -10,6 +10,8 @@ import TaskItem from '@tiptap/extension-task-item'
 import CharacterCount from '@tiptap/extension-character-count'
 import TextDirection from 'tiptap-text-direction'
 import { Footnote, FootnoteReference, Footnotes } from 'tiptap-footnotes'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { DecorationSet, Decoration } from '@tiptap/pm/view'
 
 // ── Swift bridge ──────────────────────────────────────────────────────────
 
@@ -17,6 +19,58 @@ function post(msg) {
   const h = window.webkit?.messageHandlers?.editorBridge
   if (h) h.postMessage(msg)
 }
+
+// ── Astigmatism mode (ProseMirror decoration plugin) ──────────────────────
+//
+// Decorations are ProseMirror-managed: they update automatically on every
+// state transaction (including selection changes) without any manual event
+// wiring, and they don't interfere with ProseMirror's own MutationObserver.
+
+let astigMode = false
+const astigKey = new PluginKey('astigFocus')
+
+const AstigFocusExtension = Extension.create({
+  name: 'astigFocus',
+  addProseMirrorPlugins() {
+    return [new Plugin({
+      key: astigKey,
+      state: {
+        init: () => false,
+        apply(tr, prev) {
+          const meta = tr.getMeta(astigKey)
+          return meta !== undefined ? meta : prev
+        },
+      },
+      props: {
+        decorations(state) {
+          if (!astigKey.getState(state)) return DecorationSet.empty
+          const { $head } = state.selection
+          if ($head.depth < 1) return DecorationSet.empty
+
+          const node1 = $head.node(1)
+          const isList = node1 && (
+            node1.type.name === 'bulletList' ||
+            node1.type.name === 'orderedList' ||
+            node1.type.name === 'taskList'
+          )
+
+          let from, to
+          if (isList && $head.depth >= 2) {
+            from = $head.before(2)
+            to   = $head.after(2)
+          } else {
+            from = $head.before(1)
+            to   = $head.after(1)
+          }
+
+          return DecorationSet.create(state.doc, [
+            Decoration.node(from, to, { class: 'astig-focus' }),
+          ])
+        },
+      },
+    })]
+  },
+})
 
 // ── Editor ────────────────────────────────────────────────────────────────
 
@@ -40,6 +94,7 @@ const editor = new Editor({
     Footnote,
     FootnoteReference,
     Footnotes,
+    AstigFocusExtension,
   ],
   onUpdate() {
     post({ type: 'documentChanged' })
@@ -54,8 +109,16 @@ const editor = new Editor({
   onFocus() {
     updateCursor()
   },
+  onBlur() {
+    updateCursor()
+  },
   onCreate() {
     post({ type: 'editorReady' })
+    if (window.__ft_astig) {
+      astigMode = true
+      document.body.classList.add('astig-mode')
+      editor.view.dispatch(editor.state.tr.setMeta(astigKey, true))
+    }
   },
 })
 
@@ -212,5 +275,14 @@ window.editorBridge = {
   },
   insertImage(src) {
     editor.chain().focus().insertContent({ type: 'image', attrs: { src, alt: '' } }).run()
+  },
+  setAstigMode(enabled) {
+    astigMode = enabled
+    if (enabled) {
+      document.body.classList.add('astig-mode')
+    } else {
+      document.body.classList.remove('astig-mode')
+    }
+    editor.view.dispatch(editor.state.tr.setMeta(astigKey, enabled))
   },
 }

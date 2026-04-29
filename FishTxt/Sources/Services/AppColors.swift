@@ -93,6 +93,43 @@ class AppColors: ObservableObject {
 
     }
 
+    /// Returns the light counterpart palette's key colors, or nil if the current palette
+    /// is light (no astig mode needed) or has no named counterpart.
+    func astigLightColors() -> (surface: String, textBody: String, textHeading: String, metaIndication: String)? {
+        guard isDark else { return nil }
+        let current = UserDefaults.standard.string(forKey: "colorPalette") ?? ""
+        let lightName = current.replacingOccurrences(of: "-dark", with: "-light")
+        guard lightName != current,
+              let url = Bundle.main.url(forResource: "colors", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let root = try? JSONDecoder().decode([String: [String: [Double]]].self, from: data),
+              let light = root[lightName] else { return nil }
+        func rgb(_ key: String) -> String {
+            guard let v = light[key], v.count >= 3 else { return "rgb(128,128,128)" }
+            return "rgb(\(Int(v[0])),\(Int(v[1])),\(Int(v[2])))"
+        }
+        return (rgb("surface"), rgb("text_body"), rgb("text_heading"), rgb("meta_indication"))
+    }
+
+    /// Document-start script for astig mode — injected as a WKUserScript alongside the color
+    /// variables so the editor page has the correct state before any rendering happens.
+    func astigDocStartJS() -> String {
+        let enabled = UserDefaults.standard.bool(forKey: "astigMode")
+        guard enabled, let colors = astigLightColors() else {
+            return "window.__ft_astig=false;"
+        }
+        return """
+        window.__ft_astig=true;
+        (function(){
+          var r=document.documentElement.style;
+          r.setProperty('--astig-surface',         '\(colors.surface)');
+          r.setProperty('--astig-text-body',       '\(colors.textBody)');
+          r.setProperty('--astig-text-heading',    '\(colors.textHeading)');
+          r.setProperty('--astig-meta-indication', '\(colors.metaIndication)');
+        })();
+        """
+    }
+
     /// Sets only the CSS custom properties on document.documentElement.
     /// Safe to run at document-start (no document.head access).
     /// Used as a persistent WKUserScript to eliminate the flash of old colors on load.

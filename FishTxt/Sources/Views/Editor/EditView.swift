@@ -20,6 +20,7 @@ struct EditView: View {
     @State private var escMonitor: Any?
     @AppStorage("fontSize") private var fontSize: Double = 16.0
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
+    @AppStorage("astigMode") private var astigMode: Bool = false
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -65,6 +66,7 @@ struct EditView: View {
         }
         .onChange(of: appColors.surface) { _ in
             bridge.applyColors()
+            bridge.setAstigMode(astigMode)
         }
         .onChange(of: fontSize) { newSize in
             bridge.setFontSize(newSize)

@@ -226,6 +226,35 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         evaluate(AppColors.shared.editorCSSInjection())
     }
 
+    func setAstigMode(_ enabled: Bool) {
+        let actuallyEnabled = enabled && AppColors.shared.isDark
+        let colors = actuallyEnabled ? AppColors.shared.astigLightColors() : nil
+        webView?.callAsyncJavaScript(
+            """
+            if (enabled && surface) {
+                var r = document.documentElement.style;
+                r.setProperty('--astig-surface',         surface);
+                r.setProperty('--astig-text-body',       textBody);
+                r.setProperty('--astig-text-heading',    textHeading);
+                r.setProperty('--astig-meta-indication', metaIndication);
+            }
+            if (window.editorBridge && window.editorBridge.setAstigMode) {
+                window.editorBridge.setAstigMode(enabled);
+            }
+            """,
+            arguments: [
+                "enabled":       actuallyEnabled   as Any,
+                "surface":       (colors?.surface        ?? "") as Any,
+                "textBody":      (colors?.textBody       ?? "") as Any,
+                "textHeading":   (colors?.textHeading    ?? "") as Any,
+                "metaIndication":(colors?.metaIndication ?? "") as Any,
+            ],
+            in: nil,
+            in: .page,
+            completionHandler: nil
+        )
+    }
+
     // MARK: - Private
 
     private func evaluate(_ js: String) {

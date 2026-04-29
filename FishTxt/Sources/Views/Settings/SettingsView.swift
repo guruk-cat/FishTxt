@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("autoScroll") private var autoScroll: String = "centered"
     @AppStorage("printProfile") private var printProfile: String = "default"
     @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
+    @AppStorage("astigMode") private var astigMode: Bool = false
     @State private var availablePrintProfiles: [String] = []
 
     var body: some View {
@@ -98,6 +99,18 @@ struct SettingsView: View {
                                 .toggleStyle(.switch)
                                 .tint(AppColors.shared.metaIndication)
                                 .controlSize(.mini)
+                        }
+
+                        settingsRow("Astigmatism mode") {
+                            Toggle("", isOn: Binding(
+                                get: { astigMode && appColors.isDark },
+                                set: { astigMode = $0 }
+                            ))
+                            .toggleStyle(.switch)
+                            .tint(AppColors.shared.metaIndication)
+                            .controlSize(.mini)
+                            .disabled(!appColors.isDark)
+                            .opacity(appColors.isDark ? 1.0 : 0.35)
                         }
 
                     }

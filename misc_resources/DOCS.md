@@ -387,7 +387,7 @@ Print profile selection is persisted and used whenever the user prints a blob fr
 
 **To rebuild after editing source files:**
 
-```
+```bash
 cd editor-src
 npm run build
 ```
