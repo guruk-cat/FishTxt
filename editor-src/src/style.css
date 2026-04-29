@@ -271,8 +271,8 @@ ol.footnotes li::marker { color: var(--text-muted); }
 
 .astig-mode .ProseMirror .astig-focus {
   background: var(--astig-surface);
-  box-shadow: 0 0 0 0.5em var(--astig-surface);
-  border-radius: 4px;
+  box-shadow: 0 0 0 0.4em var(--astig-surface);
+  border-radius: 0;
   color: var(--astig-text-body);
 }
 

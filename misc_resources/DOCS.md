@@ -143,6 +143,8 @@ Produces JavaScript snippets for editor theming:
 
 - `editorCSSVariablesJS()` — sets CSS custom properties at document-start (prevents flash)
 - `editorCSSInjection()` — full injection with selection override, requires document.head
+- `astigDocStartJS()` — sets `window.__ft_astig` and astig CSS variables at document-start; used as a WKUserScript so the mode is active before `onCreate` fires
+- `astigLightColors()` — resolves the light counterpart palette (requires `*-dark`/`*-light` naming convention); returns nil if the current palette is light or has no named counterpart
 
 ## Sidebar (`Sources/Views/Sidebar/`)
 
@@ -303,7 +305,7 @@ Hosts the WebKit editor and manages save lifecycle:
 
 **Injection timing**:
 
-- **Document-start**: Color CSS variables (prevents color flash)
+- **Document-start**: Color CSS variables (prevents color flash); astig mode initial state (`window.__ft_astig`, astig CSS vars)
 - **Document-end**: Toolbar wiring JavaScript (`toolbarInitJS` — wired after TipTap modules load from the compiled bundle)
 
 **Toolbar init** wires up click handlers for:
@@ -344,7 +346,7 @@ Updates auto-scroll mode, font, and image half-width on settings change via coor
 - Heading: `setHeading(level:)`
 - Content: `setContent(_:)`, `getContent(completion:)`
 - Navigation: `scrollToTop()`, `focus()`
-- Theming: `applyColors()`, `setAutoScroll(_:)`
+- Theming: `applyColors()`, `setAutoScroll(_:)`, `setAstigMode(_:)`
 - Image: `insertImage(src:)` — inserts a `figure > img` block at the cursor using `callAsyncJavaScript` (handles large base64 payloads safely); `setImageHalfWidth(_:)` — injects `--ft-img-max-width: 50%|100%` CSS variable
 
 **Clipboard helper**:
@@ -355,6 +357,60 @@ Updates auto-scroll mode, font, and image half-width on settings change via coor
 
 - `scrollToOutlineHeading` — posted by `BlobOutlineView` (object: `Int` heading index); received by `EditView` to call `bridge.scrollToHeading(index:)`
 - `activeHeadingChanged` — posted by `EditorBridge` when the JS side reports a `headingVisible` message (object: `Int` heading index); received by `BlobOutlineView` to highlight the active row
+
+### Astigmatism Mode
+
+Astigmatism mode (`astig-mode`) applies only to dark palettes and only in EditView. When active, the currently focused text block is highlighted with a light box using colors from the light counterpart of the active dark palette (e.g. `paper-dark` → pulls colors from `paper-light`). All other blocks remain in the normal dark-on-light style.
+
+**End-to-end flow:**
+
+1. `AppColors.astigDocStartJS()` generates a WKUserScript injected at document-start. It sets `window.__ft_astig = true/false` and writes the four astig CSS variables (`--astig-surface`, `--astig-text-body`, `--astig-text-heading`, `--astig-meta-indication`) directly on `document.documentElement.style` (same mechanism as palette color vars — inline style, highest specificity, no flash).
+2. `main.js` `onCreate`: if `window.__ft_astig`, sets `astigMode = true` and adds `astig-mode` to `document.body`. Does **not** dispatch the ProseMirror enable transaction yet — see `contentReady` below.
+3. `main.js` `setContent()`: on first call, sets `contentReady = true` and, if `astigMode`, dispatches the ProseMirror enable transaction. This prevents the decoration appearing on the blank pre-load state.
+4. `EditorBridge.setAstigMode(_:)` handles runtime toggles (from Settings). Uses `callAsyncJavaScript` to set astig CSS vars and call `window.editorBridge.setAstigMode(enabled)`. Only dispatches the enable transaction if `contentReady`.
+5. `EditView.onChange(of: appColors.surface)` calls `bridge.setAstigMode(astigMode)` on palette change to recompute colors from the new light counterpart.
+
+**ProseMirror decoration — the only correct approach:**
+
+The highlight is implemented as a ProseMirror `Plugin` (`AstigFocusExtension` in `main.js`). The plugin carries a boolean state (enabled/disabled) toggled by dispatching `tr.setMeta(astigKey, enabled)`. Its `decorations` prop is called automatically on every state transaction (cursor moves, edits, selection changes) and returns a `Decoration.node` on the currently focused block.
+
+**Do not attempt to add the highlight by calling `element.classList.add()` on nodes inside `.ProseMirror`.** ProseMirror manages its DOM via `MutationObserver` and re-renders nodes when it detects attribute mutations, immediately overwriting any externally added classes. The result is a brief flash followed by reversion — the decoration will appear and disappear within a single frame. Decorations are the framework-sanctioned mechanism precisely because ProseMirror applies them itself during rendering.
+
+**Box-highlight geometry — why px values are baked from Swift:**
+
+The highlight box is rendered using 8 `box-shadow` layers (0 spread, explicit offsets) to achieve independent horizontal and vertical extension. The horizontal offset (`X px`, where `X = Int(currentFontSize)` — 1em of the body text font) is injected as a literal value from `applyEditorStyle()` in `EditorBridge`.
+
+Two pitfalls drove this design:
+
+- **CSS custom properties do not work in `box-shadow` x-offset in WKWebView.** Using `var(--ft-font-size, 1em)` as the x-offset silently falls back to `1em` regardless of whether the variable is set. There is no error; the fallback is simply used. Baking the px value from Swift into the injected CSS string is the only reliable approach.
+- **`em` in `box-shadow` resolves to the element's own font-size.** A `0.5em` spread on an `h1` (which has `font-size: 2em`) is visually twice as wide as the same spread on a `<p>`. This makes heading highlights inconsistent with paragraph highlights. Using a px value derived from the body font size (injected by Swift, which knows `currentFontSize`) ensures all node types get the same horizontal extent.
+
+The 8-shadow composition:
+
+```
+0  -V 0 0 color   /* top */
+0   V 0 0 color   /* bottom */
+X   0 0 0 color   /* right */
+-X  0 0 0 color   /* left */
+X  -V 0 0 color   /* top-right corner */
+-X -V 0 0 color   /* top-left corner */
+X   V 0 0 color   /* bottom-right corner */
+-X  V 0 0 color   /* bottom-left corner */
+```
+
+Where `X = body font size px` and `V = 0.4em` (em-relative to each node's own font size, so vertical padding adapts to heading vs. paragraph line height). The 4 corner shadows fill the gaps that would otherwise appear between the edge shadows.
+
+**List item geometry:**
+
+The `<ul>` / `<ol>` has `padding-left: 1.5em`. The `<li>` element's left edge is therefore `1.5 × font_size px` inside the text area left edge — the same edge that paragraph highlights start from. To align the list item highlight's left edge with paragraphs (and to include bullets/numbers inside the light box), the left extension from `<li>` must be `1.5 × X + X = 2.5 × X px`. The right extension stays `X px` because `<li>` right edge aligns with paragraph right edge. This asymmetric 8-shadow is injected as a separate `li.astig-focus` rule (higher specificity than the general `.astig-focus` rule).
+
+**Blockquote:**
+
+`border-radius` on an element also rounds the corners of its `border-left`, making the blockquote's left indicator bar look trapezoidal. `border-radius: 0` is set globally on all `.astig-focus` nodes for consistency.
+
+**`evaluateJavaScript` vs `callAsyncJavaScript`:**
+
+In this app, `evaluateJavaScript` (via `EditorBridge.evaluate(_:)`) is used for style injection (the `ft-font` `<style>` element) and works reliably when called after `webView(_:didFinish:)` with a short delay. `callAsyncJavaScript` is used for `setAstigMode` and image insertion because it handles larger payloads and is the more reliable channel for runtime commands. Do not assume these are interchangeable.
 
 ## Settings (`Sources/Views/Settings/`)
 
@@ -367,6 +423,7 @@ Modal sheet with @AppStorage bindings:
   - Font size (−/+ buttons, range 10–36pt)
   - Auto-scroll mode (dropdown: Off / On)
   - Limit image width to half (switch toggle — `imageLimitHalfWidth`; when ON, `--ft-img-max-width` is set to `50%` in the editor and `--ft-print-img-max-width` to `50%` in print output)
+  - Astigmatism mode (switch toggle — `astigMode`; only active when a dark palette is in use; persists across palette changes so the preference is restored when returning to a dark palette)
 - **Appearance**
   - Color palette (dropdown, populated from `colors.json` keys)
   - Print profile (dropdown, auto-populated from `.css` files in `Resources/print-profiles/`)
@@ -432,6 +489,7 @@ The sidebar reflects project selection and folder navigation. The dashboard show
 | Printing & print profiles | `ProjectStore.printBlob()`, `BlobPrinter`, `Resources/print-profiles/*.css` |
 | Footnote HTML rendering | `ProjectStore.renderNodeHTML()` (cases: `footnoteReference`, `footnotes`, `footnote`) |
 | Color theming (Swift + web) | `AppColors.swift` |
+| Astigmatism mode (architecture, geometry, pitfalls) | See **Astigmatism Mode** section above; `AppColors.astigDocStartJS()`, `AppColors.astigLightColors()`, `EditorBridge.setAstigMode(_:)`, `main.js` (`AstigFocusExtension`, `setContent`, `setAstigMode`) |
 | Dashboard drag & drop | `DashboardView.swift` |
 | Sidebar tree drag & drop | `FileNavigatorView.swift` |
 | Card rendering & previews | `CardView.swift` |

@@ -168,11 +168,41 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
         let size = currentFontSize
         let maxWidth = Int(820.0 * size / 20.0)
         let cssFamily = fontFamilyCSS(currentFontFamily)
+        let x  = Int(size)
+        // <ul>/<ol> has padding-left: 1.5em, so <li> left edge is 1.5×size px
+        // inside the text area. Add the standard X extension to match paragraph alignment.
+        let lx = Int(size * 2.5)
+        let css = """
+            .ProseMirror, .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 { font-family: \(cssFamily); }
+            .ProseMirror { font-size: \(x)px; max-width: \(maxWidth)px; }
+            .astig-mode .ProseMirror .astig-focus {
+              box-shadow:
+                0 -0.4em 0 0 var(--astig-surface),
+                0  0.4em 0 0 var(--astig-surface),
+                \(x)px  0      0 0 var(--astig-surface),
+               -\(x)px  0      0 0 var(--astig-surface),
+                \(x)px -0.4em  0 0 var(--astig-surface),
+               -\(x)px -0.4em  0 0 var(--astig-surface),
+                \(x)px  0.4em  0 0 var(--astig-surface),
+               -\(x)px  0.4em  0 0 var(--astig-surface);
+            }
+            .astig-mode .ProseMirror li.astig-focus {
+              box-shadow:
+                0 -0.4em 0 0 var(--astig-surface),
+                0  0.4em 0 0 var(--astig-surface),
+                \(x)px   0      0 0 var(--astig-surface),
+               -\(lx)px  0      0 0 var(--astig-surface),
+                \(x)px  -0.4em  0 0 var(--astig-surface),
+               -\(lx)px -0.4em  0 0 var(--astig-surface),
+                \(x)px   0.4em  0 0 var(--astig-surface),
+               -\(lx)px  0.4em  0 0 var(--astig-surface);
+            }
+            """
         let js = """
         (function(){
           var el = document.getElementById('ft-font');
           if (!el) { el = document.createElement('style'); el.id = 'ft-font'; document.head.appendChild(el); }
-          el.textContent = '.ProseMirror, .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 { font-family: \(cssFamily); } .ProseMirror { font-size: \(Int(size))px; max-width: \(maxWidth)px; }';
+          el.textContent = `\(css)`;
         })()
         """
         evaluate(js)

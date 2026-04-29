@@ -21,7 +21,7 @@
     "surface_sunken":   [200, 212, 190],
     "surface_raised":   [184, 202, 170],
     "text_body":        [48, 62, 40],
-    "text_heading":     [182, 110, 44],
+    "text_heading":     [30, 72, 70],
     "text_muted":       [144, 158, 136],
     "text_resting":     [88, 104, 76],
     "meta_indication":  [100, 148, 28],

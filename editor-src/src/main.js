@@ -27,6 +27,7 @@ function post(msg) {
 // wiring, and they don't interfere with ProseMirror's own MutationObserver.
 
 let astigMode = false
+let contentReady = false
 const astigKey = new PluginKey('astigFocus')
 
 const AstigFocusExtension = Extension.create({
@@ -117,7 +118,8 @@ const editor = new Editor({
     if (window.__ft_astig) {
       astigMode = true
       document.body.classList.add('astig-mode')
-      editor.view.dispatch(editor.state.tr.setMeta(astigKey, true))
+      // Don't dispatch yet — wait for setContent so the decoration
+      // doesn't appear on the blank pre-load state.
     }
   },
 })
@@ -251,6 +253,12 @@ window.editorBridge = {
   setContent(n) {
     const doc = typeof n === 'string' ? JSON.parse(n) : n
     editor.commands.setContent(doc, false)
+    if (!contentReady) {
+      contentReady = true
+      if (astigMode) {
+        editor.view.dispatch(editor.state.tr.setMeta(astigKey, true))
+      }
+    }
   },
   toggleBold()        { editor.chain().focus().toggleBold().run();        sendStateUpdate() },
   toggleItalic()      { editor.chain().focus().toggleItalic().run();      sendStateUpdate() },
@@ -283,6 +291,8 @@ window.editorBridge = {
     } else {
       document.body.classList.remove('astig-mode')
     }
-    editor.view.dispatch(editor.state.tr.setMeta(astigKey, enabled))
+    if (contentReady) {
+      editor.view.dispatch(editor.state.tr.setMeta(astigKey, enabled))
+    }
   },
 }
