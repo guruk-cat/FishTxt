@@ -267,6 +267,7 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                 r.setProperty('--astig-text-body',       textBody);
                 r.setProperty('--astig-text-heading',    textHeading);
                 r.setProperty('--astig-meta-indication', metaIndication);
+                r.setProperty('--astig-text-muted',      textMuted);
             }
             if (window.editorBridge && window.editorBridge.setAstigMode) {
                 window.editorBridge.setAstigMode(enabled);
@@ -278,6 +279,7 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
                 "textBody":      (colors?.textBody       ?? "") as Any,
                 "textHeading":   (colors?.textHeading    ?? "") as Any,
                 "metaIndication":(colors?.metaIndication ?? "") as Any,
+                "textMuted":     (colors?.textMuted      ?? "") as Any,
             ],
             in: nil,
             in: .page,

@@ -52,7 +52,8 @@ const AstigFocusExtension = Extension.create({
           const isList = node1 && (
             node1.type.name === 'bulletList' ||
             node1.type.name === 'orderedList' ||
-            node1.type.name === 'taskList'
+            node1.type.name === 'taskList' ||
+            node1.type.name === 'footnotes'
           )
 
           let from, to

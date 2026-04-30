@@ -95,7 +95,7 @@ class AppColors: ObservableObject {
 
     /// Returns the light counterpart palette's key colors, or nil if the current palette
     /// is light (no astig mode needed) or has no named counterpart.
-    func astigLightColors() -> (surface: String, textBody: String, textHeading: String, metaIndication: String)? {
+    func astigLightColors() -> (surface: String, textBody: String, textHeading: String, metaIndication: String, textMuted: String)? {
         guard isDark else { return nil }
         let current = UserDefaults.standard.string(forKey: "colorPalette") ?? ""
         let stored = UserDefaults.standard.string(forKey: "astigPalette") ?? ""
@@ -110,7 +110,7 @@ class AppColors: ObservableObject {
             guard let v = light[key], v.count >= 3 else { return "rgb(128,128,128)" }
             return "rgb(\(Int(v[0])),\(Int(v[1])),\(Int(v[2])))"
         }
-        return (rgb("surface"), rgb("text_body"), rgb("text_heading"), rgb("meta_indication"))
+        return (rgb("surface"), rgb("text_body"), rgb("text_heading"), rgb("meta_indication"), rgb("text_muted"))
     }
 
     /// Document-start script for astig mode — injected as a WKUserScript alongside the color
@@ -128,6 +128,7 @@ class AppColors: ObservableObject {
           r.setProperty('--astig-text-body',       '\(colors.textBody)');
           r.setProperty('--astig-text-heading',    '\(colors.textHeading)');
           r.setProperty('--astig-meta-indication', '\(colors.metaIndication)');
+          r.setProperty('--astig-text-muted',      '\(colors.textMuted)');
         })();
         """
     }

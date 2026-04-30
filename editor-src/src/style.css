@@ -267,6 +267,7 @@ ol.footnotes li::marker { color: var(--text-muted); }
   --astig-text-body:       rgb(70, 58, 42);
   --astig-text-heading:    rgb(88, 138, 90);
   --astig-meta-indication: rgb(190, 88, 30);
+  --astig-text-muted:      rgb(140, 120, 90);
 }
 
 .astig-mode .ProseMirror .astig-focus {
@@ -280,6 +281,21 @@ ol.footnotes li::marker { color: var(--text-muted); }
 .astig-mode .ProseMirror h2.astig-focus,
 .astig-mode .ProseMirror h3.astig-focus {
   color: var(--astig-text-heading);
+}
+
+/* footnote reference superscript inside a focused paragraph */
+.astig-mode .ProseMirror .astig-focus a.footnote-ref {
+  color: var(--astig-meta-indication);
+}
+
+/* focused footnote list item */
+.astig-mode .ProseMirror ol.footnotes li.astig-focus {
+  background: var(--astig-surface);
+  color: var(--astig-text-body);
+  border-radius: 0;
+}
+.astig-mode .ProseMirror ol.footnotes li.astig-focus::marker {
+  color: var(--astig-text-muted);
 }
 
 .astig-mode #custom-cursor {
