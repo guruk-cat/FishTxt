@@ -98,7 +98,9 @@ class AppColors: ObservableObject {
     func astigLightColors() -> (surface: String, textBody: String, textHeading: String, metaIndication: String)? {
         guard isDark else { return nil }
         let current = UserDefaults.standard.string(forKey: "colorPalette") ?? ""
-        let lightName = current.replacingOccurrences(of: "-dark", with: "-light")
+        let stored = UserDefaults.standard.string(forKey: "astigPalette") ?? ""
+        let autoName = current.replacingOccurrences(of: "-dark", with: "-light")
+        let lightName = stored.isEmpty ? autoName : stored
         guard lightName != current,
               let url = Bundle.main.url(forResource: "colors", withExtension: "json"),
               let data = try? Data(contentsOf: url),

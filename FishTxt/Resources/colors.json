@@ -1,17 +1,17 @@
 {
   "flora-dark":{
-    "surface":          [31, 39, 27],
-    "surface_sunken":   [53, 67, 46],
-    "surface_raised":   [75, 95, 65],
+    "surface":          [31, 38, 29],
+    "surface_sunken":   [53, 65, 50],
+    "surface_raised":   [75, 92, 72],
     "text_body":        [212, 197, 160],
     "text_heading":     [226, 171, 111],
     "text_muted":       [124, 137, 116],
     "text_resting":     [172, 184, 164],
     "meta_indication":   [179, 212, 74],
     "meta_confirmation": [174, 115, 149],
-    "chrome_sidebar":   [31, 39, 27],
-    "chrome_panel":     [40, 52, 35],
-    "chrome_toolbar":   [64, 82, 56],
+    "chrome_sidebar":   [31, 38, 29],
+    "chrome_panel":     [40, 51, 38],
+    "chrome_toolbar":   [64, 80, 62],
     "border_card":      [46, 58, 39],
     "destructive":      [204, 82, 82]
   },
@@ -35,8 +35,8 @@
 
   "paper-dark":{
     "surface":          [38, 30, 14],
-    "surface_sunken":   [70, 54, 26],
-    "surface_raised":   [90, 72, 34],
+    "surface_sunken":   [64, 52, 32],
+    "surface_raised":   [84, 70, 44],
     "text_body":        [204, 188, 162],
     "text_heading":     [128, 178, 134],
     "text_muted":       [142, 126, 102],
@@ -44,8 +44,8 @@
     "meta_indication":  [196, 104, 38],
     "meta_confirmation":[84, 158, 92],
     "chrome_sidebar":   [38, 30, 14],
-    "chrome_panel":     [50, 40, 20],
-    "chrome_toolbar":   [82, 64, 32],
+    "chrome_panel":     [49, 40, 23],
+    "chrome_toolbar":   [74, 64, 42],
     "border_card":      [52, 42, 20],
     "destructive":      [204, 82, 82]
   },

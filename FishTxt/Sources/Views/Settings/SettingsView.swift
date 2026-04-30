@@ -12,6 +12,7 @@ struct SettingsView: View {
     @AppStorage("printProfile") private var printProfile: String = "default"
     @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
     @AppStorage("astigMode") private var astigMode: Bool = false
+    @AppStorage("astigPalette") private var astigPalette: String = ""
     @State private var availablePrintProfiles: [String] = []
 
     var body: some View {
@@ -111,6 +112,19 @@ struct SettingsView: View {
                             .controlSize(.mini)
                             .disabled(!appColors.isDark)
                             .opacity(appColors.isDark ? 1.0 : 0.35)
+                        }
+
+                        settingsRow("Astig palette") {
+                            let lightPalettes = appColors.availablePalettes.filter { !$0.hasSuffix("-dark") }
+                            Picker("", selection: $astigPalette) {
+                                Text("Auto").tag("")
+                                ForEach(lightPalettes, id: \.self) { palette in
+                                    Text(palette.replacingOccurrences(of: "_", with: " ").capitalized).tag(palette)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .disabled(!appColors.isDark || !astigMode)
+                            .opacity(appColors.isDark && astigMode ? 1.0 : 0.35)
                         }
 
                     }
