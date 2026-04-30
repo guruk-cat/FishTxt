@@ -43,10 +43,11 @@ const AstigFocusExtension = Extension.create({
           if (meta === true || meta === false) return { enabled: meta, userInteracted: false }
           // Keyboard path: a synthetic 'interact' meta sets the flag without toggling enabled.
           if (meta === 'interact') return { ...prev, userInteracted: true }
+          // pointer:true is stamped by ProseMirror's DOM observer on real mouse-click
+          // transactions. Check this before the !enabled guard so userInteracted is
+          // tracked even when astig is off (the cursor display also depends on it).
+          if (tr.getMeta('pointer') && !prev.userInteracted) return { ...prev, userInteracted: true }
           if (!prev.enabled) return prev
-          // ProseMirror stamps pointer:true on every transaction originating from a real
-          // mouse click (set during mousedown, before decorations runs for that transaction).
-          if (tr.getMeta('pointer')) return { ...prev, userInteracted: true }
           return prev
         },
       },
@@ -79,8 +80,8 @@ const AstigFocusExtension = Extension.create({
           ])
         },
         handleKeyDown(view) {
-          const { enabled, userInteracted } = astigKey.getState(view.state)
-          if (enabled && !userInteracted)
+          const { userInteracted } = astigKey.getState(view.state)
+          if (!userInteracted)
             view.dispatch(view.state.tr.setMeta(astigKey, 'interact'))
           return false
         },
@@ -167,6 +168,10 @@ document.getElementById('editor').appendChild(cur)
 
 function updateCursor() {
   if (!editor.isFocused || !editor.state.selection.empty) {
+    cur.style.display = 'none'
+    return
+  }
+  if (!astigKey.getState(editor.state).userInteracted) {
     cur.style.display = 'none'
     return
   }
@@ -269,15 +274,15 @@ window.editorBridge = {
   setContent(n) {
     const doc = typeof n === 'string' ? JSON.parse(n) : n
     editor.commands.setContent(doc, false)
+    // Reset selection to start (ProseMirror's replaceWith maps old selection to end)
+    // and reset userInteracted so no cursor or decoration appears before the first click.
     editor.view.dispatch(
-      editor.state.tr.setSelection(TextSelection.atStart(editor.state.doc))
+      editor.state.tr
+        .setSelection(TextSelection.atStart(editor.state.doc))
+        .setMeta(astigKey, false)
     )
-    if (!contentReady) {
-      contentReady = true
-      if (astigMode) {
-        editor.view.dispatch(editor.state.tr.setMeta(astigKey, true))
-      }
-    }
+    if (!contentReady) contentReady = true
+    if (astigMode) editor.view.dispatch(editor.state.tr.setMeta(astigKey, true))
   },
   toggleBold()        { editor.chain().focus().toggleBold().run();        sendStateUpdate() },
   toggleItalic()      { editor.chain().focus().toggleItalic().run();      sendStateUpdate() },
@@ -294,7 +299,11 @@ window.editorBridge = {
   copyAll() {
     post({ type: 'copyAll', text: editor.getText(), html: editor.getHTML() })
   },
-  focus() { editor.commands.focus('end') },
+  focus() {
+    editor.commands.focus('end')
+    editor.view.dispatch(editor.state.tr.setMeta(astigKey, 'interact'))
+    updateCursor()
+  },
   setAutoScrollMode(m) {
     autoScrollMode = m
     const ed = document.getElementById('editor')
