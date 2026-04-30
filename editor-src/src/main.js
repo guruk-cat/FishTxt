@@ -10,7 +10,7 @@ import TaskItem from '@tiptap/extension-task-item'
 import CharacterCount from '@tiptap/extension-character-count'
 import TextDirection from 'tiptap-text-direction'
 import { Footnote, FootnoteReference, Footnotes } from 'tiptap-footnotes'
-import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 import { DecorationSet, Decoration } from '@tiptap/pm/view'
 
 // ── Swift bridge ──────────────────────────────────────────────────────────
@@ -36,15 +36,24 @@ const AstigFocusExtension = Extension.create({
     return [new Plugin({
       key: astigKey,
       state: {
-        init: () => false,
+        init: () => ({ enabled: false, userInteracted: false }),
         apply(tr, prev) {
           const meta = tr.getMeta(astigKey)
-          return meta !== undefined ? meta : prev
+          // Explicit enable/disable always resets userInteracted for the new load.
+          if (meta === true || meta === false) return { enabled: meta, userInteracted: false }
+          // Keyboard path: a synthetic 'interact' meta sets the flag without toggling enabled.
+          if (meta === 'interact') return { ...prev, userInteracted: true }
+          if (!prev.enabled) return prev
+          // ProseMirror stamps pointer:true on every transaction originating from a real
+          // mouse click (set during mousedown, before decorations runs for that transaction).
+          if (tr.getMeta('pointer')) return { ...prev, userInteracted: true }
+          return prev
         },
       },
       props: {
         decorations(state) {
-          if (!astigKey.getState(state)) return DecorationSet.empty
+          const { enabled, userInteracted } = astigKey.getState(state)
+          if (!enabled || !userInteracted) return DecorationSet.empty
           const { $head } = state.selection
           if ($head.depth < 1) return DecorationSet.empty
 
@@ -68,6 +77,12 @@ const AstigFocusExtension = Extension.create({
           return DecorationSet.create(state.doc, [
             Decoration.node(from, to, { class: 'astig-focus' }),
           ])
+        },
+        handleKeyDown(view) {
+          const { enabled, userInteracted } = astigKey.getState(view.state)
+          if (enabled && !userInteracted)
+            view.dispatch(view.state.tr.setMeta(astigKey, 'interact'))
+          return false
         },
       },
     })]
@@ -254,6 +269,9 @@ window.editorBridge = {
   setContent(n) {
     const doc = typeof n === 'string' ? JSON.parse(n) : n
     editor.commands.setContent(doc, false)
+    editor.view.dispatch(
+      editor.state.tr.setSelection(TextSelection.atStart(editor.state.doc))
+    )
     if (!contentReady) {
       contentReady = true
       if (astigMode) {
