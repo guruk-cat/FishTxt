@@ -127,7 +127,7 @@ For the full UX-level description, see `astigmatism-mode.md`.
 
 **End-to-end flow:**
 
-1. `AppColors.astigDocStartJS()` generates a WKUserScript injected at document-start. It sets `window.__ft_astig = true/false` and writes the four astig CSS variables (`--astig-surface`, `--astig-text-body`, `--astig-text-heading`, `--astig-meta-indication`) directly on `document.documentElement.style` (same mechanism as palette color vars — inline style, highest specificity, no flash).
+1. `AppColors.astigDocStartJS()` generates a WKUserScript injected at document-start. It sets `window.__ft_astig = true/false` and writes five astig CSS variables (`--astig-surface`, `--astig-text-body`, `--astig-text-heading`, `--astig-meta-indication`, `--astig-text-muted`) directly on `document.documentElement.style` (same mechanism as palette color vars — inline style, highest specificity, no flash).
 2. `main.js` `onCreate`: if `window.__ft_astig`, sets `astigMode = true` and adds `astig-mode` to `document.body`. Does **not** dispatch the ProseMirror enable transaction yet — see `contentReady` below.
 3. `main.js` `setContent()`: on first call, sets `contentReady = true` and, if `astigMode`, dispatches the ProseMirror enable transaction. This prevents the decoration appearing on the blank pre-load state.
 4. `EditorBridge.setAstigMode(_:)` handles runtime toggles (from Settings). Uses `callAsyncJavaScript` to set astig CSS vars and call `window.editorBridge.setAstigMode(enabled)`. Only dispatches the enable transaction if `contentReady`.
@@ -170,3 +170,15 @@ The `<ul>` / `<ol>` has `padding-left: 1.5em`. The `<li>` element's left edge is
 **Blockquote:**
 
 `border-radius` on an element also rounds the corners of its `border-left`, making the blockquote's left indicator bar look trapezoidal. `border-radius: 0` is set globally on all `.astig-focus` nodes for consistency.
+
+**Footnotes:**
+
+The `tiptap-footnotes` extension introduces three node types with distinct astig considerations:
+
+- **`footnoteReference`** (inline `<sup>`) — sits inside a body paragraph, so the containing paragraph gets `.astig-focus` correctly. However, `a.footnote-ref` has an explicit `color: var(--meta-indication)` rule that overrides inherited color. A dedicated `.astig-focus a.footnote-ref { color: var(--astig-meta-indication) }` rule overrides this.
+
+- **`footnotes`** container (`<ol class="footnotes">`) — registered under the name `'footnotes'`, not `'orderedList'`, even though it extends `OrderedList`. The `isList` check in `AstigFocusExtension` must include `node1.type.name === 'footnotes'` so the plugin takes the depth-2 path and decorates the individual `footnote` (`<li>`) rather than the entire `<ol>`.
+
+- **`footnote`** items (`<li>`) — receive `.astig-focus` via the depth-2 decoration path (same as regular list items). The asymmetric box-shadow from `applyEditorStyle()` (`li.astig-focus` selector) already covers these. Additional CSS rules handle `li.astig-focus` background/color and `li.astig-focus::marker` using `--astig-text-muted`.
+
+- **`--astig-text-muted`** — a fifth astig CSS variable pulled from `text_muted` in the light counterpart palette. Needed for footnote markers and the `ol.footnotes` separator line. Injected by both `astigDocStartJS()` and `setAstigMode(_:)`.
