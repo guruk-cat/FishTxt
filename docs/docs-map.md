@@ -11,11 +11,9 @@ When writing a long article that covers many sources and topics, it is hard to k
 
 FishTxt was designed to be exactly that kind of combination: a set of tools that you can use from the very beginning of a project all the way to the first or second draft. Of course, you'll likely need at some point an actual, robust document editor like Microsoft Word or Apple Pages. While FishTxt can export to a printer or PDF, this is done through built-in CSS profiles, which is quite different from document editors if that's what you're used to. But remember, FishTxt was designed specifically for the development phase, for longer projects, for the part of your work where it's still unclear what the finished product should really look like. In that regard, FishTxt is not intended to replace your document editor; but it does make you rethink what each tool is best used for.
 
-## Authors & Version
+## Authors and Credits
 
-FishTxt was designed by me, and the codebase was built largely by Claude Sonnet.
-
-This version is the Beta version (build 4), currently being tested in real use (by me).
+FishTxt was designed by me, and the codebase was built largely by Claude Sonnet. The actual text editor uses [TipTap](https://tiptap.dev/docs/editor/getting-started/overview), an open-source rich text editor framework. Moreover, the [tiptap-footnoes](https://github.com/buttondown/tiptap-footnotes) extension is used for adding in-line references and notes.
 
 ## Repository Map
 
