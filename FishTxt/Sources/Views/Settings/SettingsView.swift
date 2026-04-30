@@ -19,7 +19,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             // Title bar
             HStack {
-                Text("Settings")
+                Text("SETTINGS")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(AppColors.shared.textHeading)
                 Spacer()
@@ -42,10 +42,10 @@ struct SettingsView: View {
 
             // Settings form
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 16) {
 
                     // MARK: Editor
-                    settingsSection("Editor") {
+                    settingsSection {
                         settingsRow("Font family") {
                             Picker("", selection: $fontFamily) {
                                 Text("Menlo").tag("Menlo")
@@ -53,7 +53,7 @@ struct SettingsView: View {
                             }
                             .pickerStyle(.menu)
                         }
-
+                        Divider().padding(.leading, 12)
                         settingsRow("Font size") {
                             HStack(spacing: 6) {
                                 Button(action: { if fontSize > 10 { fontSize -= 1 } }) {
@@ -61,7 +61,7 @@ struct SettingsView: View {
                                         .font(.system(size: 11, weight: .medium))
                                         .foregroundColor(AppColors.shared.textResting)
                                         .frame(width: 22, height: 22)
-                                        .background(AppColors.shared.surface)
+                                        .background(AppColors.shared.chromePanel)
                                         .cornerRadius(5)
                                         .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
                                 }
@@ -77,15 +77,22 @@ struct SettingsView: View {
                                         .font(.system(size: 11, weight: .medium))
                                         .foregroundColor(AppColors.shared.textResting)
                                         .frame(width: 22, height: 22)
-                                        .background(AppColors.shared.surface)
+                                        .background(AppColors.shared.chromePanel)
                                         .cornerRadius(5)
                                         .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
-                        
-                        settingsRow("Auto scroll") {
+                        Divider().padding(.leading, 12)
+                        settingsRow("Limit imgage width") {
+                            Toggle("", isOn: $imageLimitHalfWidth)
+                                .toggleStyle(.switch)
+                                .tint(AppColors.shared.metaIndication)
+                                .controlSize(.mini)
+                        }
+                        Divider().padding(.leading, 12)
+                        settingsRow("Auto-scroll when hitting bottom") {
                             Toggle("", isOn: Binding(
                                 get: { autoScroll == "centered" },
                                 set: { autoScroll = $0 ? "centered" : "regular" }
@@ -94,43 +101,10 @@ struct SettingsView: View {
                             .tint(AppColors.shared.metaIndication)
                             .controlSize(.mini)
                         }
-
-                        settingsRow("Limit img width") {
-                            Toggle("", isOn: $imageLimitHalfWidth)
-                                .toggleStyle(.switch)
-                                .tint(AppColors.shared.metaIndication)
-                                .controlSize(.mini)
-                        }
-
-                        settingsRow("Astigmatism mode") {
-                            Toggle("", isOn: Binding(
-                                get: { astigMode && appColors.isDark },
-                                set: { astigMode = $0 }
-                            ))
-                            .toggleStyle(.switch)
-                            .tint(AppColors.shared.metaIndication)
-                            .controlSize(.mini)
-                            .disabled(!appColors.isDark)
-                            .opacity(appColors.isDark ? 1.0 : 0.35)
-                        }
-
-                        settingsRow("Astig palette") {
-                            let lightPalettes = appColors.availablePalettes.filter { !$0.hasSuffix("-dark") }
-                            Picker("", selection: $astigPalette) {
-                                Text("Auto").tag("")
-                                ForEach(lightPalettes, id: \.self) { palette in
-                                    Text(palette.replacingOccurrences(of: "_", with: " ").capitalized).tag(palette)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .disabled(!appColors.isDark || !astigMode)
-                            .opacity(appColors.isDark && astigMode ? 1.0 : 0.35)
-                        }
-
                     }
-
-                    // MARK: Appearance
-                    settingsSection("Appearance") {
+                    
+                    // MARK: Colors
+                    settingsSection {
                         settingsRow("Color palette") {
                             Picker("", selection: $colorPalette) {
                                 ForEach(appColors.availablePalettes, id: \.self) { palette in
@@ -142,7 +116,35 @@ struct SettingsView: View {
                                 appColors.loadColors(palette: newPalette)
                             }
                         }
+                        Divider().padding(.leading, 12)
+                        settingsRow("Astigmatism palette") {
+                            let lightPalettes = appColors.availablePalettes.filter { !$0.hasSuffix("-dark") }
+                            Picker("", selection: $astigPalette) {
+                                Text("Auto").tag("")
+                                ForEach(lightPalettes, id: \.self) { palette in
+                                    Text(palette.replacingOccurrences(of: "_", with: " ").capitalized).tag(palette)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .disabled(!appColors.isDark || !astigMode)
+                            .opacity(appColors.isDark && astigMode ? 1.0 : 0.35)
+                        }
+                        Divider().padding(.leading, 12)
+                        settingsRow("Astigmatism mode") {
+                            Toggle("", isOn: Binding(
+                                get: { astigMode && appColors.isDark },
+                                set: { astigMode = $0 }
+                            ))
+                            .toggleStyle(.switch)
+                            .tint(AppColors.shared.metaIndication)
+                            .controlSize(.mini)
+                            .disabled(!appColors.isDark)
+                            .opacity(appColors.isDark ? 1.0 : 0.35)
+                        }
+                    }
 
+                    // MARK: Printing
+                    settingsSection {
                         settingsRow("Print profile") {
                             Picker("", selection: $printProfile) {
                                 ForEach(availablePrintProfiles, id: \.self) { profile in
@@ -168,17 +170,13 @@ struct SettingsView: View {
     // MARK: - Layout helpers
 
     @ViewBuilder
-    private func settingsSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(AppColors.shared.textHeading)
-                .tracking(1.0)
-
-            VStack(alignment: .leading, spacing: 8) {
+    private func settingsSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        GroupBox {
+            VStack(spacing: 0) {
                 content()
             }
         }
+        .groupBoxStyle(SurfaceGroupBoxStyle(background: appColors.surface))
     }
 
     @ViewBuilder
@@ -187,10 +185,11 @@ struct SettingsView: View {
             Text(label)
                 .font(.system(size: 13))
                 .foregroundColor(AppColors.shared.textResting)
-                .frame(width: 120, alignment: .leading)
-
-            control().frame(width: 160, alignment: .trailing)
+            Spacer()
+            control()
         }
+        .padding(.horizontal, 12)
+        .frame(height: 40)
     }
 
     private func loadPrintProfiles() {
@@ -202,6 +201,19 @@ struct SettingsView: View {
         availablePrintProfiles = urls
             .map { $0.deletingPathExtension().lastPathComponent }
             .sorted()
+    }
+}
+
+private struct SurfaceGroupBoxStyle: GroupBoxStyle {
+    let background: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        VStack(spacing: 0) {
+            configuration.content
+        }
+        .frame(maxWidth: .infinity)
+        .background(background)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
