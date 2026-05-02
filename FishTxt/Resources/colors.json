@@ -1,5 +1,6 @@
 {
-  "flora-dark":{
+  "forest":{
+    "type":             "dark",
     "surface":          [31, 38, 29],
     "surface_sunken":   [53, 65, 50],
     "surface_raised":   [75, 92, 72],
@@ -16,7 +17,8 @@
     "destructive":      [204, 82, 82]
   },
 
-  "flora-light":{
+  "garden":{
+    "type":             "light",
     "surface":          [218, 228, 210],
     "surface_sunken":   [200, 212, 190],
     "surface_raised":   [184, 202, 170],
@@ -33,7 +35,8 @@
     "destructive":      [204, 82, 82]
   },
 
-  "paper-dark":{
+  "cardboard":{
+    "type":             "dark",
     "surface":          [38, 30, 14],
     "surface_sunken":   [64, 52, 32],
     "surface_raised":   [84, 70, 44],
@@ -50,7 +53,8 @@
     "destructive":      [204, 82, 82]
   },
   
-  "paper-light":{
+  "paper":{
+    "type":             "light",
     "surface":          [242, 232, 210],
     "surface_sunken":   [226, 214, 190],
     "surface_raised":   [212, 200, 174],

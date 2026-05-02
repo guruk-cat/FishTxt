@@ -5,15 +5,24 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     // Defaults
-    @AppStorage("colorPalette") private var colorPalette: String = "paper-light"
+    @AppStorage("colorPalette") private var colorPalette: String = "paper"
     @AppStorage("fontFamily") private var fontFamily: String = "Menlo"
     @AppStorage("fontSize") private var fontSize: Double = 16.0
     @AppStorage("autoScroll") private var autoScroll: String = "centered"
     @AppStorage("printProfile") private var printProfile: String = "default"
     @AppStorage("imageLimitHalfWidth") private var imageLimitHalfWidth: Bool = false
     @AppStorage("astigMode") private var astigMode: Bool = false
-    @AppStorage("astigPalette") private var astigPalette: String = ""
+    @AppStorage("astigPalette") private var astigPalette: String = "paper"
+    @AppStorage("lastDarkPalette") private var lastDarkPalette: String = ""
     @State private var availablePrintProfiles: [String] = []
+
+    private var mainPaletteOptions: [String] {
+        astigMode ? appColors.palettes(ofType: "dark") : appColors.availablePalettes
+    }
+
+    private var lightPaletteOptions: [String] {
+        appColors.palettes(ofType: "light")
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -107,39 +116,38 @@ struct SettingsView: View {
                     settingsSection {
                         settingsRow("Color palette") {
                             Picker("", selection: $colorPalette) {
-                                ForEach(appColors.availablePalettes, id: \.self) { palette in
+                                ForEach(mainPaletteOptions, id: \.self) { palette in
                                     Text(palette.replacingOccurrences(of: "_", with: " ").capitalized).tag(palette)
                                 }
                             }
                             .pickerStyle(.menu)
                             .onChange(of: colorPalette) { newPalette in
                                 appColors.loadColors(palette: newPalette)
+                                if appColors.paletteTypes[newPalette] == "dark" {
+                                    lastDarkPalette = newPalette
+                                }
                             }
                         }
                         Divider().padding(.leading, 12)
                         settingsRow("Astigmatism palette") {
-                            let lightPalettes = appColors.availablePalettes.filter { !$0.hasSuffix("-dark") }
                             Picker("", selection: $astigPalette) {
-                                Text("Auto").tag("")
-                                ForEach(lightPalettes, id: \.self) { palette in
+                                ForEach(lightPaletteOptions, id: \.self) { palette in
                                     Text(palette.replacingOccurrences(of: "_", with: " ").capitalized).tag(palette)
                                 }
                             }
                             .pickerStyle(.menu)
-                            .disabled(!appColors.isDark || !astigMode)
-                            .opacity(appColors.isDark && astigMode ? 1.0 : 0.35)
+                            .disabled(!astigMode)
+                            .opacity(astigMode ? 1.0 : 0.35)
                         }
                         Divider().padding(.leading, 12)
                         settingsRow("Astigmatism mode") {
-                            Toggle("", isOn: Binding(
-                                get: { astigMode && appColors.isDark },
-                                set: { astigMode = $0 }
-                            ))
-                            .toggleStyle(.switch)
-                            .tint(AppColors.shared.metaIndication)
-                            .controlSize(.mini)
-                            .disabled(!appColors.isDark)
-                            .opacity(appColors.isDark ? 1.0 : 0.35)
+                            Toggle("", isOn: $astigMode)
+                                .toggleStyle(.switch)
+                                .tint(AppColors.shared.metaIndication)
+                                .controlSize(.mini)
+                                .onChange(of: astigMode) { enabled in
+                                    if enabled { autoCorrectPalettesForAstig() }
+                                }
                         }
                     }
 
@@ -164,6 +172,11 @@ struct SettingsView: View {
         .background(AppColors.shared.chromePanel)
         .task {
             loadPrintProfiles()
+            if lastDarkPalette.isEmpty || appColors.paletteTypes[lastDarkPalette] != "dark" {
+                lastDarkPalette = appColors.paletteTypes[colorPalette] == "dark"
+                    ? colorPalette
+                    : (appColors.palettes(ofType: "dark").first ?? "")
+            }
         }
     }
 
@@ -190,6 +203,24 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 12)
         .frame(height: 40)
+    }
+
+    /// When astig mode is turned on, ensure the main palette is dark and the astig palette
+    /// is a light palette. Falls back to last-used or first-in-line as needed.
+    private func autoCorrectPalettesForAstig() {
+        if appColors.paletteTypes[colorPalette] != "dark" {
+            let darkList = appColors.palettes(ofType: "dark")
+            let next = darkList.contains(lastDarkPalette) ? lastDarkPalette : (darkList.first ?? colorPalette)
+            if next != colorPalette {
+                colorPalette = next
+                appColors.loadColors(palette: next)
+                lastDarkPalette = next
+            }
+        }
+        let lightList = appColors.palettes(ofType: "light")
+        if !lightList.contains(astigPalette) {
+            astigPalette = lightList.first ?? ""
+        }
     }
 
     private func loadPrintProfiles() {

@@ -31,31 +31,40 @@ class AppColors: ObservableObject {
     /// Names of all palettes found in colors.json, sorted alphabetically.
     private(set) var availablePalettes: [String] = []
 
+    /// Maps palette name → "dark" or "light", read from each palette's `type` field.
+    private(set) var paletteTypes: [String: String] = [:]
+
     /// Raw 0–255 RGB values for the active palette. Used to inject CSS into the web editor.
     private(set) var rawPalette: [String: [Double]] = [:]
 
     init() {
-        let palette = UserDefaults.standard.string(forKey: "colorPalette") ?? "paper-light"
+        let palette = UserDefaults.standard.string(forKey: "colorPalette") ?? "paper"
         loadColors(palette: palette)
+    }
+
+    /// Returns palette names whose `type` field matches the given value, sorted alphabetically.
+    func palettes(ofType type: String) -> [String] {
+        availablePalettes.filter { paletteTypes[$0] == type }
     }
 
     func loadColors(palette: String) {
         guard
             let url = Bundle.main.url(forResource: "colors", withExtension: "json"),
             let data = try? Data(contentsOf: url),
-            let root = try? JSONDecoder().decode([String: [String: [Double]]].self, from: data)
+            let root = try? JSONSerialization.jsonObject(with: data) as? [String: [String: Any]]
         else {
             print("AppColors: colors.json missing or malformed")
             return
         }
 
         availablePalettes = root.keys.sorted()
+        paletteTypes = root.compactMapValues { $0["type"] as? String }
 
         let resolvedPalette: String
         if root[palette] != nil {
             resolvedPalette = palette
         } else {
-            resolvedPalette = "paper-light"
+            resolvedPalette = "paper"
             UserDefaults.standard.set(resolvedPalette, forKey: "colorPalette")
         }
 
@@ -65,11 +74,11 @@ class AppColors: ObservableObject {
         }
 
         func c(_ key: String) -> Color {
-            guard let v = dict[key] else { return .gray }
+            guard let v = dict[key] as? [Double] else { return .gray }
             return Color(red: v[0] / 255, green: v[1] / 255, blue: v[2] / 255)
         }
 
-        rawPalette = dict
+        rawPalette = dict.compactMapValues { $0 as? [Double] }
         surface        = c("surface")
         surfaceSunken  = c("surface_sunken")
         surfaceRaised  = c("surface_raised")
@@ -85,29 +94,22 @@ class AppColors: ObservableObject {
         metaConfirmation = c("meta_confirmation")
         destructive    = c("destructive")
 
-        // Perceived luminance of surface — W3C formula
-        if let bg = dict["surface"] {
-            let luminance = (bg[0] * 299 + bg[1] * 587 + bg[2] * 114) / 1000
-            isDark = luminance < 128
-        }
-
+        isDark = paletteTypes[resolvedPalette] == "dark"
     }
 
     /// Returns the light counterpart palette's key colors, or nil if the current palette
     /// is light (no astig mode needed) or has no named counterpart.
     func astigLightColors() -> (surface: String, textBody: String, textHeading: String, metaIndication: String, textMuted: String)? {
         guard isDark else { return nil }
-        let current = UserDefaults.standard.string(forKey: "colorPalette") ?? ""
         let stored = UserDefaults.standard.string(forKey: "astigPalette") ?? ""
-        let autoName = current.replacingOccurrences(of: "-dark", with: "-light")
-        let lightName = stored.isEmpty ? autoName : stored
-        guard lightName != current,
+        guard !stored.isEmpty,
+              paletteTypes[stored] == "light",
               let url = Bundle.main.url(forResource: "colors", withExtension: "json"),
               let data = try? Data(contentsOf: url),
-              let root = try? JSONDecoder().decode([String: [String: [Double]]].self, from: data),
-              let light = root[lightName] else { return nil }
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: [String: Any]],
+              let light = root[stored] else { return nil }
         func rgb(_ key: String) -> String {
-            guard let v = light[key], v.count >= 3 else { return "rgb(128,128,128)" }
+            guard let v = light[key] as? [Double], v.count >= 3 else { return "rgb(128,128,128)" }
             return "rgb(\(Int(v[0])),\(Int(v[1])),\(Int(v[2])))"
         }
         return (rgb("surface"), rgb("text_body"), rgb("text_heading"), rgb("meta_indication"), rgb("text_muted"))
