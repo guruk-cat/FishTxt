@@ -75,7 +75,7 @@ Updates auto-scroll mode, font, and image half-width on settings change via coor
 - Toggle formatting: `toggleBold()`, `toggleItalic()`, `toggleUnderline()`, `toggleBlockquote()`, `toggleBulletList()`, `toggleOrderedList()`
 - Heading: `setHeading(level:)`
 - Content: `setContent(_:)`, `getContent(completion:)`
-- Navigation: `scrollToTop()`, `focus()`, `scrollToHeading(index:)`
+- Navigation: `scrollToTop()`, `scrollToHeading(index:)`
 - Theming: `applyColors()`, `setAutoScroll(_:)`, `setAstigMode(_:)`
 - Image: `insertImage(src:)` — inserts a `figure > img` block at the cursor using `callAsyncJavaScript` (handles large base64 payloads safely); `setImageHalfWidth(_:)` — injects `--ft-img-max-width: 50%|100%` CSS variable
 
@@ -115,7 +115,7 @@ The output `FishTxt/Resources/editor.html` is what the app loads. Rebuild and re
 
 - TipTap's Document schema is extended to `block+ footnotes?` so `tiptap-footnotes` can place a `footnotes` node at the end.
 - `window.editorBridge` is the JS object Swift calls via `evaluateJavaScript`. `window.webkit.messageHandlers.editorBridge` is the handler JS posts messages to.
-- The custom cursor (`#custom-cursor`) replaces the native caret (`caret-color: transparent` on `.ProseMirror`). It is repositioned in `updateCursor()` on every selection/focus/update event. `updateCursor()` gates on `astigKey.getState(editor.state).userInteracted` in addition to `editor.isFocused`: when the user first clicks, ProseMirror's `focus` event fires mid-`mousedown` (making `editor.isFocused` true) before the DOM observer has dispatched the `pointer: true` selection transaction. Without the gate, the cursor would briefly flash at position 1 (where `TextSelection.atStart` left the selection) before jumping to the clicked position. Because `userInteracted` is only set by the `pointer: true` transaction (which arrives after focus), the gate keeps the cursor hidden during that window.
+- The custom cursor (`#custom-cursor`) replaces the native caret (`caret-color: transparent` on `.ProseMirror`). It is repositioned in `updateCursor()` on every selection/focus/update event. `updateCursor()` gates on `astigKey.getState(editor.state).userInteracted` in addition to `editor.isFocused`: when the user first clicks, ProseMirror's `focus` event fires mid-`mousedown` (making `editor.isFocused` true) before the DOM observer has dispatched the `pointer: true` selection transaction. Without the gate, the cursor would briefly flash at position 1 (where `TextSelection.atStart` left the selection) before jumping to the clicked position. `userInteracted` is set by: (a) the `pointer: true` transaction when a click changes the selection, (b) `handleClick` dispatching an object-meta transaction when the click does not change the selection (e.g. clicking in an empty paragraph already at position 1, where ProseMirror skips the pointer transaction), or (c) `setContent()` directly when the loaded document is empty. The gate keeps the cursor hidden until one of these paths fires.
 - Centred-scroll mode (`doCenteredScroll`) only triggers when the cursor is below the vertical midpoint of `#editor`, matching the original editor behaviour.
 - **`Resources/editor.html`** — compiled single-file TipTap editor. **Do not edit directly** — rebuild from `editor-src/` instead. Grep for specific patterns rather than reading in full.
 
@@ -129,7 +129,7 @@ For the full UX-level description, see `astigmatism-mode.md`.
 
 1. `AppColors.astigDocStartJS()` generates a WKUserScript injected at document-start. It sets `window.__ft_astig = true/false` and writes five astig CSS variables (`--astig-surface`, `--astig-text-body`, `--astig-text-heading`, `--astig-meta-indication`, `--astig-text-muted`) directly on `document.documentElement.style` (same mechanism as palette color vars — inline style, highest specificity, no flash).
 2. `main.js` `onCreate`: if `window.__ft_astig`, sets `astigMode = true` and adds `astig-mode` to `document.body`. Does **not** dispatch the ProseMirror enable transaction yet — see `contentReady` below.
-3. `main.js` `setContent()`: on every call, dispatches a combined transaction that (a) resets the ProseMirror selection to `TextSelection.atStart` — necessary because ProseMirror's `replaceWith` maps the old selection to the end of the new document, which would otherwise cause a phantom decoration at the last block — and (b) sets `setMeta(astigKey, false)` to reset the plugin state for the new blob. Then, if `astigMode` is true, immediately dispatches `setMeta(astigKey, true)` to re-enable. Also sets `contentReady = true` on first call.
+3. `main.js` `setContent()`: on every call, dispatches a combined transaction that (a) resets the ProseMirror selection to `TextSelection.atStart` — necessary because ProseMirror's `replaceWith` maps the old selection to the end of the new document, which would otherwise cause a phantom decoration at the last block — and (b) sets `setMeta(astigKey, false)` to reset the plugin state for the new blob. Sets `contentReady = true` on first call. Then branches: if `editor.isEmpty` (new blob or blob whose content was fully deleted), focuses the editor immediately and dispatches the object-meta `{ enabled: astigMode, userInteracted: true }` so cursor and astig activate without requiring a click; otherwise, if `astigMode` is true, dispatches `setMeta(astigKey, true)` to re-enable astig and waits for the user's first click.
 4. `EditorBridge.setAstigMode(_:)` handles runtime toggles (from Settings). Uses `callAsyncJavaScript` to set astig CSS vars and call `window.editorBridge.setAstigMode(enabled)`. Only dispatches the enable transaction if `contentReady`.
 5. `EditView.onChange(of: appColors.surface)` calls `bridge.setAstigMode(astigMode)` on palette change to recompute colors from the new light counterpart.
 
@@ -137,15 +137,17 @@ For the full UX-level description, see `astigmatism-mode.md`.
 
 The highlight is implemented as a ProseMirror `Plugin` (`AstigFocusExtension` in `main.js`). The plugin carries state `{ enabled, userInteracted }` updated via `tr.setMeta(astigKey, value)`:
 
+- `{ enabled, userInteracted }` (plain object) → sets both fields directly. Used by `setContent()` on empty documents and by `handleClick` when the pointer transaction was skipped.
 - `true` / `false` → set `enabled`, reset `userInteracted` to `false` (used on blob load and astig toggle)
-- `'interact'` → set `userInteracted: true` without changing `enabled` (used by `handleKeyDown` for keyboard-initiated first interaction)
 - `pointer: true` meta (stamped automatically by ProseMirror's DOM observer on real mouse-click transactions) → sets `userInteracted: true` in `apply`; this check is placed before the `!enabled` guard so it also tracks clicks when astig is off
 
-`decorations` only renders when both `enabled` and `userInteracted` are true. This prevents any decoration from appearing before the user has made a deliberate click or keypress, regardless of where ProseMirror's internal selection happens to be at load time.
+`decorations` only renders when both `enabled` and `userInteracted` are true. This prevents any decoration from appearing before the user has made a deliberate click, regardless of where ProseMirror's internal selection happens to be at load time.
 
-A `handleKeyDown` plugin prop dispatches `'interact'` on the first keypress (when `!userInteracted`) so the decoration activates for keyboard-focused users who type without clicking first.
+A `handleKeyDown` plugin prop returns `true` (blocking the event) when `!userInteracted`, keeping the editor inert until the user has clicked to place the cursor. Typing before clicking is intentionally a no-op.
 
-Its `decorations` prop is called automatically on every state transaction (cursor moves, edits, selection changes) and returns a `Decoration.node` on the currently focused block.
+A `handleClick` plugin prop fires after ProseMirror has fully processed a click and placed the selection. If `userInteracted` is still false at that point — which happens when the click does not change the selection and ProseMirror therefore skips the `pointer: true` transaction (e.g. clicking in an empty paragraph already at position 1) — it dispatches an object-meta transaction to set `userInteracted: true`, then calls `updateCursor()`.
+
+The `decorations` prop is called automatically on every state transaction (cursor moves, edits, selection changes) and returns a `Decoration.node` on the currently focused block.
 
 **Do not attempt to add the highlight by calling `element.classList.add()` on nodes inside `.ProseMirror`.** ProseMirror manages its DOM via `MutationObserver` and re-renders nodes when it detects attribute mutations, immediately overwriting any externally added classes. The result is a brief flash followed by reversion — the decoration will appear and disappear within a single frame. Decorations are the framework-sanctioned mechanism precisely because ProseMirror applies them itself during rendering.
 
