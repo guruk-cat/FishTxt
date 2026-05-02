@@ -24,6 +24,7 @@ The following are key values in `colors.json` and their corresponding usage in t
 
 | Key | Usage |
 | --- | ----- |
+| `type` | either "dark" or "light." This is mainly an indication that is used for the astigmatism mode. |
 | `surface` | background for the text editor and blob cards in the dashboard |
 | `surface_sunken` | background for the dashboard area (behind cards) |
 | `surface_raised` | overlayed with an `opacity` argument when an element is selected or hovered |
