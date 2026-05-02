@@ -9,7 +9,8 @@ struct FileNavigatorView: View {
     @Binding var selectedFolderID: UUID?
     @Binding var activeBlobID: UUID?
 
-    // Rename state
+    // Rename / create state
+    @State private var isCreatingProject = false
     @State private var isRenamingProject = false
     @State private var renameProjectID: UUID?
     @State private var renameProjectText = ""
@@ -79,10 +80,8 @@ struct FileNavigatorView: View {
                         .foregroundColor(AppColors.shared.textHeading)
                     Spacer()
                     Button {
-                        let p = store.createProject(name: "Untitled Project")
-                        selectedProjectID = p.id
-                        selectedFolderID = nil
-                        activeBlobID = nil
+                        renameProjectText = ""
+                        isCreatingProject = true
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 11, weight: .semibold))
@@ -100,6 +99,17 @@ struct FileNavigatorView: View {
                 }
             }
             .padding(.bottom, 12)
+        }
+        .alert("New Project", isPresented: $isCreatingProject) {
+            TextField("Project name", text: $renameProjectText)
+            Button("Cancel", role: .cancel) {}
+            Button("Create") {
+                let name = renameProjectText.trimmingCharacters(in: .whitespaces)
+                let p = store.createProject(name: name.isEmpty ? "Untitled Project" : name)
+                selectedProjectID = p.id
+                selectedFolderID = nil
+                activeBlobID = nil
+            }
         }
         .alert("Rename Project", isPresented: $isRenamingProject) {
             TextField("Project name", text: $renameProjectText)
