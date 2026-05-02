@@ -156,7 +156,14 @@ class ProjectStore: ObservableObject {
 
         project.folders.removeAll { $0.id == folderID }
 
-        // Remove all blobs in this folder
+        // Delete blob files from disk before removing from project
+        let blobsInFolder = project.blobs.filter { $0.folderID == folderID }
+        let projectPath = rootPath + "/" + projectID.uuidString
+        for blob in blobsInFolder {
+            let blobFile = projectPath + "/" + blob.id.uuidString + ".json"
+            try? fileManager.removeItem(atPath: blobFile)
+        }
+
         project.blobs.removeAll { $0.folderID == folderID }
 
         updateProject(project)
