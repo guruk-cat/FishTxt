@@ -86,11 +86,6 @@ class EditorBridge: NSObject, ObservableObject, WKScriptMessageHandler {
     func toggleBlockquote()     { evaluate("window.editorBridge.toggleBlockquote()"); refocusWebView() }
     func addFootnoteReference() { evaluate("window.editorBridge.addFootnoteReference()") }
     func copyAll()              { evaluate("window.editorBridge.copyAll()") }
-    func focus() {
-        refocusWebView()
-        evaluate("window.editorBridge.focus()")
-    }
-
     func setHeading(level: Int) {
         evaluate("window.editorBridge.setHeading(\(level))")
         refocusWebView()

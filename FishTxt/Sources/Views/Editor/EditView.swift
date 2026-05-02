@@ -39,15 +39,11 @@ struct EditView: View {
         .onReceive(bridge.$isReady.filter { $0 }) { _ in
             guard !hasLoaded else { return }
             hasLoaded = true
-            if let json = store.loadBlobContent(blobID: blobID, in: projectID) {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    bridge.setContentAndScrollToTop(json)
-                    bridge.markClean()
-                }
-            } else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    bridge.focus()
-                }
+            let json = store.loadBlobContent(blobID: blobID, in: projectID)
+                ?? "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\"}]}"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                bridge.setContentAndScrollToTop(json)
+                bridge.markClean()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .saveDocument)) { _ in

@@ -332,16 +332,6 @@ window.editorBridge = {
   copyAll() {
     post({ type: 'copyAll', text: editor.getText(), html: editor.getHTML() })
   },
-  focus() {
-    // Called for new empty blobs (no setContent path). Mark the editor ready and
-    // immediately activate cursor + astig so the user can start typing right away.
-    contentReady = true
-    editor.commands.focus('end')
-    editor.view.dispatch(
-      editor.state.tr.setMeta(astigKey, { enabled: astigMode, userInteracted: true })
-    )
-    updateCursor()
-  },
   setAutoScrollMode(m) {
     autoScrollMode = m
     const ed = document.getElementById('editor')
