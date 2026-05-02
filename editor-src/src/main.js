@@ -39,13 +39,16 @@ const AstigFocusExtension = Extension.create({
         init: () => ({ enabled: false, userInteracted: false }),
         apply(tr, prev) {
           const meta = tr.getMeta(astigKey)
-          // Explicit enable/disable always resets userInteracted for the new load.
+          // Object meta: { enabled, userInteracted } — set both fields at once.
+          // Used by focus() so an empty-blob open immediately activates cursor + astig.
+          if (meta !== null && typeof meta === 'object') {
+            return { enabled: !!meta.enabled, userInteracted: !!meta.userInteracted }
+          }
+          // Explicit enable/disable resets userInteracted (blob load or astig toggle).
           if (meta === true || meta === false) return { enabled: meta, userInteracted: false }
-          // Keyboard path: a synthetic 'interact' meta sets the flag without toggling enabled.
-          if (meta === 'interact') return { ...prev, userInteracted: true }
           // pointer:true is stamped by ProseMirror's DOM observer on real mouse-click
-          // transactions. Check this before the !enabled guard so userInteracted is
-          // tracked even when astig is off (the cursor display also depends on it).
+          // transactions. Check before the !enabled guard so userInteracted is tracked
+          // even when astig is off (cursor display depends on it too).
           if (tr.getMeta('pointer') && !prev.userInteracted) return { ...prev, userInteracted: true }
           if (!prev.enabled) return prev
           return prev
@@ -79,10 +82,30 @@ const AstigFocusExtension = Extension.create({
             Decoration.node(from, to, { class: 'astig-focus' }),
           ])
         },
+        // Block all keystrokes until the user has clicked to place the cursor.
+        // This ensures the editor stays inert (no text inserted, no formatting)
+        // before a deliberate first interaction.
         handleKeyDown(view) {
           const { userInteracted } = astigKey.getState(view.state)
-          if (!userInteracted)
-            view.dispatch(view.state.tr.setMeta(astigKey, 'interact'))
+          return !userInteracted
+        },
+        // Called after ProseMirror has fully processed a click and placed the selection.
+        // Two cases arise:
+        //   (a) Pointer transaction fired during mousedown → userInteracted already true.
+        //   (b) Click did not change the selection (e.g. clicking in an empty paragraph
+        //       already at position 1) → ProseMirror skips the pointer transaction →
+        //       userInteracted is still false after mousedown.
+        // In case (b) we dispatch our own transaction here to set userInteracted. By the
+        // time handleClick fires, the selection is already at the clicked position, so
+        // updateCursor() will render the caret in the right place.
+        handleClick(view) {
+          const pluginState = astigKey.getState(view.state)
+          if (!pluginState.userInteracted) {
+            view.dispatch(
+              view.state.tr.setMeta(astigKey, { enabled: pluginState.enabled, userInteracted: true })
+            )
+          }
+          updateCursor()
           return false
         },
       },
@@ -282,7 +305,17 @@ window.editorBridge = {
         .setMeta(astigKey, false)
     )
     if (!contentReady) contentReady = true
-    if (astigMode) editor.view.dispatch(editor.state.tr.setMeta(astigKey, true))
+    if (editor.isEmpty) {
+      // Empty document (e.g. blob was edited, cleared, then saved): behave identically
+      // to a brand-new blob — focus and activate cursor + astig right away, no click needed.
+      editor.commands.focus('end')
+      editor.view.dispatch(
+        editor.state.tr.setMeta(astigKey, { enabled: astigMode, userInteracted: true })
+      )
+      updateCursor()
+    } else if (astigMode) {
+      editor.view.dispatch(editor.state.tr.setMeta(astigKey, true))
+    }
   },
   toggleBold()        { editor.chain().focus().toggleBold().run();        sendStateUpdate() },
   toggleItalic()      { editor.chain().focus().toggleItalic().run();      sendStateUpdate() },
@@ -300,8 +333,13 @@ window.editorBridge = {
     post({ type: 'copyAll', text: editor.getText(), html: editor.getHTML() })
   },
   focus() {
+    // Called for new empty blobs (no setContent path). Mark the editor ready and
+    // immediately activate cursor + astig so the user can start typing right away.
+    contentReady = true
     editor.commands.focus('end')
-    editor.view.dispatch(editor.state.tr.setMeta(astigKey, 'interact'))
+    editor.view.dispatch(
+      editor.state.tr.setMeta(astigKey, { enabled: astigMode, userInteracted: true })
+    )
     updateCursor()
   },
   setAutoScrollMode(m) {
