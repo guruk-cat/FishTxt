@@ -28,6 +28,12 @@ class AppColors: ObservableObject {
     /// Whether the current palette is a dark theme (used to set preferredColorScheme).
     @Published var isDark: Bool = true
 
+    /// Background for the settings panel window. Darker than `settingsBox` regardless of palette tone.
+    var settingsPanel: Color { isDark ? surface : chromePanel }
+
+    /// Background for settings GroupBox rows. Lighter than `settingsPanel` regardless of palette tone.
+    var settingsBox: Color { isDark ? chromePanel : surface }
+
     /// Names of all palettes found in colors.json, sorted alphabetically.
     private(set) var availablePalettes: [String] = []
 

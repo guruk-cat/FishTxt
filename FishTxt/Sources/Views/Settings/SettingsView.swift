@@ -70,7 +70,7 @@ struct SettingsView: View {
                                         .font(.system(size: 11, weight: .medium))
                                         .foregroundColor(AppColors.shared.textResting)
                                         .frame(width: 22, height: 22)
-                                        .background(AppColors.shared.chromePanel)
+                                        .background(AppColors.shared.settingsPanel)
                                         .cornerRadius(5)
                                         .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
                                 }
@@ -86,7 +86,7 @@ struct SettingsView: View {
                                         .font(.system(size: 11, weight: .medium))
                                         .foregroundColor(AppColors.shared.textResting)
                                         .frame(width: 22, height: 22)
-                                        .background(AppColors.shared.chromePanel)
+                                        .background(AppColors.shared.settingsPanel)
                                         .cornerRadius(5)
                                         .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppColors.shared.borderCard, lineWidth: 1))
                                 }
@@ -169,7 +169,7 @@ struct SettingsView: View {
             Spacer(minLength: 0)
         }
         .frame(width: 380, height: 420)
-        .background(AppColors.shared.chromePanel)
+        .background(AppColors.shared.settingsPanel)
         .task {
             loadPrintProfiles()
             if lastDarkPalette.isEmpty || appColors.paletteTypes[lastDarkPalette] != "dark" {
@@ -189,7 +189,7 @@ struct SettingsView: View {
                 content()
             }
         }
-        .groupBoxStyle(SurfaceGroupBoxStyle(background: appColors.surface))
+        .groupBoxStyle(SurfaceGroupBoxStyle(background: appColors.settingsBox))
     }
 
     @ViewBuilder
