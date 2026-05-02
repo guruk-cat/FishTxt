@@ -44,7 +44,7 @@
     "text_heading":     [128, 178, 134],
     "text_muted":       [142, 126, 102],
     "text_resting":     [188, 172, 142],
-    "meta_indication":  [196, 104, 38],
+    "meta_indication":  [255, 191, 62],
     "meta_confirmation":[84, 158, 92],
     "chrome_sidebar":   [38, 30, 14],
     "chrome_panel":     [49, 40, 23],
